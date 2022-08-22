@@ -1,0 +1,19 @@
+{
+  "name": "example1",
+  "version": "1.0.0",
+  "description": "Plain express endpoints without middleware",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node --es-module-specifier-resolution=node ./src/server.js",
+    "dev": "nodemon --es-module-specifier-resolution=node src/server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.18.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.18"
+  }
+}

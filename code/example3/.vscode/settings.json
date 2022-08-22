@@ -1,0 +1,8 @@
+{
+  "mochaExplorer.files": "./src/tests/**/*.test.ts",
+  "mochaExplorer.watch": "./src/tests/**/*.test.ts",
+  "mochaExplorer.require": ["ts-node/register"],
+  "mochaExplorer.env": { "NODE_ENV": "test" },
+  "mochaExplorer.exit": true,
+  "testExplorer.mergeSuites": true
+}
