@@ -492,8 +492,6 @@ These decorators ensure your output is correctly serialized and strip out all da
 - Status code: The status code you want to return (Optional)
   - Want to learn more about [status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)?
 
-<!-- TODO: Move to part 1 -->
-
 ### Use the Representer
 
 Apply the `@Representer` decorator with the `UserView` on all endpoints except the get list endpoint.
@@ -1302,7 +1300,7 @@ If it's not yet installed, you can install [docker](https://formulae.brew.sh/for
 brew install docker
 ```
 
-<!-- TODO: docker desktop? -->
+In order to get some extra functionality you also need to install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
 ### Docker container
 
