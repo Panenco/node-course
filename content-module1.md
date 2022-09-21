@@ -526,6 +526,7 @@ export const deleteUser = async (req, res, next) => {
   }
   UserStore.delete(req.params.id);
   res.status(204);
+  res.send();
 };
 ```
 
