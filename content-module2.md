@@ -259,7 +259,7 @@ And set these to false to make Typescript a bit less strict
 import { Exclude, Expose } from 'class-transformer';
 import { IsEmail, IsString, Length } from 'class-validator';
 
-// For safety we'll exclude everything from being transormed by placing a @Exclude() decorator on the class declaration
+// For safety we'll exclude everything from being transformed by placing a @Exclude() decorator on the class declaration
 @Exclude()
 export class UserBody {
   // We can expose the properties we want included one by one
@@ -820,7 +820,6 @@ it('should CRUD users', async () => {
     .send({
       email: 'test-user+updated@panenco.com',
     } as User)
-    .set('x-auth', 'api-key')
     .expect(200);
 
   expect(updateResponse.name).equal('test');
@@ -834,7 +833,7 @@ it('should CRUD users', async () => {
   expect(newUser).not.undefined;
   expect(newUser.email).equal('test-user+updated@panenco.com');
 
-  // Get the newly created user
+  // Delete the newly created user
   await request.delete(`/api/users/${createResponse.id}`).expect(204);
 
   // Get all users again after deleted the only user
