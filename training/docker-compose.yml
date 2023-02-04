@@ -1,0 +1,11 @@
+version: '3'
+services:
+  postgres:
+    container_name: example-postgres
+    image: postgres:latest
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./data/postgres:/data/example-postgres
+    env_file:
+      - docker.env
