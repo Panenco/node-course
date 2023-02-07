@@ -19,6 +19,6 @@ export class LegalEntity extends BaseEntity<LegalEntity, 'id'> {
   @Property()
   public vatNumber: string;
 
-  @ManyToOne(() => Team, { name: 'team_id' })
-  public teamId!: string;
+  @ManyToOne(() => Team)
+  public team!: Team;
 }

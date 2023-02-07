@@ -46,6 +46,17 @@
           "primary": false,
           "nullable": true,
           "mappedType": "text"
+        },
+        "creation_date": {
+          "name": "creation_date",
+          "type": "timestamptz(0)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "default": "now()",
+          "mappedType": "datetime"
         }
       },
       "name": "team",
@@ -194,7 +205,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "mappedType": "uuid"
         }
       },
@@ -223,6 +234,7 @@
             "id"
           ],
           "referencedTableName": "public.team",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         },
         "tender_legal_entity_id_foreign": {
@@ -235,6 +247,7 @@
             "id"
           ],
           "referencedTableName": "public.legal_entity",
+          "deleteRule": "set null",
           "updateRule": "cascade"
         }
       }
@@ -442,6 +455,7 @@
             "id"
           ],
           "referencedTableName": "public.tender",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -468,26 +482,6 @@
         },
         "weight": {
           "name": "weight",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "default": "0",
-          "mappedType": "integer"
-        },
-        "relative_weight": {
-          "name": "relative_weight",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "default": "0",
-          "mappedType": "integer"
-        },
-        "total_weight": {
-          "name": "total_weight",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -531,6 +525,7 @@
             "id"
           ],
           "referencedTableName": "public.request",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -742,8 +737,8 @@
           "nullable": false,
           "mappedType": "uuid"
         },
-        "answer": {
-          "name": "answer",
+        "answer_text": {
+          "name": "answer_text",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -926,8 +921,8 @@
           "default": "now()",
           "mappedType": "datetime"
         },
-        "author_id": {
-          "name": "author_id",
+        "author_id_id": {
+          "name": "author_id_id",
           "type": "uuid",
           "unsigned": false,
           "autoincrement": false,
@@ -951,10 +946,10 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "post_author_id_foreign": {
-          "constraintName": "post_author_id_foreign",
+        "post_author_id_id_foreign": {
+          "constraintName": "post_author_id_id_foreign",
           "columnNames": [
-            "author_id"
+            "author_id_id"
           ],
           "localTableName": "public.post",
           "referencedColumnNames": [
@@ -1003,8 +998,8 @@
           "nullable": true,
           "mappedType": "uuid"
         },
-        "respondent_id_id": {
-          "name": "respondent_id_id",
+        "respondent_id": {
+          "name": "respondent_id",
           "type": "uuid",
           "unsigned": false,
           "autoincrement": false,
@@ -1038,7 +1033,7 @@
             "id"
           ],
           "referencedTableName": "public.user",
-          "deleteRule": "set null",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         },
         "membership_team_id_foreign": {
@@ -1051,7 +1046,7 @@
             "id"
           ],
           "referencedTableName": "public.team",
-          "deleteRule": "set null",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         },
         "membership_tender_id_foreign": {
@@ -1067,10 +1062,10 @@
           "deleteRule": "set null",
           "updateRule": "cascade"
         },
-        "membership_respondent_id_id_foreign": {
-          "constraintName": "membership_respondent_id_id_foreign",
+        "membership_respondent_id_foreign": {
+          "constraintName": "membership_respondent_id_foreign",
           "columnNames": [
-            "respondent_id_id"
+            "respondent_id"
           ],
           "localTableName": "public.membership",
           "referencedColumnNames": [

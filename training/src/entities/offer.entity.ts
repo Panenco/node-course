@@ -13,12 +13,12 @@ export class Offer extends BaseEntity<Offer, 'id'> {
   @Enum(() => RequestEnum)
   public type: RequestEnum;
 
-  @ManyToOne(() => Team, { nullable: true, name: 'supplier_id' })
-  public supplierId?: string;
+  @ManyToOne(() => Team, { nullable: true })
+  public supplier?: Team;
 
-  @ManyToOne(() => Request, { nullable: true, name: 'request_id' })
-  public requestId?: string;
+  @ManyToOne(() => Request, { nullable: true })
+  public request?: Request;
 
-  @ManyToOne(() => Respondent, { name: 'respondent_id' })
-  public respondentId: string;
+  @ManyToOne(() => Respondent)
+  public respondent: Respondent;
 }

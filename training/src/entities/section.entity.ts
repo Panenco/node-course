@@ -13,12 +13,6 @@ export class Section extends BaseEntity<Section, 'id'> {
   @Property({ default: 0 })
   public weight?: number;
 
-  @Property()
-  public relativeWeight: number = 0;
-
-  @Property()
-  public totalWeight: number = 0;
-
-  @ManyToOne(() => Request, { name: 'request_id' })
-  public requestId!: string;
+  @ManyToOne(() => Request, { onDelete: 'cascade' })
+  public request!: Request;
 }

@@ -19,6 +19,6 @@ export class Question extends BaseEntity<Question, 'id'> {
   @Property()
   public totalWeight: number = 0;
 
-  @ManyToOne(() => Section, { name: 'section_id' })
-  public sectionId!: string;
+  @ManyToOne(() => Section)
+  public section!: Section;
 }

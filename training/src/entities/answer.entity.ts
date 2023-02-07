@@ -9,11 +9,11 @@ export class Answer extends BaseEntity<Answer, 'id'> {
   id: string = v4();
 
   @Property()
-  public answer: string;
+  public answerText: string;
 
-  @ManyToOne(() => Offer, { name: 'offer_id' })
-  public offerId: string;
+  @ManyToOne(() => Offer)
+  public offer: Offer;
 
-  @ManyToOne(() => Question, { name: 'question_id' })
-  public questionId: string;
+  @ManyToOne(() => Question)
+  public question: Question;
 }

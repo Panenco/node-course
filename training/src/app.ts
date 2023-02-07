@@ -1,3 +1,4 @@
+import { SectionController } from './controllers/sections/section.controller';
 import express, { Application, NextFunction, Request, Response } from 'express';
 import { UserController } from './controllers/users/user.controller';
 import { getMetadataArgsStorage, RoutingControllersOptions, useExpressServer } from 'routing-controllers';
@@ -11,11 +12,12 @@ import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MikroORM, RequestContext } from '@mikro-orm/core';
 import ormConfig from './orm.config';
 import { TeamController } from './controllers/teams/team.controller';
+import { TenderController } from './controllers/tenders/tender.controller';
+import { RequestController } from './controllers/requests/request.controller';
 
 export class App {
   host: Application;
   public orm: MikroORM<PostgreSqlDriver>;
-
 
   constructor() {
     // Init app
@@ -39,8 +41,9 @@ export class App {
       RequestContext.create(this.orm.em, next);
     });
     
+    const controllers = [UserController, PostController, AuthController, TeamController, TenderController, RequestController, SectionController];
     // Users route
-    this.initializeControllers([UserController, PostController, AuthController, TeamController]);
+    this.initializeControllers(controllers);
 
     // Swagger
     this.initializeSwagger()
@@ -50,7 +53,7 @@ export class App {
       res.status(404).send(`Can not ${req.method} ${req.url}`);
     })
 
-    // // Error handling
+    // Error handling
     this.host.use(errorMiddleware);
   }
 

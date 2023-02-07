@@ -8,11 +8,9 @@ export const createTeam = async (body: TeamBody, userId: string): Promise<Team> 
 
   // create team
   const team = em.create(Team, body);
-  await em.persistAndFlush(team);
-
   // create team member
-  const membership = em.create(Membership, { userId, teamId: team.id })
-  await em.persistAndFlush(membership);
+  const membership = em.create(Membership, { user: userId, team: team.id })
 
+  await em.persistAndFlush([membership. team]);
   return team;
 }

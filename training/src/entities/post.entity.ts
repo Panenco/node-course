@@ -19,6 +19,6 @@ export class Post extends BaseEntity<Post, 'id'> {
   @Property({ defaultRaw: `now()`, onUpdate: () => new Date() })
   public updatedAt: Date = new Date();
 
-  @ManyToOne(() => User, { name: 'author_id' })
-  authorId: string;
+  @ManyToOne(() => User)
+  authorId: User;
 }

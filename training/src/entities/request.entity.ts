@@ -1,6 +1,7 @@
-import { BaseEntity, Entity, Enum, ManyToOne, PrimaryKey, Property } from "@mikro-orm/core";
+import { BaseEntity, Cascade, Collection, Entity, Enum, ManyToOne, OneToMany, PrimaryKey, Property } from "@mikro-orm/core";
 import { v4 } from 'uuid';
 import { RequestEnum } from "../utils/types";
+import { Section } from "./section.entity";
 import { Tender } from "./tender.entity";
 
 @Entity()
@@ -23,6 +24,9 @@ export class Request extends BaseEntity<Request, 'id'> {
   @Enum(() => RequestEnum)
   public type: RequestEnum;
   
-  @ManyToOne(() => Tender, { name: 'tender_id' })
-  public tenderId!: string;
+  @ManyToOne(() => Tender, { onDelete: 'cascade' })
+  public tender!: Tender;
+
+  @OneToMany(() => Section, section => section.request, { cascade: [Cascade.REMOVE] })
+  sections = new Collection<Section>(this);
 }

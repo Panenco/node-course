@@ -13,12 +13,12 @@ export class Respondent extends BaseEntity<Respondent, 'id'> {
   @Enum(() => RequestEnum)
   public type: RequestEnum;
 
-  @ManyToOne(() => Tender, { name: 'tender_id' })
-  public tenderId: string;
+  @ManyToOne(() => Tender)
+  public tender: Tender;
 
-  @ManyToOne(() => Team, { name: 'team_id' })
-  public teamId: string;
+  @ManyToOne(() => Team)
+  public team: Team;
 
-  @ManyToOne(() => LegalEntity, { name: 'legal_entity_id', nullable: true })
-  public legalEntityId?: string;
+  @ManyToOne(() => LegalEntity, { nullable: true })
+  public legalEntity?: LegalEntity;
 }
