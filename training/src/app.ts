@@ -10,6 +10,7 @@ import { routingControllersToSpec } from 'routing-controllers-openapi';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MikroORM, RequestContext } from '@mikro-orm/core';
 import ormConfig from './orm.config';
+import { TeamController } from './controllers/teams/team.controller';
 
 export class App {
   host: Application;
@@ -39,7 +40,7 @@ export class App {
     });
     
     // Users route
-    this.initializeControllers([UserController, PostController, AuthController]);
+    this.initializeControllers([UserController, PostController, AuthController, TeamController]);
 
     // Swagger
     this.initializeSwagger()
