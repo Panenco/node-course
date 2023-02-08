@@ -1,19 +1,12 @@
-import { SectionController } from './controllers/sections/section.controller';
 import express, { Application, NextFunction, Request, Response } from 'express';
-import { UserController } from './controllers/users/user.controller';
 import { getMetadataArgsStorage, RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import { errorMiddleware, getAuthenticator, validationMetadatasToSchemas } from '@panenco/papi';
 import 'express-async-errors';
 import swaggerUi from 'swagger-ui-express';
-import { PostController } from './controllers/posts/post.controller';
-import { AuthController } from './controllers/auth/auth.controller';
 import { routingControllersToSpec } from 'routing-controllers-openapi';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MikroORM, RequestContext } from '@mikro-orm/core';
 import ormConfig from './orm.config';
-import { TeamController } from './controllers/teams/team.controller';
-import { TenderController } from './controllers/tenders/tender.controller';
-import { RequestController } from './controllers/requests/request.controller';
 
 export class App {
   host: Application;
@@ -41,9 +34,8 @@ export class App {
       RequestContext.create(this.orm.em, next);
     });
     
-    const controllers = [UserController, PostController, AuthController, TeamController, TenderController, RequestController, SectionController];
     // Users route
-    this.initializeControllers(controllers);
+    this.initializeControllers();
 
     // Swagger
     this.initializeSwagger()
@@ -57,13 +49,13 @@ export class App {
     this.host.use(errorMiddleware);
   }
 
-  private initializeControllers(controllers: Function[]) {
+  private initializeControllers() {
     useExpressServer(this.host, { // Link the express host to routing-controllers
       cors: {
           origin: "*", // Allow all origins, any application on any url can call our api. This is why we also added the `cors` package.
           exposedHeaders: ["x-auth"], // Allow the header `x-auth` to be exposed to the client. This is needed for the authentication to work later.
       },
-      controllers, // Provide the controllers. Currently this won't work yet, first we need to convert the Route to a routing-controllers controller.
+      controllers: [`${__dirname}/**/*.controller.ts`], // Provide the controllers. Currently this won't work yet, first we need to convert the Route to a routing-controllers controller.
       defaultErrorHandler: false, // Disable the default error handler. We will handle errors through papi later.
       routePrefix: "/api", // Map all routes to the `/api` path.
       authorizationChecker: getAuthenticator('jwtSecretFromConfigHere'), // Tell routing-controllers to use the papi authentication checker
