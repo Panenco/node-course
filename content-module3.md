@@ -762,14 +762,13 @@ describe('Integration tests', () => {
         .send({
           email: 'test-user+1@panenco.com',
         } as User)
-        .set('x-auth', 'api-key')
         .expect(StatusCode.ok);
 
       expect(updateResponse.name).equal('test');
       expect(updateResponse.email).equal('test-user+1@panenco.com');
       expect(updateResponse.password).undefined; // middleware transformed the object to not include the password
 
-      // Get the newly created user
+      // Delete the newly created user
       await request.delete(`/api/users/${createResponse.id}`).expect(204);
 
       // Get all users again after deleted the only user
@@ -893,7 +892,7 @@ export class AuthController {
   @Post('/tokens')
   @Representer(AccessTokenView)
   async create(@Body() body: LoginBody) {
-    return createToken(body);
+    return login(body);
   }
 }
 ```
@@ -1390,7 +1389,7 @@ MikroORM is an actively maintained TypeScript ORM coming with clever performance
 
 ### Add packages
 
-Next to MikroORM's core package, the orm uses other packages to import language specific funtionality. Migrations are needed to easily keep our database and code in sync, more on that later!
+Next to MikroORM's core package, the orm uses other packages to import language specific functionality. Migrations are needed to easily keep our database and code in sync, more on that later!
 
 ```bash
 yarn add @mikro-orm/core @mikro-orm/postgresql @mikro-orm/migrations uuid @mikro-orm/cli
@@ -1536,7 +1535,7 @@ To create and execute a migration:
 3. Check the migration (`migrations/Migration<id>.js`) on possible errors
 4. Run the pending migrations: `yarn mikro-orm migration:up`
 
-Now that the migraton ran, a refresh of your database (`⌘+R` or `ctrl+R`) in TablePlus should show you two tables:
+Now that the migration ran, a refresh of your database (`⌘+R` or `ctrl+R`) in TablePlus should show you two tables:
 
 - migrations, containing the migrations executed and with a timestamp
 - user, containing the properties we defined
@@ -1546,7 +1545,7 @@ To find out more details about your database schema, click the 'Structure' butto
 Since database migrations can run on large amounts of critical production data, some security measures are in effect:
 
 - They are executed in transactions, rolling previous statements back when a single SQL statement fails
-- They are carefully stored and saved, allowing one to trigger a rollback in case something went wrong: `yarn mikro-orm migration:up`
+- They are carefully stored and saved, allowing one to trigger a rollback in case something went wrong: `yarn mikro-orm migration:down`
 
 ## Updating the handlers
 
@@ -1572,7 +1571,7 @@ this.host.use((req, __, next: NextFunction) => {
 
 Now we replace all occurrences of the UserStore with either a query or other equivalent actions:
 
-1. Get the Entity Mangager from the RequestContext
+1. Get the Entity Manager from the RequestContext
 2. Look up and use the EM's find, findOne, findAndCount, flush, persistAndFlush, deleteAndFlush methods to rewrite the handlers. (in production applications we don't restrict us to these EM methods)
    Some hints:
    1. The BaseEntity has helper methods for updating an entity
