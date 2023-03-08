@@ -18,10 +18,10 @@ Install nvm with [nvm](https://formulae.brew.sh/formula/nvm) [using homebrew](ht
 
 _If Node.js is already installed it should be removed before installing nvm._
 
-When the installation is completed you can simply run the following to install node 16:
+When the installation is completed you can simply run the following to install latest LTS node (currently 18.14.0):
 
 ```bash
-nvm install 16
+nvm install --lts
 ```
 
 ## Yarn
