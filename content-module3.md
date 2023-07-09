@@ -51,6 +51,23 @@ The default flow of a feature/endpoint always has 4 steps:
 By following these few steps it will be easy to build clean, secure and
 maintainable API's.
 
+## ESM/CJS issues with TypeScript decorators
+
+TypeScript's decorators are not standardized and experimental.
+This causes a lot of issues with the new ESM modules.
+That's why the recommended way is to use CJS under the hood
+
+Remove `"type": "module"` from package.json
+in tsconfig change
+```jsonc
+	"module": "commonjs" 
+	"moduleResolution": "node",
+	resolveJsonModule": true,
+```
+
+Remove all the `.js` extensions from the imports in the code.
+Use ts-node instead of tsx
+
 ## Add packages
 
 There are 2 packages we still need to

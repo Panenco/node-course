@@ -1,10 +1,7 @@
 {
 	"mochaExplorer.files": "./src/tests/**/*.test.ts",
 	"mochaExplorer.watch": "./src/tests/**/*.test.ts",
-	"mochaExplorer.nodeArgv": [
-		"--loader",
-		"tsx"
-	],
+	"mochaExplorer.require": ["ts-node/register"],
 	"mochaExplorer.env": {
 		"NODE_ENV": "test"
 	},
