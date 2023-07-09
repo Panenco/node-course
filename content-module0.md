@@ -9,7 +9,7 @@ The tools you will need to effectively develop the API
 Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine. This means we write our code in JavaScript/TypeScript.
 
 Node.js should **never** be installed independently on your machine.  
-Instead you should install it through [nvm (node version manager)](https://formulae.brew.sh/formula/nvm) or [fnm](https://github.com/Schniz/fnm).  
+Instead you should install it through [nvm (node version manager)](https://formulae.brew.sh/formula/nvm).  
 
 ### NVM
 
@@ -47,22 +47,6 @@ When the installation is completed you can simply run the following to install l
 ```bash
 nvm install --lts
 ```
-
-### FNM
-
-Install fnm by executing
-```shell
-curl -fsSL https://fnm.vercel.app/install | bash
-```
-
-add completions
-```shell
-fnm completions --shell <SHELL>
-```
-
-Where shell is your shell (`echo $SHELL`)
-
-All the information about fnm can be found [here](https://github.com/Schniz/fnm)
 
 ## Package manager
 
