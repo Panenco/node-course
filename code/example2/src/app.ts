@@ -1,6 +1,6 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
 
-import { UserRoute } from './controllers/users/user.route';
+import { UserRoute } from './controllers/users/user.route.js';
 
 export class App {
   host: Application;

@@ -7,8 +7,8 @@
     "start": "ts-node ./src/server.ts",
     "dev": "nodemon ./src/server.ts",
     "test": "mocha --require ts-node/register ./src/tests/**/*.test.ts",
-    "migration:squash": "yarn clean:build && yarn rimraf src/migrations && yarn mikro-orm schema:drop --run && yarn migration:migrate && yarn build:clean",
-    "migration:migrate": "yarn mikro-orm migration:create && yarn mikro-orm migration:up"
+    "migration:squash": "pnpm clean:build && pnpm rimraf src/migrations && pnpm mikro-orm schema:drop --run && pnpm migration:migrate && pnpm build:clean",
+    "migration:migrate": "pnpm mikro-orm migration:create && pnpm mikro-orm migration:up"
   },
   "author": "",
   "license": "ISC",

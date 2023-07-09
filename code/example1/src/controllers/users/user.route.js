@@ -1,10 +1,10 @@
 import { Router } from 'express';
 
-import { create } from './handlers/create.handler';
-import { deleteUser } from './handlers/delete.handler';
-import { get } from './handlers/get.handler';
-import { getList } from './handlers/getList.handler';
-import { update } from './handlers/update.handler';
+import { create } from './handlers/create.handler.js';
+import { deleteUser } from './handlers/delete.handler.js';
+import { get } from './handlers/get.handler.js';
+import { getList } from './handlers/getList.handler.js';
+import { update } from './handlers/update.handler.js';
 
 const adminMiddleware = (req, res, next) => {
   if (req.header("auth") !== "api-key") {

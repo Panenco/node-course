@@ -1,7 +1,12 @@
 {
-  "mochaExplorer.files": "./src/tests/**/*.test.ts",
-  "mochaExplorer.watch": "./src/tests/**/*.test.ts",
-  "mochaExplorer.require": ["ts-node/register"],
-  "mochaExplorer.env": { "NODE_ENV": "test" },
-  "testExplorer.mergeSuites": true
+	"mochaExplorer.files": "./src/tests/**/*.test.ts",
+	"mochaExplorer.watch": "./src/tests/**/*.test.ts",
+	"mochaExplorer.nodeArgv": [
+		"--loader",
+		"tsx"
+	],
+	"mochaExplorer.env": {
+		"NODE_ENV": "test"
+	},
+	"testExplorer.mergeSuites": true
 }

@@ -2,9 +2,9 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { NextFunction, Request, Response } from 'express';
 
-import { UserBody } from '../../../contracts/user.body';
-import { UserView } from '../../../contracts/user.view';
-import { UserStore } from './user.store';
+import { UserBody } from '../../../contracts/user.body.js';
+import { UserView } from '../../../contracts/user.view.js';
+import { UserStore } from './user.store.js';
 
 export const create = async (
   req: Request,

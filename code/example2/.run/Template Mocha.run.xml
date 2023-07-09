@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="true" type="mocha-javascript-test-runner">
+    <node-interpreter>project</node-interpreter>
+    <node-options>--loader tsx</node-options>
+    <mocha-package>$PROJECT_DIR$/code/example2/node_modules/mocha</mocha-package>
+    <working-directory />
+    <pass-parent-env>true</pass-parent-env>
+    <envs>
+      <env name="NODE_ENV" value="test" />
+    </envs>
+    <ui>bdd</ui>
+    <extra-mocha-options />
+    <test-kind>DIRECTORY</test-kind>
+    <test-directory />
+    <recursive>false</recursive>
+    <method v="2" />
+  </configuration>
+</component>
