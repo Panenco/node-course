@@ -1,12 +1,13 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="true" type="mocha-javascript-test-runner">
     <node-interpreter>project</node-interpreter>
-    <node-options>--loader tsx</node-options>
+    <node-options>--loader @swc-node/register/esm</node-options>
     <mocha-package>$PROJECT_DIR$/code/example2/node_modules/mocha</mocha-package>
     <working-directory />
     <pass-parent-env>true</pass-parent-env>
     <envs>
       <env name="NODE_ENV" value="test" />
+      <env name="SWCRC" value="true" />
     </envs>
     <ui>bdd</ui>
     <extra-mocha-options />

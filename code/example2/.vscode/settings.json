@@ -1,12 +1,10 @@
 {
 	"mochaExplorer.files": "./src/tests/**/*.test.ts",
 	"mochaExplorer.watch": "./src/tests/**/*.test.ts",
-	"mochaExplorer.nodeArgv": [
-		"--loader",
-		"tsx"
-	],
+	"mochaExplorer.nodeArgv": ["--loader", "@swc-node/register/esm"],
 	"mochaExplorer.env": {
-		"NODE_ENV": "test"
+		"NODE_ENV": "test",
+		"SWCRC": "true"
 	},
 	"testExplorer.mergeSuites": true
 }

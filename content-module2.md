@@ -60,8 +60,9 @@ found [in this easy-to-read article](https://serokell.io/blog/why-typescript)
 pnpm add -D typescript @types/node @types/express
 ```
 
->Note!
-> Your @types/node major version (first number in semver x.x.x) should match your current node version.
+> Note!
+> Your @types/node major version (first number in semver x.x.x) should match
+> your current node version.
 > You can check your node version by running `node -v` in your terminal.
 > So, if you use node 18, you should have "@types/node": "18.x.x"
 
@@ -90,13 +91,48 @@ touch tsconfig.json
 }
 ```
 
-## Install tsx
+## Transpiling
 
-tsx is a Typescript execution engine which allows to execute the code
-without having to precompile it to Javascript first.
+TypeScript is not the first-class citizen in Node.js.
+The Node.js runtime only expects JavaScript.
+Consequently, we need to transpile the TypeScript code to JavaScript.
+This can be done via SWC (Speedy Web Compiler)
 
-```bash
-pnpm add -D tsx
+Installation
+```shell
+pnpm add -D  @swc/cli @swc/core @swc/helpers  @swc-node/register chokidar 
+```
+
+## Configure swc
+
+create a `.swcrc` file in the root of the project with the following content
+```json
+{
+	"$schema": "https://json.schemastore.org/swcrc",
+	"jsc": {
+		"parser": {
+			"syntax": "typescript",
+			"decorators": true
+
+		},
+		"target": "es2022",
+		"loose": false,
+		"minify": {
+			"compress": false,
+			"mangle": false
+		},
+		"transform": {
+			"legacyDecorator": true,
+			"decoratorMetadata": true
+		}
+	},
+	"module": {
+		"type": "es6"
+	},
+	"minify": false,
+	"isModule": true,
+	"sourceMaps": true
+}
 ```
 
 ## Convert all files to .ts extension
@@ -207,17 +243,25 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
 In `app.ts` you have a property that's less straightforward to type, the `host`.
 This is exposed by express as `Application`.
 
-## Adjust the start and dev command in package.json
+## Adjust scripts in package.json
+
+```shell
+pnpm add -D concurrently
+```
 
 ```jsonc
 // package.json
 "scripts": {
-    "start": "tsx ./src/server.ts",
-	"dev": "tsx watch ./src/server.ts"
+	"build": "swc src --out-dir build",
+	"build:clean": "rm -rf build && pnpm run build",
+	"watch": "swc src -d build --watch",
+	"start": "node build/server.js",
+	"dev": "concurrently 'pnpm run watch' 'node --watch build/server.js'",
+	"test": "SWCRC=true NODE_OPTIONS='--loader @swc-node/register/esm' mocha ./src/tests/**/*.test.ts"
 },
 ```
 
-Start the server to see if everything is OK. At this point you probably won't
+Start the server in the `dev` mode to see if everything is OK. At this point, you probably won't
 have fixed everything yet. Go through the errors the compiler shows and fix them
 one by one until your server is working again.
 
@@ -225,7 +269,7 @@ Make sure all files are renamed to .ts extension,
 event `server.js`, `app.js`,...
 
 ```bash
-pnpm start
+pnpm dev 
 ```
 
 ## VSCode debugger
@@ -657,14 +701,14 @@ some mocking techniques to pass in the data and get the result.
 For instance, the handler expects a `search` queryparam in the request object.
 We can pass it in like this:
 
-```ts
+```
 getList({query: {search: "test1"}} as Request, ...)
 ```
 
 A little more difficult is to get the json result back. For this we need to
 define a `let` variable that we set when `res.json` is called. Like this:
 
-```ts
+```
 let res: User[];
 getList(
 	...,
@@ -790,10 +834,11 @@ Create a `.vscode/settings.json` file with the following contents:
 	"mochaExplorer.watch": "./src/tests/**/*.test.ts",
 	"mochaExplorer.nodeArgv": [
 		"--loader",
-		"tsx"
+		"@swc-node/register/esm"
 	],
 	"mochaExplorer.env": {
-		"NODE_ENV": "test"
+		"NODE_ENV": "test",
+		"SWCRC": "true"
 	},
 	"testExplorer.mergeSuites": true
 }
