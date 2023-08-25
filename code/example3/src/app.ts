@@ -7,12 +7,14 @@ import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import express, { Application, NextFunction, Request, Response } from 'express';
 import { getMetadataArgsStorage, RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import { routingControllersToSpec } from 'routing-controllers-openapi';
+import { getMetadataStorage } from "class-validator"
 import swaggerUi from 'swagger-ui-express';
 
-import config from './config';
-import { AuthController } from './controllers/auth/auth.controller';
-import { UserController } from './controllers/users/user.controller';
-import ormConfig from './orm.config';
+import config from './config.js';
+import { AuthController } from './controllers/auth/auth.controller.js';
+import { UserController } from './controllers/users/user.controller.js';
+import ormConfig from './orm.config.js';
+
 
 export class App {
   public host: Application;
@@ -77,10 +79,8 @@ export class App {
   }
 
   private initializeSwagger() {
-    const { defaultMetadataStorage } = require('class-transformer/cjs/storage');
-
     const schemas = validationMetadatasToSchemas({
-      classTransformerMetadataStorage: defaultMetadataStorage,
+      classValidatorMetadataStorage: getMetadataStorage(),
       refPointerPrefix: '#/components/schemas/',
     });
 

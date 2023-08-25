@@ -23,50 +23,33 @@ it's [README](https://github.com/Panenco/papi/blob/main/README.md)
 
 Papi is a small superset on top
 of [class validator](https://www.npmjs.com/package/class-validator), [class transformer](https://www.npmjs.com/package/class-transformer)
-and [routing-controllers](https://www.npmjs.com/package/routing-controllers)that
+and [routing-controllers](https://www.npmjs.com/package/routing-controllers) that
 forces our opinionated way of working. It highly depends on decorators to define
 endpoints and contracts.
 
 The default flow of a feature/endpoint always has 4 steps:
 
 1. Authorize the user
-	- Validate the token
-	- Validate the access rights to the resource
+    - Validate the token
+    - Validate the access rights to the resource
 2. Validate the input
-	- Transform and strip the input
-	  with [class transformer](https://www.npmjs.com/package/class-transformer).
-	  Make sure no unknown properties can be provided, parse all items to the
-	  correct type (ex. string to date)
-	- Validate the input
-	  with [class validator](https://www.npmjs.com/package/class-validator)
-	  trough our Body or Query decorators
+    - Transform and strip the input
+      with [class transformer](https://www.npmjs.com/package/class-transformer).
+      Make sure no unknown properties can be provided, parse all items to the
+      correct type (ex. string to date)
+    - Validate the input
+      with [class validator](https://www.npmjs.com/package/class-validator)
+      trough our Body or Query decorators
 3. Execute the business logic
-	- The endpoint lands in the controller, the controller should contain
-	  absolutely no logic and should instantly call the handler
-	- The handler contains all logic but can call several helpers, clients or
-	  services
+    - The endpoint lands in the controller, the controller should contain
+      absolutely no logic and should instantly call the handler
+    - The handler contains all logic but can call several helpers, clients or
+      services
 4. Representation
-	- Transform the output of the handler to a predefined view contract
+    - Transform the output of the handler to a predefined view contract
 
 By following these few steps it will be easy to build clean, secure and
 maintainable API's.
-
-## ESM/CJS issues with TypeScript decorators
-
-TypeScript's decorators are not standardized and experimental.
-This causes a lot of issues with the new ESM modules.
-That's why the recommended way is to use CJS under the hood
-
-Remove `"type": "module"` from package.json
-in tsconfig change
-```jsonc
-	"module": "commonjs" 
-	"moduleResolution": "node",
-	resolveJsonModule": true,
-```
-
-Remove all the `.js` extensions from the imports in the code.
-Use ts-node instead of tsx
 
 ## Add packages
 
@@ -361,7 +344,7 @@ Since we are injecting only the items we need now, this becomes a lot easier.
 
 1. Replace the arguments in each handler with the ones we
    need: `body`, `id`, `query`
-	- Also pass the these arguments to the handler from the controller
+    - Also pass the these arguments to the handler from the controller
 2. Return the result instead of calling `res.json(...)` or assigning it
    to `locals`
 3. Remove the validation/transformation as this has now been abstracted away
@@ -601,8 +584,8 @@ data not represented in the view.
 - View: The view contract you want to be serialized, `null` if no response is
   needed (Mandatory)
 - Status code: The status code you want to return (Optional)
-	- Want to learn more
-	  about [status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)?
+    - Want to learn more
+      about [status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)?
 
 ### Use the Representer
 
@@ -659,8 +642,8 @@ The `ListRepresenter` will return something like this to the client:
 
 ```json
 {
-	"items": [],
-	"count": 0
+  "items": [],
+  "count": 0
 }
 ```
 
@@ -936,14 +919,14 @@ A brief intro:
 
 - Authentication: Verify a user's identity by checking their credentials. In our
   case we will always return a [`JWT token`](https://jwt.io)
-	- When a user provides invalid credentials, we should return
-	  a `401 Unauthorized` error.
+    - When a user provides invalid credentials, we should return
+      a `401 Unauthorized` error.
 - Authorization: Use the JWT token to verify whether the user has access to the
   requested resource.
-	- When the token itself is invalid, we should return a `401 Unauthorized`
-	  error.
-	- When the token is valid but the user has no access to the resource we
-	  should return a `403 Forbidden` error.
+    - When the token itself is invalid, we should return a `401 Unauthorized`
+      error.
+    - When the token is valid but the user has no access to the resource we
+      should return a `403 Forbidden` error.
 
 The `@Authorized` decorator should be used to mark the endpoint as requiring a
 token.  
@@ -970,25 +953,25 @@ The login endpoint should exist in a new controller, the `AuthController`.
 4. Create a new `AccessTokenView` contract that contains token and expiresIn
 5. Add a handler in `src/controllers/auth/handlers/login.handler.ts` that will
    handle the login request.
-	1. As input you have the `LoginBody` contract
-	2. As output you have the `AccessTokenView` contract
-	3. Use `getByEmail` from the `UserStore` to find the user
-	4. Validate the user's password
-		1. Simply compare both passwords in plain text. (this is a bad idea,
-		   it's just an example)
-		2. Either if the user is not found or the password is wrong, throw
-		   an `Unauthorized` error
-	5. Use
-	   the [`createAccessToken`](https://github.com/Panenco/papi/blob/main/docs/modules.md#createaccesstoken)
-	   helper from papi to create a JWT token
-		1. This is an `async` function so you need to `await` it
-		2. secret: used to verify the fact that our application created the
-		   token by the `@Authorize` decorator
-		3. expiresIn: amount of seconds the token should be valid (put it to 10
-		   minutes)
-		4. data: you can put basically anything in there. In our case we'll just
-		   put the user id
-		5. return the result
+    1. As input you have the `LoginBody` contract
+    2. As output you have the `AccessTokenView` contract
+    3. Use `getByEmail` from the `UserStore` to find the user
+    4. Validate the user's password
+        1. Simply compare both passwords in plain text. (this is a bad idea,
+           it's just an example)
+        2. Either if the user is not found or the password is wrong, throw
+           an `Unauthorized` error
+    5. Use
+       the [`createAccessToken`](https://github.com/Panenco/papi/blob/main/docs/modules.md#createaccesstoken)
+       helper from papi to create a JWT token
+        1. This is an `async` function so you need to `await` it
+        2. secret: used to verify the fact that our application created the
+           token by the `@Authorize` decorator
+        3. expiresIn: amount of seconds the token should be valid (put it to 10
+           minutes)
+        4. data: you can put basically anything in there. In our case we'll just
+           put the user id
+        5. return the result
 6. Create the endpoint in the controller with the `LoginBody`, `AccessTokenView`
    and call the handler
 
@@ -1321,6 +1304,18 @@ pnpm add class-validator-jsonschema routing-controllers-openapi swagger-ui-expre
 - `swagger-ui-express` to display the documentation
 - `routing-controllers-openapi` to hook up `routing-controllers` with swagger
 
+add module overrides in package.json to fix a dependency issue with routing controllers
+
+```json
+{
+  "pnpm": {
+    "overrides": {
+      "openapi3-ts": "3.2.0"
+    }
+  }
+}
+```
+
 ### Configure swagger-ui in app.ts
 
 Add a private method in app.ts to configure swagger and call it after the
@@ -1328,37 +1323,40 @@ controllers are initialized.
 
 Some explanation is inline:
 
-```
-private initializeSwagger() {
-	const {defaultMetadataStorage} = require('class-transformer/cjs/storage');
+```ts
+import { getMetadataStorage } from "class-validator";
 
-	const schemas = validationMetadatasToSchemas({
-		classTransformerMetadataStorage: defaultMetadataStorage,
-		refPointerPrefix: '#/components/schemas/',
-	}); // convert the metadata to an OpenAPI json schema
+class App {
+	// ...
+	private initializeSwagger() {
+		const schemas = validationMetadatasToSchemas({
+			classValidatorMetadataStorage: getMetadataStorage(),
+			refPointerPrefix: "#/components/schemas/",
+		});
 
-	const routingControllersOptions: RoutingControllersOptions = {
-		routePrefix: '/api', // Set the route prefix so swagger knows all endpoints are prefixed with /api
-	}; // configure some general options
+		const routingControllersOptions: RoutingControllersOptions = {
+			routePrefix: "/api",
+		};
 
-	const storage = getMetadataArgsStorage();
-	const spec = routingControllersToSpec(storage, routingControllersOptions, { // Convert the routing controller metadata + the class-validator metadata into an OpenAPI spec
-		components: {
-			schemas,
-			securitySchemes: { // Add a security scheme so we will be able to enter a token on the endpoints
-				JWT: {
-					in: 'header',
-					name: 'x-auth', // Define the header key to use
-					type: 'apiKey',
-					bearerFormat: 'JWT',
-					description: 'JWT Authorization header using the JWT scheme. Example: "x-auth: {token}"',
+		const storage = getMetadataArgsStorage();
+		const spec = routingControllersToSpec(storage, routingControllersOptions, {
+			components: {
+				schemas,
+				securitySchemes: {
+					JWT: {
+						in: "header",
+						name: "x-auth",
+						type: "apiKey",
+						bearerFormat: "JWT",
+						description: "JWT Authorization header using the JWT scheme. Example: \"x-auth: {token}\"",
+					},
 				},
 			},
-		},
-		security: [{JWT: []}],
-	});
+			security: [{JWT: []}],
+		});
 
-	this.host.use('/docs', swaggerUi.serve, swaggerUi.setup(spec)); // Host swagger ui on /docs
+		this.host.use("/docs", swaggerUi.serve, swaggerUi.setup(spec));
+	}
 }
 ```
 
@@ -1410,6 +1408,7 @@ import {
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import { routingControllersToSpec } from 'routing-controllers-openapi';
 import swaggerUi from 'swagger-ui-express';
+import { getMetadataStorage } from "class-validator";
 import { UserController } from './controllers/users/user.controller.js';
 import { AuthController } from './controllers/auth/auth.controller.js';
 
@@ -1457,33 +1456,33 @@ export class App {
 	}
 
 	private initializeSwagger() {
-		const {defaultMetadataStorage} = require('class-transformer/cjs/storage');
 		const schemas = validationMetadatasToSchemas({
-			classTransformerMetadataStorage: defaultMetadataStorage,
-			refPointerPrefix: '#/components/schemas/',
-		}); // convert the metadata to an OpenAPI json schema
+			classValidatorMetadataStorage: getMetadataStorage(),
+			refPointerPrefix: "#/components/schemas/",
+		});
+
 		const routingControllersOptions: RoutingControllersOptions = {
-			routePrefix: '/api', // Set the route prefix so swagger knows all endpoints are prefixed with /api
-		}; // configure some general options
+			routePrefix: "/api",
+		};
+
 		const storage = getMetadataArgsStorage();
 		const spec = routingControllersToSpec(storage, routingControllersOptions, {
-			// Convert the routing controller metadata + the class-validator metadata into an OpenAPI spec
 			components: {
 				schemas,
 				securitySchemes: {
-					// Add a security scheme so we will be able to enter a token on the endpoints
 					JWT: {
-						in: 'header',
-						name: 'x-auth', // Define the header key to use
-						type: 'apiKey',
-						bearerFormat: 'JWT',
-						description: 'JWT Authorization header using the JWT scheme. Example: "x-auth: {token}"',
+						in: "header",
+						name: "x-auth",
+						type: "apiKey",
+						bearerFormat: "JWT",
+						description: "JWT Authorization header using the JWT scheme. Example: \"x-auth: {token}\"",
 					},
 				},
 			},
 			security: [{JWT: []}],
 		});
-		this.host.use('/docs', swaggerUi.serve, swaggerUi.setup(spec)); // Host swagger ui on /docs
+
+		this.host.use("/docs", swaggerUi.serve, swaggerUi.setup(spec));
 	}
 }
 ```
@@ -1579,17 +1578,17 @@ Adding the database:
 1. Add a postgres connection  
    ![](assets/table-plus-add-postgres.png)
 2. Enter the connection details
-	- Name: Course db
-	- Host: 127.0.0.1
-	- Port: 5432
-	- User: root
-	- Password: root
-	- Database: example  
-	  ![](assets/table-plus-connection-details.png)
+    - Name: Course db
+    - Host: 127.0.0.1
+    - Port: 5432
+    - User: root
+    - Password: root
+    - Database: example  
+      ![](assets/table-plus-connection-details.png)
 3. Test and connect
-	- Hit the test button at the bottom, if no error shows up you'r good to go
-	- Connect  
-	  ![](assets/table-plus-connect.png)
+    - Hit the test button at the bottom, if no error shows up you'r good to go
+    - Connect  
+      ![](assets/table-plus-connect.png)
 
 Naturally, there is not a lot to see here yet because we haven't created any
 tables or data yet. We'll do that next.
@@ -1642,28 +1641,33 @@ migrations soon.
 ```ts
 import { Options } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import path from 'path';
+import * as url from "node:url";
+import path from 'node:path';
+
+import config from './config.js';
+
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 export default {
+	debug: true,
 	migrations: {
-		path: path.join(__dirname, 'migrations'),
-		tableName: 'migrations',
+		path: path.join(__dirname, "migrations"),
+		tableName: "migrations",
 		transactional: true,
 		pattern: /^[\w-]+\d+\.(ts|js)$/,
 		disableForeignKeys: false,
-		emit: 'js',
+		emit: "js",
 	},
-	type: 'postgresql',
-	tsNode: true,
-	entities: [path.join(process.cwd(), '**', '*.entity.ts')],
-	entitiesTs: [path.join(process.cwd(), '**', '*.entity.ts')],
-	user: 'root',
-	password: 'root',
-	dbName: 'example',
-	host: 'localhost',
-	port: 5432,
+	type: "postgresql",
+	entities: [path.join(process.cwd(), "**", "*.entity.js")],
+	user: config.postgres.user,
+	password: config.postgres.password,
+	dbName: config.postgres.db,
+	host: config.postgres.host,
+	port: config.postgres.port,
 	ssl: false,
 } as Options<PostgreSqlDriver>;
+
 ```
 
 Connecting to the database and initializing MikroORM occurs when bootstrapping
@@ -1673,7 +1677,7 @@ In `server.ts` we replace the existing code with this asynchronous step and call
 the function:
 
 ```ts
-import { App } from './app';
+import { App } from './app.js';
 
 (async () => {
 	const app = new App();
@@ -1690,11 +1694,12 @@ config file:
 
 ```ts
 import { MikroORM, RequestContext } from '@mikro-orm/core';
-import ormConfig from './orm.config';
+import ormConfig from './orm.config.js';
 
 export class App {
 	public orm: MikroORM<PostgreSqlDriver>;
-...
+
+	// ...
 
 	public async createConnection() {
 		try {
@@ -1738,12 +1743,12 @@ UUID (string).
 
 ```ts
 import { BaseEntity, Entity, PrimaryKey, Property } from '@mikro-orm/core';
-import { v4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 @Entity()
 export class User extends BaseEntity<User, 'id'> {
 	@PrimaryKey({columnType: 'uuid'})
-	public id: string = v4();
+	public id: string = randomUUID();
 
 	@Property()
 	public name: string;
@@ -1778,18 +1783,14 @@ Tell MikroORM where to find the config file by adding it at the end of the
 package.json file:
 ,
 
-```ts
-"mikro-orm"
-:
+```json
 {
-	"useTsNode"
-:
-	true,
-		"configPaths"
-:
-	[
-		"./src/orm.config.ts"
-	]
+  "mikro-orm": {
+    "useTsNode": true,
+    "configPaths": [
+      "./src/orm.config.ts"
+    ]
+  }
 }
 ```
 
@@ -1855,11 +1856,11 @@ equivalent actions:
    deleteAndFlush methods to rewrite the handlers. (in production applications
    we don't restrict us to these EM methods)
    Some hints:
-	1. The BaseEntity has helper methods for updating an entity
-	2. If a search param is present when fetching a list, either the user's name
-	   or email has to contain this param. You'll need to use
-	   postgres' [ILIKE](https://www.postgresql.org/docs/current/functions-matching.html),
-	   which is supported by MikroORM.
+    1. The BaseEntity has helper methods for updating an entity
+    2. If a search param is present when fetching a list, either the user's name
+       or email has to contain this param. You'll need to use
+       postgres' [ILIKE](https://www.postgresql.org/docs/current/functions-matching.html),
+       which is supported by MikroORM.
 3. Remove the UserStore
 
 <details>
@@ -1868,8 +1869,8 @@ equivalent actions:
 ```ts
 import { RequestContext } from '@mikro-orm/core';
 
-import { UserBody } from '../../../contracts/user.body';
-import { User } from '../../../entities/user.entity';
+import { UserBody } from '../../../contracts/user.body.js';
+import { User } from '../../../entities/user.entity.js';
 
 export const create = async (body: UserBody) => {
 	const em = RequestContext.getEntityManager();
@@ -1888,7 +1889,7 @@ export const create = async (body: UserBody) => {
 ```ts
 import { RequestContext } from '@mikro-orm/core';
 
-import { User } from '../../../entities/user.entity';
+import { User } from '../../../entities/user.entity.js';
 
 export const getList = async (search: string) => {
 	const em = RequestContext.getEntityManager();
@@ -1912,7 +1913,7 @@ export const getList = async (search: string) => {
 import { RequestContext } from '@mikro-orm/core';
 import { NotFound } from '@panenco/papi';
 
-import { User } from '../../../entities/user.entity';
+import { User } from '../../../entities/user.entity.js';
 
 export const get = async (id: string) => {
 	const em = RequestContext.getEntityManager();
@@ -1925,7 +1926,6 @@ export const get = async (id: string) => {
 ```
 
 </details>
-</details>
 
 <details>
 <summary>update.handler.ts</summary>
@@ -1934,8 +1934,8 @@ export const get = async (id: string) => {
 import { RequestContext } from '@mikro-orm/core';
 import { NotFound } from '@panenco/papi';
 
-import { UserBody } from '../../../contracts/user.body';
-import { User } from '../../../entities/user.entity';
+import { UserBody } from '../../../contracts/user.body.js';
+import { User } from '../../../entities/user.entity.js';
 
 export const update = async (id: string, body: UserBody) => {
 	const em = RequestContext.getEntityManager();
@@ -1951,7 +1951,6 @@ export const update = async (id: string, body: UserBody) => {
 ```
 
 </details>
-</details>
 
 <details>
 <summary>delete.handler.ts</summary>
@@ -1960,7 +1959,7 @@ export const update = async (id: string, body: UserBody) => {
 import { RequestContext } from '@mikro-orm/core';
 import { NotFound } from '@panenco/papi';
 
-import { User } from '../../../entities/user.entity';
+import { User } from '../../../entities/user.entity.js';
 
 export const deleteUser = async (id: string) => {
 	const em = RequestContext.getEntityManager();
@@ -1979,8 +1978,8 @@ export const deleteUser = async (id: string) => {
 import { RequestContext } from '@mikro-orm/core';
 import { createAccessToken, Unauthorized } from '@panenco/papi';
 
-import { LoginBody } from '../../../contracts/login.body';
-import { User } from '../../../entities/user.entity';
+import { LoginBody } from '../../../contracts/login.body.js';
+import { User } from '../../../entities/user.entity.js';
 
 export const login = async (body: LoginBody) => {
 	const user = await RequestContext.getEntityManager().findOne(User, {email: body.email});
@@ -2018,7 +2017,7 @@ export const noEntityFoundError = function (entityName: string, where: Dictionar
 
 In `orm.config.ts` we can then add a simple line:
 
-```ts
+```
   findOneOrFailHandler: noEntityFoundError,
 ```
 
@@ -2064,7 +2063,7 @@ describe('Integration tests', () => {
 			await orm.em.execute(`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`);
 			await orm.getMigrator().up();
 		});
-	...
+		// ...
 	});
 });
 ```
@@ -2092,15 +2091,15 @@ import { MikroORM, RequestContext } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { expect } from 'chai';
 import { before, beforeEach, describe, it } from 'mocha';
-import { v4 } from 'uuid';
 
-import { create } from '../../controllers/users/handlers/create.handler';
-import { deleteUser } from '../../controllers/users/handlers/delete.handler';
-import { get } from '../../controllers/users/handlers/get.handler';
-import { getList } from '../../controllers/users/handlers/getList.handler';
-import { update } from '../../controllers/users/handlers/update.handler';
-import { User } from '../../entities/user.entity';
-import ormConfig from '../../orm.config';
+import { create } from '../../controllers/users/handlers/create.handler.js';
+import { deleteUser } from '../../controllers/users/handlers/delete.handler.js';
+import { get } from '../../controllers/users/handlers/get.handler.js';
+import { getList } from '../../controllers/users/handlers/getList.handler.js';
+import { update } from '../../controllers/users/handlers/update.handler.js';
+import { User } from '../../entities/user.entity.js';
+import ormConfig from '../../orm.config.js';
+import { randomUUID } from "node:crypto";
 
 const userFixtures: User[] = [
 	{
@@ -2150,7 +2149,7 @@ describe('Handler tests', () => {
 		it('should fail when getting user by unknown id', async () => {
 			await RequestContext.createAsync(orm.em.fork(), async () => {
 				try {
-					await get(v4());
+					await get(randomUUID());
 				} catch (error) {
 					expect(error.message).equal('User not found');
 					return;
@@ -2200,3 +2199,5 @@ describe('Handler tests', () => {
 	});
 });
 ```
+
+</details>

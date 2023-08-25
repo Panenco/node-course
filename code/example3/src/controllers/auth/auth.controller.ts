@@ -2,9 +2,9 @@ import { Body, Representer } from '@panenco/papi';
 import { JsonController, Post } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 
-import { AccessTokenView } from '../../contracts/accessToken.view';
-import { LoginBody } from '../../contracts/login.body';
-import { createToken } from './handlers/login.handler';
+import { AccessTokenView } from '../../contracts/accessToken.view.js';
+import { LoginBody } from '../../contracts/login.body.js';
+import { createToken } from './handlers/login.handler.js';
 
 @JsonController('/auth')
 export class AuthController {
