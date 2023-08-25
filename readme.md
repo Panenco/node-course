@@ -6,9 +6,13 @@ The end goal is to build a CRUD (create, read, update, delete) controller based 
 
 The course consists of 3 main parts: Module 1, 2 and 3. Each part builds on top of the previous one.
 
+- [Module 0](./content-module0.md)
+
+  > Setup your dev environment.
+
 - [Module 1](./content-module1.md)
 
-  > Setup your dev environment and create a very basic NodeJS Express API.
+  > Create a very basic NodeJS Express API.
 
 - [Module 2](./content-module2.md)
 

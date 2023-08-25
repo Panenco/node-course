@@ -1,8 +1,10 @@
 {
-  "mochaExplorer.files": "./src/tests/**/*.test.ts",
-  "mochaExplorer.watch": "./src/tests/**/*.test.ts",
-  "mochaExplorer.require": ["ts-node/register"],
-  "mochaExplorer.env": { "NODE_ENV": "test" },
-  "mochaExplorer.exit": true,
-  "testExplorer.mergeSuites": true
+	"mochaExplorer.files": "./src/tests/**/*.test.ts",
+	"mochaExplorer.watch": "./src/tests/**/*.test.ts",
+	"mochaExplorer.nodeArgv": ["--loader", "@swc-node/register/esm"],
+	"mochaExplorer.env": {
+		"NODE_ENV": "test",
+		"SWCRC": "true"
+	},
+	"testExplorer.mergeSuites": true
 }

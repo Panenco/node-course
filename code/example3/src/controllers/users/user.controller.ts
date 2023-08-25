@@ -2,14 +2,14 @@ import { Body, ListRepresenter, Query, Representer, StatusCode } from '@panenco/
 import { Authorized, Delete, Get, JsonController, Param, Patch, Post } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 
-import { SearchQuery } from '../../contracts/search.query';
-import { UserBody } from '../../contracts/user.body';
-import { UserView } from '../../contracts/user.view';
-import { create } from './handlers/create.handler';
-import { deleteUser } from './handlers/delete.handler';
-import { get } from './handlers/get.handler';
-import { getList } from './handlers/getList.handler';
-import { update } from './handlers/update.handler';
+import { SearchQuery } from '../../contracts/search.query.js';
+import { UserBody } from '../../contracts/user.body.js';
+import { UserView } from '../../contracts/user.view.js';
+import { create } from './handlers/create.handler.js';
+import { deleteUser } from './handlers/delete.handler.js';
+import { get } from './handlers/get.handler.js';
+import { getList } from './handlers/getList.handler.js';
+import { update } from './handlers/update.handler.js';
 
 @JsonController('/users')
 export class UserController {

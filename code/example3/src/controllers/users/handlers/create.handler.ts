@@ -1,7 +1,7 @@
 import { RequestContext } from '@mikro-orm/core';
 
-import { UserBody } from '../../../contracts/user.body';
-import { User } from '../../../entities/user.entity';
+import { UserBody } from '../../../contracts/user.body.js';
+import { User } from '../../../entities/user.entity.js';
 
 export const create = async (body: UserBody) => {
   const em = RequestContext.getEntityManager();

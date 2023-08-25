@@ -2,15 +2,15 @@ import { MikroORM, RequestContext } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { expect } from 'chai';
 import { before, beforeEach, describe, it } from 'mocha';
-import { v4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
-import { create } from '../../controllers/users/handlers/create.handler';
-import { deleteUser } from '../../controllers/users/handlers/delete.handler';
-import { get } from '../../controllers/users/handlers/get.handler';
-import { getList } from '../../controllers/users/handlers/getList.handler';
-import { update } from '../../controllers/users/handlers/update.handler';
-import { User } from '../../entities/user.entity';
-import ormConfig from '../../orm.config';
+import { create } from '../../controllers/users/handlers/create.handler.js';
+import { deleteUser } from '../../controllers/users/handlers/delete.handler.js';
+import { get } from '../../controllers/users/handlers/get.handler.js';
+import { getList } from '../../controllers/users/handlers/getList.handler.js';
+import { update } from '../../controllers/users/handlers/update.handler.js';
+import { User } from '../../entities/user.entity.js';
+import ormConfig from '../../orm.config.js';
 
 const userFixtures: User[] = [
   {
@@ -60,7 +60,7 @@ describe("Handler tests", () => {
     it("should fail when getting user by unknown id", async () => {
       await RequestContext.createAsync(orm.em.fork(), async () => {
         try {
-          await get(v4());
+          await get(randomUUID());
         } catch (error) {
           expect(error.message).equal("User not found");
           return;

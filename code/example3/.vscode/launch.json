@@ -8,7 +8,7 @@
       "request": "launch",
       "name": "Dev",
       "skipFiles": ["<node_internals>/**"],
-      "command": "yarn dev",
+      "command": "pnpm dev",
       "type": "node-terminal"
     }
   ]

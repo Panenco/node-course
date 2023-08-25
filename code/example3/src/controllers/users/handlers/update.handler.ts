@@ -1,8 +1,8 @@
 import { RequestContext } from '@mikro-orm/core';
 import { NotFound } from '@panenco/papi';
 
-import { UserBody } from '../../../contracts/user.body';
-import { User } from '../../../entities/user.entity';
+import { UserBody } from '../../../contracts/user.body.js';
+import { User } from '../../../entities/user.entity.js';
 
 export const update = async (id: string, body: UserBody) => {
   const em = RequestContext.getEntityManager();

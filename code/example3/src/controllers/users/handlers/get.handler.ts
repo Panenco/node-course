@@ -1,7 +1,7 @@
 import { RequestContext } from '@mikro-orm/core';
 import { NotFound } from '@panenco/papi';
 
-import { User } from '../../../entities/user.entity';
+import { User } from '../../../entities/user.entity.js';
 
 export const get = async (id: string) => {
   const em = RequestContext.getEntityManager();

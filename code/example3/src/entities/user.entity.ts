@@ -1,10 +1,9 @@
 import { BaseEntity, Entity, PrimaryKey, Property } from '@mikro-orm/core';
-import { v4 } from 'uuid';
-
+import { randomUUID } from "node:crypto"
 @Entity()
 export class User extends BaseEntity<User, "id"> {
   @PrimaryKey({ columnType: "uuid" })
-  public id: string = v4();
+  public id: string = randomUUID();
 
   @Property()
   public name: string;

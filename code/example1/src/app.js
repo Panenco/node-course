@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { UserRoute } from './controllers/users/user.route';
+import { UserRoute } from './controllers/users/user.route.js';
 
 export class App {
   constructor() {

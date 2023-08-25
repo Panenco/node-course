@@ -5,8 +5,8 @@ import { expect } from 'chai';
 import { beforeEach, describe, it } from 'mocha';
 import supertest from 'supertest';
 
-import { App } from '../../app';
-import { User } from '../../entities/user.entity';
+import { App } from '../../app.js';
+import { User } from '../../entities/user.entity.js';
 
 describe('Integration tests', () => {
   describe('User Tests', () => {

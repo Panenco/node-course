@@ -1,8 +1,8 @@
 import { MikroORM } from '@mikro-orm/core';
 import { expect } from 'chai';
 
-import { User } from '../../entities/user.entity';
-import ormConfig from '../../orm.config';
+import { User } from '../../entities/user.entity.js';
+import ormConfig from '../../orm.config.js';
 
 describe("Playground", () => {
   it("Play around with MikroORM", async () => {
