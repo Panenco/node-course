@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  class-transformer@0.5.1:
+    hash: scuv5vi73p64gyvbiyboxg5kki
+    path: patches/class-transformer@0.5.1.patch
+
 dependencies:
   '@types/chai':
     specifier: ^4.3.1
@@ -16,7 +21,7 @@ dependencies:
     version: 4.3.6
   class-transformer:
     specifier: ^0.5.1
-    version: 0.5.1
+    version: 0.5.1(patch_hash=scuv5vi73p64gyvbiyboxg5kki)
   class-validator:
     specifier: ^0.14.0
     version: 0.14.0
@@ -26,6 +31,9 @@ dependencies:
   mocha:
     specifier: ^10.0.0
     version: 10.0.0
+  reflect-metadata:
+    specifier: ^0.1.13
+    version: 0.1.13
 
 devDependencies:
   '@swc-node/register':
@@ -636,9 +644,10 @@ packages:
     optionalDependencies:
       fsevents: 2.3.3
 
-  /class-transformer@0.5.1:
+  /class-transformer@0.5.1(patch_hash=scuv5vi73p64gyvbiyboxg5kki):
     resolution: {integrity: sha512-SQa1Ws6hUbfC98vKGxZH3KFY0Y1lm5Zm0SY8XX9zbK7FJCyVEac3ATW0RIpwzW+oOfmHE5PMPufDG9hCfoEOMw==}
     dev: false
+    patched: true
 
   /class-validator@0.14.0:
     resolution: {integrity: sha512-ct3ltplN8I9fOwUd8GrP8UQixwff129BkEtuWDKL5W45cQuLd19xqmTLu5ge78YDm/fdje6FMt0hGOhl0lii3A==}
@@ -1709,6 +1718,10 @@ packages:
     engines: {node: '>=8.10.0'}
     dependencies:
       picomatch: 2.3.1
+
+  /reflect-metadata@0.1.13:
+    resolution: {integrity: sha512-Ts1Y/anZELhSsjMcU605fU9RE4Oi3p5ORujwbIKXfWa+0Zxs510Qrmrce5/Jowq3cHSZSJqBjypxmHarc+vEWg==}
+    dev: false
 
   /regenerator-runtime@0.14.0:
     resolution: {integrity: sha512-srw17NI0TUWHuGa5CFGGmhfNIeja30WMBfbslPNhf6JrqQlLN5gcrvig1oqPxiVaXb0oW0XRKtH6Nngs5lKCIA==}
