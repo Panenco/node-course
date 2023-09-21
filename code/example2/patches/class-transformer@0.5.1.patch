@@ -1,0 +1,44 @@
+diff --git a/cjs/TransformOperationExecutor.js b/cjs/TransformOperationExecutor.js
+index 2e40fb4fb2b9ba5e95960f2ed76d26e34d389481..74c11050714618de8ac4e7242b485669f480d984 100644
+--- a/cjs/TransformOperationExecutor.js
++++ b/cjs/TransformOperationExecutor.js
+@@ -145,6 +145,10 @@ class TransformOperationExecutor {
+                 }
+                 else if (targetType) {
+                     newValue = new targetType();
++
++                    for (const key of Object.keys(newValue)) {
++                        delete newValue[key];
++                    }
+                 }
+                 else {
+                     newValue = {};
+diff --git a/esm2015/TransformOperationExecutor.js b/esm2015/TransformOperationExecutor.js
+index d38971615be89e7bebf123291c7b2ce5f1f48cc1..bdc7abaabac3d61d5daad0da2e9a42f43bb521e3 100644
+--- a/esm2015/TransformOperationExecutor.js
++++ b/esm2015/TransformOperationExecutor.js
+@@ -142,6 +142,9 @@ export class TransformOperationExecutor {
+                 }
+                 else if (targetType) {
+                     newValue = new targetType();
++                    for (const key of Object.keys(newValue)) {
++                        delete newValue[key];
++                    }
+                 }
+                 else {
+                     newValue = {};
+diff --git a/esm5/TransformOperationExecutor.js b/esm5/TransformOperationExecutor.js
+index 4ccb83f515f8d9f1b35243fc4d156069361ee64e..47bc409fe414425d0c482fc0ac3043d3afdaa82c 100644
+--- a/esm5/TransformOperationExecutor.js
++++ b/esm5/TransformOperationExecutor.js
+@@ -155,6 +155,10 @@ var TransformOperationExecutor = /** @class */ (function () {
+                 }
+                 else if (targetType) {
+                     newValue = new targetType();
++
++                    for (const key of Object.keys(newValue)) {
++                        delete newValue[key];
++                    }
+                 }
+                 else {
+                     newValue = {};
