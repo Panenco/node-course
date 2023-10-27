@@ -1684,7 +1684,8 @@ const config = loader.applyEnvConfig(JSON.parse(json));
 // We need a default export here. Otherwise the imported object might be undefined.
 export default config;
 ```  
-This config file loads a json and exports it so it can be loaded into `src/orm.config.ts`.
+This config file loads a JSON and exports it so it can be loaded into `src/orm.config.ts`.
+The JSON file contains the configurations that are going to be re-used across the application.
 To make this work, install the loader package:
 ```bash
 pnpm add @ljobse/appsettings-loader
