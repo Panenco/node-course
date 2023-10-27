@@ -1669,6 +1669,42 @@ export default {
 } as Options<PostgreSqlDriver>;
 
 ```
+On line 6, you'll notice that a `config` parameter is imported from a `./config.js` file, located in the same folder as `orm.config.ts`.
+We therefore must create this config file as well:
+
+- `src/config.ts`
+```ts
+import loader from '@ljobse/appsettings-loader';
+import * as fs from "node:fs";
+
+const json = await fs.promises.readFile('./config.json', 'utf8');
+
+const config = loader.applyEnvConfig(JSON.parse(json));
+
+// We need a default export here. Otherwise the imported object might be undefined.
+export default config;
+```  
+This config file loads a json and exports it so it can be loaded into `src/orm.config.ts`.
+To make this work, install the loader package:
+```bash
+pnpm add @ljobse/appsettings-loader
+```
+Finally, the actual configuration is stored in the `./config.json` file, so we need to create that as well.
+
+- `./config.json`
+```json
+{
+  "port": 3000,
+  "postgres": {
+    "db": "example",
+    "host": "localhost",
+    "password": "root",
+    "port": 5432,
+    "user": "root"
+  }
+}
+```
+
 
 Connecting to the database and initializing MikroORM occurs when bootstrapping
 your application, right before you start listening to incoming requests.
@@ -1797,9 +1833,9 @@ package.json file:
 To create and execute a migration:
 
 1. Make sure your database is up and running: `docker compose up -d`
-2. Generate the migration: `pnpm mikro-orm migration:create`
+2. Generate the migration: `pnpm mikro-orm-esm migration:create`
 3. Check the migration (`migrations/Migration<id>.js`) on possible errors
-4. Run the pending migrations: `pnpm mikro-orm migration:up`
+4. Run the pending migrations: `pnpm mikro-orm-esm migration:up`
 
 Now that the migration ran, a refresh of your database (`⌘+R` or `ctrl+R`) in
 TablePlus should show you two tables:
@@ -1816,7 +1852,7 @@ some security measures are in effect:
 - They are executed in transactions, rolling previous statements back when a
   single SQL statement fails
 - They are carefully stored and saved, allowing one to trigger a rollback in
-  case something went wrong: `pnpm mikro-orm migration:down`
+  case something went wrong: `pnpm mikro-orm-esm migration:down`
 
 ## Updating the handlers
 
