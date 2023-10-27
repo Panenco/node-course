@@ -99,6 +99,7 @@ Consequently, we need to transpile the TypeScript code to JavaScript.
 This can be done via SWC (Speedy Web Compiler)
 
 Installation
+
 ```shell
 pnpm add -D  @swc/cli @swc/core @swc/helpers  @swc-node/register chokidar 
 ```
@@ -106,6 +107,7 @@ pnpm add -D  @swc/cli @swc/core @swc/helpers  @swc-node/register chokidar
 ## Configure swc
 
 create a `.swcrc` file in the root of the project with the following content
+
 ```json
 {
 	"$schema": "https://json.schemastore.org/swcrc",
@@ -113,7 +115,6 @@ create a `.swcrc` file in the root of the project with the following content
 		"parser": {
 			"syntax": "typescript",
 			"decorators": true
-
 		},
 		"target": "es2022",
 		"loose": false,
@@ -261,7 +262,8 @@ pnpm add -D concurrently
 },
 ```
 
-Start the server in the `dev` mode to see if everything is OK. At this point, you probably won't
+Start the server in the `dev` mode to see if everything is OK. At this point,
+you probably won't
 have fixed everything yet. Go through the errors the compiler shows and fix them
 one by one until your server is working again.
 
@@ -590,7 +592,7 @@ pnpm add -D mocha @types/mocha
 
 ```jsonc
 // package.json
-"test": "NODE_OPTIONS='--loader tsx' mocha ./src/tests/**/*.test.ts"
+"test": "SWCRC=true NODE_OPTIONS='--loader @swc-node/register/esm' mocha ./src/tests/**/*.test.ts"
 
 ```
 
@@ -1018,3 +1020,113 @@ it('should CRUD users', async () => {
 ```
 
 </details>
+
+### Dependency patching
+
+You may notice that some of your tests are failing because the `undefined` value
+is somehow coming through the validator.
+This is a `class-transformer` library bug which we need to fix. But how can I
+fix a library bug? Well, we can use pnpm pathing to patch the package.
+
+You can deep dive into the issue here:
+https://github.com/typestack/class-transformer/issues/1216
+
+run the following:
+
+```shell
+pnpm patch class-transformer@0.5.1
+```
+
+it should output the following:
+
+```
+You can now edit the following folder: {path}
+
+Once you're done with your changes, run "pnpm patch-commit {path}
+```
+
+On MacOS the path looks like `/private/var/folders/...`
+
+run:
+
+```shell
+code {path}
+```
+
+In there you can find 3 build directories:
+
+- `cjs`
+- `esm5`
+- `esm2015`
+
+You need to edit the `TransformOperationExecutor.js` file in all 3 directories.
+
+Look for the following line:
+
+```js
+newValue = new targetType();
+```
+
+it should be around:
+
+```js
+let newValue = source ? source : {};
+if (!source &&
+	(this.transformationType === TransformationType.PLAIN_TO_CLASS ||
+		this.transformationType === TransformationType.CLASS_TO_CLASS)) {
+	if (isMap) {
+		newValue = new Map();
+	} else if (targetType) {
+		newValue = new targetType();
+	} else {
+		newValue = {};
+	}
+}
+```
+
+add the following line after it:
+
+```js
+ for (const key of Object.keys(newValue)) {
+	delete newValue[key];
+}
+```
+
+So it will look like:
+
+```js
+if (isMap) {
+// ...
+} else if (targetType) {
+	newValue = new targetType();
+
+	for (const key of Object.keys(newValue)) {
+		delete newValue[key];
+	}
+} else {
+// ...
+}
+```
+
+Save the file and repeat for the other 2 directories.
+
+After you are done, close that project and run:
+
+```shell
+pnpm patch-commit {path}
+```
+
+You should find the `pathes` directory in your project root and the following record in the package.json:
+```
+"pnpm": {
+	"patchedDependencies": {
+		"class-transformer@0.5.1": "patches/class-transformer@0.5.1.patch"
+	}
+}
+```
+
+Commit the changes and 
+
+```shell
+pnpm install
+```
