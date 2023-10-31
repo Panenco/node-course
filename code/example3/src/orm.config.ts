@@ -15,7 +15,7 @@ export default {
     transactional: true,
     pattern: /^[\w-]+\d+\.(ts|js)$/,
     disableForeignKeys: false,
-    emit: "js",
+    emit: "ts",
   },
   type: "postgresql",
   entities: [path.join(process.cwd(), "**", "*.entity.js")],
