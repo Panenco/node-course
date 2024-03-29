@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  multer: 1.4.5-lts.1
   routing-controllers: ^0.10.0
   openapi3-ts: 3.2.0
 
@@ -28,7 +29,7 @@ dependencies:
     version: 5.7.12(@mikro-orm/core@5.7.12)(@mikro-orm/migrations@5.7.12)
   '@panenco/papi':
     specifier: ^1.0.4
-    version: 1.4.1(class-transformer@0.5.1)(class-validator@0.14.0)(express@4.18.2)
+    version: 1.4.1(class-transformer@0.5.1)(class-validator@0.14.0)(express@4.19.2)
   '@types/chai':
     specifier: ^4.3.1
     version: 4.3.5
@@ -51,11 +52,11 @@ dependencies:
     specifier: ^2.8.5
     version: 2.8.5
   express:
-    specifier: ^4.18.1
-    version: 4.18.2
+    specifier: ^4.19.2
+    version: 4.19.2
   express-async-errors:
     specifier: ^3.1.1
-    version: 3.1.1(express@4.18.2)
+    version: 3.1.1(express@4.19.2)
   mocha:
     specifier: ^10.0.0
     version: 10.2.0
@@ -67,7 +68,7 @@ dependencies:
     version: 4.0.0(routing-controllers@0.10.4)
   swagger-ui-express:
     specifier: ^4.4.0
-    version: 4.6.3(express@4.18.2)
+    version: 4.6.3(express@4.19.2)
   uuid:
     specifier: ^8.3.2
     version: 8.3.2
@@ -484,7 +485,7 @@ packages:
     engines: {node: '>= 8'}
     requiresBuild: true
     peerDependencies:
-      multer: '*'
+      multer: 1.4.5-lts.1
     dependencies:
       fix-esm: 1.0.1
       multer: 1.4.5-lts.1
@@ -496,6 +497,7 @@ packages:
   /@koa/router@12.0.0:
     resolution: {integrity: sha512-cnnxeKHXlt7XARJptflGURdJaO+ITpNkOHmQu7NHmCoRinPbyvFzce/EG/E8Zy81yQ1W9MoSdtklc3nyaDReUw==}
     engines: {node: '>= 12'}
+    deprecated: '**IMPORTANT 10x+ PERFORMANCE UPGRADE**: Please upgrade to v12.0.1+ as we have fixed an issue with debuglog causing 10x slower router benchmark performance, see https://github.com/koajs/router/pull/173'
     requiresBuild: true
     dependencies:
       http-errors: 2.0.0
@@ -744,7 +746,7 @@ packages:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.15.0
 
-  /@panenco/papi@1.4.1(class-transformer@0.5.1)(class-validator@0.14.0)(express@4.18.2):
+  /@panenco/papi@1.4.1(class-transformer@0.5.1)(class-validator@0.14.0)(express@4.19.2):
     resolution: {integrity: sha512-U4VXXNV8Z/y3G98YPGjTFT69qwEiTNbavHEKwfHni586pbDISrLqqaZlofbG9Sm/s1yQB4/IH5DRiJIAQQV0Yw==}
     peerDependencies:
       class-transformer: ^0.5.1
@@ -753,7 +755,7 @@ packages:
     dependencies:
       class-transformer: 0.5.1(patch_hash=yebqiposcxc76lvfwl5uxfbgea)
       class-validator: 0.14.0
-      express: 4.18.2
+      express: 4.19.2
       jsonwebtoken: 9.0.1
       openapi3-ts: 3.2.0
       reflect-metadata: 0.1.13
@@ -1202,26 +1204,6 @@ packages:
     resolution: {integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==}
     engines: {node: '>=8'}
 
-  /body-parser@1.20.1:
-    resolution: {integrity: sha512-jWi7abTbYwajOytWCQc37VulmWiRae5RyTpaCyDcS5/lMdtwSz5lOpDE67srw/HYe35f1z3fDQw+3txg7gNtWw==}
-    engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
-    dependencies:
-      bytes: 3.1.2
-      content-type: 1.0.5
-      debug: 2.6.9
-      depd: 2.0.0
-      destroy: 1.2.0
-      http-errors: 2.0.0
-      iconv-lite: 0.4.24
-      on-finished: 2.4.1
-      qs: 6.11.0
-      raw-body: 2.5.1
-      type-is: 1.6.18
-      unpipe: 1.0.0
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
   /body-parser@1.20.2:
     resolution: {integrity: sha512-ml9pReCu3M61kGlqoTm2umSXTlRTuGTx0bfYj+uIUKKYycG5NtSbeetV3faSU6R7ajOPw0g/J1PvK4qNy7s5bA==}
     engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
@@ -1242,7 +1224,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: false
-    optional: true
 
   /brace-expansion@1.1.11:
     resolution: {integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==}
@@ -1564,6 +1545,11 @@ packages:
     engines: {node: '>= 0.6'}
     dev: false
 
+  /cookie@0.6.0:
+    resolution: {integrity: sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==}
+    engines: {node: '>= 0.6'}
+    dev: false
+
   /cookiejar@2.1.4:
     resolution: {integrity: sha512-LDx6oHrK+PhzLKJU9j5S7/Y3jM/mUHvD/DeI1WQmJn652iPC5Y4TBzC9l+5OMOXlyTTA+SmVUPm0HQUwpD5Jqw==}
     dev: true
@@ -1850,12 +1836,12 @@ packages:
       pify: 2.3.0
     dev: true
 
-  /express-async-errors@3.1.1(express@4.18.2):
+  /express-async-errors@3.1.1(express@4.19.2):
     resolution: {integrity: sha512-h6aK1da4tpqWSbyCa3FxB/V6Ehd4EEB15zyQq9qe75OZBp0krinNKuH4rAY+S/U/2I36vdLAUFSjQJ+TFmODng==}
     peerDependencies:
       express: ^4.16.2
     dependencies:
-      express: 4.18.2
+      express: 4.19.2
     dev: false
 
   /express-session@1.17.3:
@@ -1876,16 +1862,16 @@ packages:
     dev: false
     optional: true
 
-  /express@4.18.2:
-    resolution: {integrity: sha512-5/PsL6iGPdfQ/lKM1UuielYgv3BUoJfz1aUwU9vHZ+J7gyvwdQXFEBIEIaxeGf0GIcreATNyBExtalisDbuMqQ==}
+  /express@4.19.2:
+    resolution: {integrity: sha512-5T6nhjsT+EOMzuck8JjBHARTHfMht0POzlA60WV2pMD3gyXw2LZnZ+ueGdNxG+0calOJcWKbpFcuzLZ91YWq9Q==}
     engines: {node: '>= 0.10.0'}
     dependencies:
       accepts: 1.3.8
       array-flatten: 1.1.1
-      body-parser: 1.20.1
+      body-parser: 1.20.2
       content-disposition: 0.5.4
       content-type: 1.0.5
-      cookie: 0.5.0
+      cookie: 0.6.0
       cookie-signature: 1.0.6
       debug: 2.6.9
       depd: 2.0.0
@@ -3252,16 +3238,6 @@ packages:
     engines: {node: '>= 0.6'}
     dev: false
 
-  /raw-body@2.5.1:
-    resolution: {integrity: sha512-qqJBtEyVgS0ZmPGdCFPWJ3FreoqvG4MVQln/kCgF7Olq95IbOp0/BWyMwbdtn4VTvkM8Y7khCQ2Xgk/tcrCXig==}
-    engines: {node: '>= 0.8'}
-    dependencies:
-      bytes: 3.1.2
-      http-errors: 2.0.0
-      iconv-lite: 0.4.24
-      unpipe: 1.0.0
-    dev: false
-
   /raw-body@2.5.2:
     resolution: {integrity: sha512-8zGqypfENjCIqGhgXToC8aB2r7YrBX+AQAfIPs/Mlk+BtPTztOvTS01NRW/3Eh60J+a48lt8qsCzirQ6loCVfA==}
     engines: {node: '>= 0.8'}
@@ -3272,7 +3248,6 @@ packages:
       iconv-lite: 0.4.24
       unpipe: 1.0.0
     dev: false
-    optional: true
 
   /readable-stream@2.3.8:
     resolution: {integrity: sha512-8p0AUk4XODgIewSi0l8Epjs+EVnWiK7NoDIEGU0HhE7+ZyY8D1IMY7odu5lRrFXGg71L15KG8QrPmum45RTtdA==}
@@ -3386,7 +3361,7 @@ packages:
       '@koa/multer': 3.0.2(multer@1.4.5-lts.1)
       '@koa/router': 12.0.0
       body-parser: 1.20.2
-      express: 4.18.2
+      express: 4.19.2
       express-session: 1.17.3
       koa: 2.14.2
       koa-bodyparser: 4.4.1
@@ -3740,13 +3715,13 @@ packages:
     resolution: {integrity: sha512-c1KmAjuVODxw+vwkNLALQZrgdlBAuBbr2xSPfYrJgseEi7gFKcTvShysPmyuDI4kcUa1+5rFpjWvXdusKY74mg==}
     dev: false
 
-  /swagger-ui-express@4.6.3(express@4.18.2):
+  /swagger-ui-express@4.6.3(express@4.19.2):
     resolution: {integrity: sha512-CDje4PndhTD2HkgyKH3pab+LKspDeB/NhPN2OF1j+piYIamQqBYwAXWESOT1Yju2xFg51bRW9sUng2WxDjzArw==}
     engines: {node: '>= v0.10.32'}
     peerDependencies:
       express: '>=4.0.0 || >=5.0.0-beta'
     dependencies:
-      express: 4.18.2
+      express: 4.19.2
       swagger-ui-dist: 5.1.0
     dev: false
 
