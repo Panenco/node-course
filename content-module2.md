@@ -78,7 +78,7 @@ touch tsconfig.json
 		"target": "esnext",
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
-		"module": "esnext",
+		"module": "nodenext",
 		"moduleResolution": "nodenext",
 		"allowJs": true,
 		"sourceMap": true,
@@ -98,10 +98,12 @@ The Node.js runtime only expects JavaScript.
 Consequently, we need to transpile the TypeScript code to JavaScript.
 This can be done via SWC (Speedy Web Compiler)
 
+We are using some specific versions for SWC to make sure the other configuration here keeps working.
+
 Installation
 
 ```shell
-pnpm add -D  @swc/cli @swc/core @swc/helpers  @swc-node/register chokidar
+pnpm add -D  @swc/cli@^0.1.62 @swc/core@^1.3.79 @swc/helpers@^0.5.1  @swc-node/register@^1.6.7 chokidar
 ```
 
 ## Configure swc
