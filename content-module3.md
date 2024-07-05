@@ -1663,7 +1663,7 @@ specific functionality. Migrations are needed to easily keep our database and
 code in sync, more on that later!
 
 ```bash
-pnpm add @mikro-orm/core@5.2.3 @mikro-orm/postgresql@5.2.3 @mikro-orm/migrations@5.2.3 uuid @mikro-orm/cli@5.2.3
+pnpm add @mikro-orm/core@5.7.12 @mikro-orm/postgresql@5.7.12 @mikro-orm/migrations@5.7.12 uuid @mikro-orm/cli@5.7.12
 ```
 
 ### Config
