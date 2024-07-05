@@ -836,7 +836,9 @@ Create a `.vscode/settings.json` file with the following contents:
 		"NODE_ENV": "test",
 		"SWCRC": "true"
 	},
-	"testExplorer.mergeSuites": true
+	"testExplorer.mergeSuites": true,
+	"mochaExplorer.timeout": 200000,
+	"mochaExplorer.exit": true
 }
 ```
 
