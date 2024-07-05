@@ -103,7 +103,7 @@ We are using some specific versions for SWC to make sure the other configuration
 Installation
 
 ```shell
-pnpm add -D  @swc/cli@^0.1.62 @swc/core@^1.3.79 @swc/helpers@^0.5.1  @swc-node/register@^1.6.7 chokidar
+pnpm add -D  @swc/cli@0.1.62 @swc/core@1.3.79 @swc/helpers@0.5.1  @swc-node/register@1.6.7 chokidar
 ```
 
 ## Configure swc
