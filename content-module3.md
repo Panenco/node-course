@@ -5,11 +5,11 @@ go to a whole other level and create a real world setup.
 
 The next part will consist of a few large topics:
 
-- Papi & routing-controllers for easy controller definition and contract
-  validation/representation
-- Swagger for automatically generated API documentation
-- Authentication and authorization for access management
-- Databases for storing data
+-   Papi & routing-controllers for easy controller definition and contract
+    validation/representation
+-   Swagger for automatically generated API documentation
+-   Authentication and authorization for access management
+-   Databases for storing data
 
 # papi & routing-controllers
 
@@ -59,7 +59,7 @@ and [routing-controllers](https://www.npmjs.com/package/routing-controllers)
 because previously we already added `class-transformer` and `class-validator`.
 
 ```bash
-pnpm add routing-controllers @panenco/papi cors
+pnpm add routing-controllers@0.10.4 @panenco/papi cors
 ```
 
 Some warnings will be shown but they can be ignored as we are not impacted by
@@ -114,8 +114,7 @@ Your result should look like this:
 
 ```ts
 @JsonController("/users")
-export class UserRoute {
-}
+export class UserRoute {}
 ```
 
 However, the name is actually not valid anymore.
@@ -143,60 +142,60 @@ Converting the code:
 2. Comment the entire constructor for now
 3. Add a method for each endpoint
 
-   The controller should look like this now:
+    The controller should look like this now:
 
-   ```ts
-   @JsonController('/users')
-   export class UserController {
-     //   constructor() {
-     //     this.router = Router();
-     //     this.path = "users";
+    ```ts
+    @JsonController("/users")
+    export class UserController {
+    	//   constructor() {
+    	//     this.router = Router();
+    	//     this.path = "users";
 
-     //     this.router.post("/", adminMiddleware, create);
-     //     this.router.get("/", getList);
-     //     this.router.get("/:id", get);
-     //     this.router.patch(
-     //       "/:id",
-     //       patchValidationMiddleware,
-     //       update,
-     //       representationMiddleware
-     //     );
-     //     this.router.delete("/:id", deleteUser);
-     //   }
-     async create() {}
+    	//     this.router.post("/", adminMiddleware, create);
+    	//     this.router.get("/", getList);
+    	//     this.router.get("/:id", get);
+    	//     this.router.patch(
+    	//       "/:id",
+    	//       patchValidationMiddleware,
+    	//       update,
+    	//       representationMiddleware
+    	//     );
+    	//     this.router.delete("/:id", deleteUser);
+    	//   }
+    	async create() {}
 
-     async getList() {}
+    	async getList() {}
 
-     async get() {}
+    	async get() {}
 
-     async update() {}
+    	async update() {}
 
-     async delete() {}
-   }
-   ```
+    	async delete() {}
+    }
+    ```
 
 4. Next up you should tell `routing-controllers` that these methods are the
    routes, specify the path and the http-method.
 
-   `routing-controllers` has some decorators to accomplish this. For each
-   http-method there is a decorator, the argument you pass defines the path.
-   ex `@Post("/users")`
+    `routing-controllers` has some decorators to accomplish this. For each
+    http-method there is a decorator, the argument you pass defines the path.
+    ex `@Post("/users")`
 
-   When that's done `routing-controllers` will actually know the endpoints we
-   have defined.
+    When that's done `routing-controllers` will actually know the endpoints we
+    have defined.
 
 5. In the method body you can call the handlers now. Currently, that will still
    give errors as we don't pass the arguments defined in the handlers yet. We'll
    be fixing that later.
 
-   Most of the commented code is now converted so lets clean it up. Remove all
-   lines except the `post` and `patch`; we'll come back to the middleware used
-   there later.
+    Most of the commented code is now converted so lets clean it up. Remove all
+    lines except the `post` and `patch`; we'll come back to the middleware used
+    there later.
 
 The current code:
 
 ```ts
-@JsonController('/users')
+@JsonController("/users")
 export class UserController {
 	//     this.router.post("/", adminMiddleware, create);
 	//     this.router.patch(
@@ -215,17 +214,17 @@ export class UserController {
 		return getList();
 	}
 
-	@Get('/:id')
+	@Get("/:id")
 	async get() {
 		return get();
 	}
 
-	@Patch('/:id')
+	@Patch("/:id")
 	async update() {
 		return update();
 	}
 
-	@Delete('/:id')
+	@Delete("/:id")
 	async delete() {
 		await deleteUser();
 	}
@@ -360,8 +359,8 @@ errors in the handlers and controller should also be resolved.
 <summary>user.controller.ts</summary>
 
 ```ts
-import { Body, Query } from '@panenco/papi';
-import { NextFunction, Request, Response } from 'express';
+import { Body, Query } from "@panenco/papi";
+import { NextFunction, Request, Response } from "express";
 import {
 	Delete,
 	Get,
@@ -369,25 +368,25 @@ import {
 	Param,
 	Patch,
 	Post,
-	UseBefore
-} from 'routing-controllers';
+	UseBefore,
+} from "routing-controllers";
 
-import { SearchQuery } from '../../contracts/search.query.js';
-import { UserBody } from '../../contracts/user.body.js';
-import { create } from './handlers/create.handler.js';
-import { deleteUser } from './handlers/delete.handler.js';
-import { get } from './handlers/get.handler.js';
-import { getList } from './handlers/getList.handler.js';
-import { update } from './handlers/update.handler.js';
+import { SearchQuery } from "../../contracts/search.query.js";
+import { UserBody } from "../../contracts/user.body.js";
+import { create } from "./handlers/create.handler.js";
+import { deleteUser } from "./handlers/delete.handler.js";
+import { get } from "./handlers/get.handler.js";
+import { getList } from "./handlers/getList.handler.js";
+import { update } from "./handlers/update.handler.js";
 
 const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
-	if (req.header('x-auth') !== 'api-key') {
-		return res.status(401).send('Unauthorized');
+	if (req.header("x-auth") !== "api-key") {
+		return res.status(401).send("Unauthorized");
 	}
 	next();
 };
 
-@JsonController('/users')
+@JsonController("/users")
 export class UserController {
 	@Post()
 	@UseBefore(adminMiddleware)
@@ -400,18 +399,21 @@ export class UserController {
 		return getList(query.search);
 	}
 
-	@Get('/:id')
-	async get(@Param('id') id: string) {
+	@Get("/:id")
+	async get(@Param("id") id: string) {
 		return get(id);
 	}
 
-	@Patch('/:id')
-	async update(@Param('id') id: string, @Body({}, {skipMissingProperties: true}) body: UserBody) {
+	@Patch("/:id")
+	async update(
+		@Param("id") id: string,
+		@Body({}, { skipMissingProperties: true }) body: UserBody
+	) {
 		return update(id, body);
 	}
 
-	@Delete('/:id')
-	async delete(@Param('id') id: string) {
+	@Delete("/:id")
+	async delete(@Param("id") id: string) {
 		deleteUser(id);
 		return null;
 	}
@@ -424,8 +426,8 @@ export class UserController {
 <summary>create.handler.ts</summary>
 
 ```ts
-import { UserBody } from '../../../contracts/user.body.js';
-import { UserStore } from './user.store.js';
+import { UserBody } from "../../../contracts/user.body.js";
+import { UserStore } from "./user.store.js";
 
 export const create = async (body: UserBody) => {
 	const user = UserStore.add(body);
@@ -440,7 +442,7 @@ export const create = async (body: UserBody) => {
 <summary>getList.handler.ts</summary>
 
 ```ts
-import { UserStore } from './user.store.js';
+import { UserStore } from "./user.store.js";
 
 export const getList = (search: string) => {
 	const users = UserStore.find(search);
@@ -454,15 +456,15 @@ export const getList = (search: string) => {
 <summary>get.handler.ts</summary>
 
 ```ts
-import { NotFound } from '@panenco/papi';
+import { NotFound } from "@panenco/papi";
 
-import { UserStore } from './user.store.js';
+import { UserStore } from "./user.store.js";
 
 export const get = (idString: string) => {
 	const id = Number(idString);
 	const user = UserStore.get(id);
 	if (!user) {
-		throw new NotFound('userNotFound', 'User not found');
+		throw new NotFound("userNotFound", "User not found");
 	}
 	return user;
 };
@@ -474,18 +476,18 @@ export const get = (idString: string) => {
 <summary>update.handler.ts</summary>
 
 ```ts
-import { NotFound } from '@panenco/papi';
+import { NotFound } from "@panenco/papi";
 
-import { UserBody } from '../../../contracts/user.body.js';
-import { UserStore } from './user.store.js';
+import { UserBody } from "../../../contracts/user.body.js";
+import { UserStore } from "./user.store.js";
 
 export const update = (idString: string, body: UserBody) => {
 	const id = Number(idString);
 	const user = UserStore.get(id);
 	if (!user) {
-		throw new NotFound('userNotFound', 'User not found');
+		throw new NotFound("userNotFound", "User not found");
 	}
-	const updated = UserStore.update(id, {...user, ...body});
+	const updated = UserStore.update(id, { ...user, ...body });
 	return updated;
 };
 ```
@@ -496,15 +498,15 @@ export const update = (idString: string, body: UserBody) => {
 <summary>delete.handler.ts</summary>
 
 ```ts
-import { NotFound } from '@panenco/papi';
+import { NotFound } from "@panenco/papi";
 
-import { UserStore } from './user.store.js';
+import { UserStore } from "./user.store.js";
 
 export const deleteUser = (idString: string) => {
 	const id = Number(idString);
 	const user = UserStore.get(id);
 	if (!user) {
-		throw new NotFound('userNotFound', 'User not found');
+		throw new NotFound("userNotFound", "User not found");
 	}
 	UserStore.delete(id);
 };
@@ -525,8 +527,8 @@ as well.
 
 There are 2 things you need to do to set it up:
 
-- Use the papi `errorMiddleware`
-- Allow for async errors
+-   Use the papi `errorMiddleware`
+-   Allow for async errors
 
 #### Papi error middleware
 
@@ -561,7 +563,7 @@ Now it only needs to be imported once before anything else loads. So put it at
 the top of `app.ts`:
 
 ```ts
-import 'express-async-errors';
+import "express-async-errors";
 ```
 
 ## Representer decorators
@@ -572,20 +574,20 @@ easier by abstracting recurring code away.
 Much like the Body/Query decorators there are also decorators to represent the
 response:
 
-- [Representer](https://github.com/Panenco/papi/blob/main/docs/modules.md#representer)
-- [ListRepresenter](https://github.com/Panenco/papi/blob/main/docs/modules.md#listrepresenter)
-- [ArrayRepresenter](https://github.com/Panenco/papi/blob/main/docs/modules.md#arrayrepresenter)
+-   [Representer](https://github.com/Panenco/papi/blob/main/docs/modules.md#representer)
+-   [ListRepresenter](https://github.com/Panenco/papi/blob/main/docs/modules.md#listrepresenter)
+-   [ArrayRepresenter](https://github.com/Panenco/papi/blob/main/docs/modules.md#arrayrepresenter)
 
 These decorators ensure your output is correctly serialized and strip out all
 data not represented in the view.
 
 2 arguments can be passed to the decorators:
 
-- View: The view contract you want to be serialized, `null` if no response is
-  needed (Mandatory)
-- Status code: The status code you want to return (Optional)
-    - Want to learn more
-      about [status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)?
+-   View: The view contract you want to be serialized, `null` if no response is
+    needed (Mandatory)
+-   Status code: The status code you want to return (Optional)
+    -   Want to learn more
+        about [status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)?
 
 ### Use the Representer
 
@@ -642,8 +644,8 @@ The `ListRepresenter` will return something like this to the client:
 
 ```json
 {
-  "items": [],
-  "count": 0
+	"items": [],
+	"count": 0
 }
 ```
 
@@ -655,8 +657,8 @@ endpoint.
 In order to keep things simple modify the handler to return a fake paginated
 list of users:
 
-- `return [users, users.length];`
-- Explicitly set the return type to `[UserView[], number]`
+-   `return [users, users.length];`
+-   Explicitly set the return type to `[UserView[], number]`
 
 Putting it all together:
 
@@ -705,90 +707,92 @@ Just pass in the arguments you need and get the return value to validate.
 <summary>The code</summary>
 
 ```ts
-import { expect } from 'chai';
-import { beforeEach, describe, it } from 'mocha';
+import { expect } from "chai";
+import { beforeEach, describe, it } from "mocha";
 
-import { create } from '../../controllers/users/handlers/create.handler.js';
-import { deleteUser } from '../../controllers/users/handlers/delete.handler.js';
-import { get } from '../../controllers/users/handlers/get.handler.js';
-import { getList } from '../../controllers/users/handlers/getList.handler.js';
-import { update } from '../../controllers/users/handlers/update.handler.js';
+import { create } from "../../controllers/users/handlers/create.handler.js";
+import { deleteUser } from "../../controllers/users/handlers/delete.handler.js";
+import { get } from "../../controllers/users/handlers/get.handler.js";
+import { getList } from "../../controllers/users/handlers/getList.handler.js";
+import { update } from "../../controllers/users/handlers/update.handler.js";
 import {
 	User,
-	UserStore
-} from '../../controllers/users/handlers/user.store.js';
+	UserStore,
+} from "../../controllers/users/handlers/user.store.js";
 
 const userFixtures: User[] = [
 	{
-		name: 'test1',
-		email: 'test-user+1@panenco.com',
+		name: "test1",
+		email: "test-user+1@panenco.com",
 		id: 0,
-		password: 'password1',
+		password: "password1",
 	},
 	{
-		name: 'test2',
-		email: 'test-user+2@panenco.com',
+		name: "test2",
+		email: "test-user+2@panenco.com",
 		id: 1,
-		password: 'password2',
+		password: "password2",
 	},
 ];
 
-describe('Handler tests', () => {
-	describe('User Tests', () => {
+describe("Handler tests", () => {
+	describe("User Tests", () => {
 		beforeEach(() => {
 			UserStore.users = [...userFixtures]; // Clone the array
 		});
 
-		it('should get users', () => {
+		it("should get users", () => {
 			const [res, total] = getList(null);
 
-			expect(res.some((x) => x.name === 'test2')).true;
+			expect(res.some((x) => x.name === "test2")).true;
 		});
 
-		it('should get user by id', () => {
-			const res = get('1');
+		it("should get user by id", () => {
+			const res = get("1");
 
-			expect(res.name).equal('test2');
-			expect(res.email).equal('test-user+2@panenco.com');
+			expect(res.name).equal("test2");
+			expect(res.email).equal("test-user+2@panenco.com");
 		});
 
-		it('should fail when getting user by unknown id', () => {
+		it("should fail when getting user by unknown id", () => {
 			try {
-				get('999');
+				get("999");
 			} catch (error) {
-				expect(error.message).equal('User not found');
+				expect(error.message).equal("User not found");
 				return;
 			}
-			expect(true, 'should have thrown an error').false;
+			expect(true, "should have thrown an error").false;
 		});
 
-		it('should create user', async () => {
+		it("should create user", async () => {
 			const body = {
-				email: 'test-user+new@panenco.com',
-				name: 'newUser',
-				password: 'reallysecretstuff',
+				email: "test-user+new@panenco.com",
+				name: "newUser",
+				password: "reallysecretstuff",
 			} as User;
 			const res = await create(body);
 
-			expect(res.name).equal('newUser');
-			expect(res.email).equal('test-user+new@panenco.com');
+			expect(res.name).equal("newUser");
+			expect(res.email).equal("test-user+new@panenco.com");
 		});
 
-		it('should update user', async () => {
+		it("should update user", async () => {
 			const body = {
-				email: 'test-user+updated@panenco.com',
+				email: "test-user+updated@panenco.com",
 			} as User;
 			const id = 0;
 			const res = update(id.toString(), body);
 
 			expect(res.email).equal(body.email);
-			expect(res.name).equal('test1');
-			expect(UserStore.users.find((x) => x.id === id).email).equal(body.email);
+			expect(res.name).equal("test1");
+			expect(UserStore.users.find((x) => x.id === id).email).equal(
+				body.email
+			);
 		});
 
-		it('should delete user by id', () => {
+		it("should delete user by id", () => {
 			const initialCount = UserStore.users.length;
-			deleteUser('1');
+			deleteUser("1");
 
 			expect(UserStore.users.some((x) => x.id === 1)).false;
 			expect(initialCount - 1).equal(UserStore.users.length);
@@ -806,10 +810,10 @@ anything needs to change here we can simply run them.
 
 For me there were a few changes needed:
 
-- Provide a body when validating the access (unauthorized) on the create
-  endpoint. (this happens because the Body is validated before the UseBefore
-  middleware. Not really a problem, but it's not ideal.)
-- Process the list response a bit different as now we have the `items` + `count`
+-   Provide a body when validating the access (unauthorized) on the create
+    endpoint. (this happens because the Body is validated before the UseBefore
+    middleware. Not really a problem, but it's not ideal.)
+-   Process the list response a bit different as now we have the `items` + `count`
 
 > Bonus: Papi has named status codes in the `StatusCode` enum. So you can use
 > them instead of specifying numbers to validate the status code.
@@ -818,20 +822,20 @@ For me there were a few changes needed:
 <summary>The code</summary>
 
 ```ts
-import { StatusCode } from '@panenco/papi';
-import { expect } from 'chai';
-import { beforeEach, describe, it } from 'mocha';
-import supertest from 'supertest';
+import { StatusCode } from "@panenco/papi";
+import { expect } from "chai";
+import { beforeEach, describe, it } from "mocha";
+import supertest from "supertest";
 
-import { App } from '../../app.js';
-import { UserBody } from '../../contracts/user.body.js';
+import { App } from "../../app.js";
+import { UserBody } from "../../contracts/user.body.js";
 import {
 	User,
-	UserStore
-} from '../../controllers/users/handlers/user.store.js';
+	UserStore,
+} from "../../controllers/users/handlers/user.store.js";
 
-describe('Integration tests', () => {
-	describe('User Tests', () => {
+describe("Integration tests", () => {
+	describe("User Tests", () => {
 		let request: supertest.SuperTest<supertest.Test>;
 		beforeEach(() => {
 			UserStore.users = [];
@@ -840,58 +844,66 @@ describe('Integration tests', () => {
 			request = supertest(app.host);
 		});
 
-		it('should CRUD users', async () => {
+		it("should CRUD users", async () => {
 			// Unauthorized without "api-key"
 			await request
 				.post(`/api/users`)
 				.send({
-					email: 'test@test.test',
-					name: 'test',
-					password: 'testtestest',
+					email: "test@test.test",
+					name: "test",
+					password: "testtestest",
 				} as UserBody)
 				.expect(StatusCode.unauthorized);
 
 			// Successfully create new user
-			const {body: createResponse} = await request
+			const { body: createResponse } = await request
 				.post(`/api/users`)
 				.send({
-					name: 'test',
-					email: 'test-user+1@panenco.com',
-					password: 'real secret stuff',
+					name: "test",
+					email: "test-user+1@panenco.com",
+					password: "real secret stuff",
 				} as User)
-				.set('x-auth', 'api-key')
+				.set("x-auth", "api-key")
 				.expect(StatusCode.created);
 
-			expect(UserStore.users.some((x) => x.email === createResponse.email)).true;
+			expect(
+				UserStore.users.some((x) => x.email === createResponse.email)
+			).true;
 
 			// Get the newly created user
-			const {body: getResponse} = await request.get(`/api/users/${createResponse.id}`).expect(StatusCode.ok);
-			expect(getResponse.name).equal('test');
+			const { body: getResponse } = await request
+				.get(`/api/users/${createResponse.id}`)
+				.expect(StatusCode.ok);
+			expect(getResponse.name).equal("test");
 
 			// Get all users
-			const {body: getListRes} = await request.get(`/api/users`).expect(StatusCode.ok);
-			const {items, count} = getListRes;
+			const { body: getListRes } = await request
+				.get(`/api/users`)
+				.expect(StatusCode.ok);
+			const { items, count } = getListRes;
 			expect(items.length).equal(1);
 			expect(count).equal(1);
 
 			// Successfully update user
-			const {body: updateResponse} = await request
+			const { body: updateResponse } = await request
 				.patch(`/api/users/${createResponse.id}`)
 				.send({
-					email: 'test-user+1@panenco.com',
+					email: "test-user+1@panenco.com",
 				} as User)
 				.expect(StatusCode.ok);
 
-			expect(updateResponse.name).equal('test');
-			expect(updateResponse.email).equal('test-user+1@panenco.com');
+			expect(updateResponse.name).equal("test");
+			expect(updateResponse.email).equal("test-user+1@panenco.com");
 			expect(updateResponse.password).undefined; // middleware transformed the object to not include the password
 
 			// Delete the newly created user
 			await request.delete(`/api/users/${createResponse.id}`).expect(204);
 
 			// Get all users again after deleted the only user
-			const {body: getNoneResponse} = await request.get(`/api/users`).expect(StatusCode.ok);
-			const {count: getNoneCount} = getNoneResponse;
+			const { body: getNoneResponse } = await request
+				.get(`/api/users`)
+				.expect(StatusCode.ok);
+			const { count: getNoneCount } = getNoneResponse;
 			expect(getNoneCount).equal(0);
 		});
 	});
@@ -917,16 +929,16 @@ topic: [Section 12: API Authentication and Security (Task App)](https://www.udem
 
 A brief intro:
 
-- Authentication: Verify a user's identity by checking their credentials. In our
-  case we will always return a [`JWT token`](https://jwt.io)
-    - When a user provides invalid credentials, we should return
-      a `401 Unauthorized` error.
-- Authorization: Use the JWT token to verify whether the user has access to the
-  requested resource.
-    - When the token itself is invalid, we should return a `401 Unauthorized`
-      error.
-    - When the token is valid but the user has no access to the resource we
-      should return a `403 Forbidden` error.
+-   Authentication: Verify a user's identity by checking their credentials. In our
+    case we will always return a [`JWT token`](https://jwt.io)
+    -   When a user provides invalid credentials, we should return
+        a `401 Unauthorized` error.
+-   Authorization: Use the JWT token to verify whether the user has access to the
+    requested resource.
+    -   When the token itself is invalid, we should return a `401 Unauthorized`
+        error.
+    -   When the token is valid but the user has no access to the resource we
+        should return a `403 Forbidden` error.
 
 The `@Authorized` decorator should be used to mark the endpoint as requiring a
 token.  
@@ -983,8 +995,8 @@ on [jwt.io](jwt.io)
 <summary>login.body.ts</summary>
 
 ```ts
-import { Exclude, Expose } from 'class-transformer';
-import { IsEmail, IsString } from 'class-validator';
+import { Exclude, Expose } from "class-transformer";
+import { IsEmail, IsString } from "class-validator";
 
 @Exclude()
 export class LoginBody {
@@ -1004,8 +1016,8 @@ export class LoginBody {
 <summary>accessToken.view.ts</summary>
 
 ```ts
-import { Exclude, Expose } from 'class-transformer';
-import { IsNumber, IsString } from 'class-validator';
+import { Exclude, Expose } from "class-transformer";
+import { IsNumber, IsString } from "class-validator";
 
 @Exclude()
 export class AccessTokenView {
@@ -1025,16 +1037,16 @@ export class AccessTokenView {
 <summary>auth.controller.ts</summary>
 
 ```ts
-import { Representer } from '@panenco/papi';
-import { Body, JsonController, Post } from 'routing-controllers';
+import { Representer } from "@panenco/papi";
+import { Body, JsonController, Post } from "routing-controllers";
 
-import { AccessTokenView } from '../../contracts/accessToken.view.js';
-import { LoginBody } from '../../contracts/login.body.js';
-import { login } from './handlers/login.handler.js';
+import { AccessTokenView } from "../../contracts/accessToken.view.js";
+import { LoginBody } from "../../contracts/login.body.js";
+import { login } from "./handlers/login.handler.js";
 
-@JsonController('/auth')
+@JsonController("/auth")
 export class AuthController {
-	@Post('/tokens')
+	@Post("/tokens")
 	@Representer(AccessTokenView)
 	async create(@Body() body: LoginBody) {
 		return login(body);
@@ -1048,17 +1060,17 @@ export class AuthController {
 <summary>login.handler.ts</summary>
 
 ```ts
-import { createAccessToken, Unauthorized } from '@panenco/papi';
+import { createAccessToken, Unauthorized } from "@panenco/papi";
 
-import { LoginBody } from '../../../contracts/login.body.js';
-import { UserStore } from '../../users/handlers/user.store.js';
+import { LoginBody } from "../../../contracts/login.body.js";
+import { UserStore } from "../../users/handlers/user.store.js";
 
 export const login = async (body: LoginBody) => {
 	const user = UserStore.getByEmail(body.email);
 	if (!user || user.password !== body.password) {
-		throw new Unauthorized('unauthorized', 'Invalid credentials');
+		throw new Unauthorized("unauthorized", "Invalid credentials");
 	}
-	const result = await createAccessToken('jwtSecretFromConfigHere', 60 * 10, {
+	const result = await createAccessToken("jwtSecretFromConfigHere", 60 * 10, {
 		userId: user.id,
 	}); // Important this secret is also used for the authenticator initialization in app.ts
 	return result;
@@ -1120,8 +1132,8 @@ import {
 	ListRepresenter,
 	Query,
 	Representer,
-	StatusCode
-} from '@panenco/papi';
+	StatusCode,
+} from "@panenco/papi";
 import {
 	Authorized,
 	Delete,
@@ -1129,19 +1141,19 @@ import {
 	JsonController,
 	Param,
 	Patch,
-	Post
-} from 'routing-controllers';
+	Post,
+} from "routing-controllers";
 
-import { SearchQuery } from '../../contracts/search.query.js';
-import { UserBody } from '../../contracts/user.body.js';
-import { UserView } from '../../contracts/user.view.js';
-import { create } from './handlers/create.handler.js';
-import { deleteUser } from './handlers/delete.handler.js';
-import { get } from './handlers/get.handler.js';
-import { getList } from './handlers/getList.handler.js';
-import { update } from './handlers/update.handler.js';
+import { SearchQuery } from "../../contracts/search.query.js";
+import { UserBody } from "../../contracts/user.body.js";
+import { UserView } from "../../contracts/user.view.js";
+import { create } from "./handlers/create.handler.js";
+import { deleteUser } from "./handlers/delete.handler.js";
+import { get } from "./handlers/get.handler.js";
+import { getList } from "./handlers/getList.handler.js";
+import { update } from "./handlers/update.handler.js";
 
-@JsonController('/users')
+@JsonController("/users")
 export class UserController {
 	@Post()
 	@Representer(UserView, StatusCode.created)
@@ -1156,24 +1168,27 @@ export class UserController {
 		return getList(query.search);
 	}
 
-	@Get('/:id')
+	@Get("/:id")
 	@Authorized()
 	@Representer(UserView)
-	async get(@Param('id') id: string) {
+	async get(@Param("id") id: string) {
 		return get(id);
 	}
 
-	@Patch('/:id')
+	@Patch("/:id")
 	@Authorized()
 	@Representer(UserView)
-	async update(@Param('id') id: string, @Body({}, {skipMissingProperties: true}) body: UserBody) {
+	async update(
+		@Param("id") id: string,
+		@Body({}, { skipMissingProperties: true }) body: UserBody
+	) {
 		return update(id, body);
 	}
 
-	@Delete('/:id')
+	@Delete("/:id")
 	@Authorized()
 	@Representer(null)
-	async delete(@Param('id') id: string) {
+	async delete(@Param("id") id: string) {
 		deleteUser(id);
 	}
 }
@@ -1185,19 +1200,19 @@ export class UserController {
 <summary>user.integration.test.ts</summary>
 
 ```ts
-import { StatusCode } from '@panenco/papi';
-import { expect } from 'chai';
-import { beforeEach, describe, it } from 'mocha';
-import supertest from 'supertest';
+import { StatusCode } from "@panenco/papi";
+import { expect } from "chai";
+import { beforeEach, describe, it } from "mocha";
+import supertest from "supertest";
 
-import { App } from '../../app.js';
+import { App } from "../../app.js";
 import {
 	User,
-	UserStore
-} from '../../controllers/users/handlers/user.store.js';
+	UserStore,
+} from "../../controllers/users/handlers/user.store.js";
 
-describe('Integration tests', () => {
-	describe('User Tests', () => {
+describe("Integration tests", () => {
+	describe("User Tests", () => {
 		let request: supertest.SuperTest<supertest.Test>;
 		beforeEach(async () => {
 			UserStore.users = [];
@@ -1206,64 +1221,75 @@ describe('Integration tests', () => {
 			request = supertest(app.host);
 		});
 
-		it('should CRUD users', async () => {
+		it("should CRUD users", async () => {
 			// Unauthorized without "token"
 			await request.get(`/api/users`).expect(StatusCode.unauthorized);
 
 			// Successfully create new user
-			const {body: createResponse} = await request
+			const { body: createResponse } = await request
 				.post(`/api/users`)
 				.send({
-					name: 'test',
-					email: 'test-user+1@panenco.com',
-					password: 'real secret stuff',
+					name: "test",
+					email: "test-user+1@panenco.com",
+					password: "real secret stuff",
 				} as User)
 				.expect(StatusCode.created);
 
 			// Login
-			const {body: loginResponse} = await request
+			const { body: loginResponse } = await request
 				.post(`/api/auth/tokens`)
 				.send({
-					email: 'test-user+1@panenco.com',
-					password: 'real secret stuff',
+					email: "test-user+1@panenco.com",
+					password: "real secret stuff",
 				} as User)
 				.expect(StatusCode.ok);
 			const token = loginResponse.token;
 
-			expect(UserStore.users.some((x) => x.email === createResponse.email)).true;
+			expect(
+				UserStore.users.some((x) => x.email === createResponse.email)
+			).true;
 
 			// Get the newly created user
-			const {body: getResponse} = await request
+			const { body: getResponse } = await request
 				.get(`/api/users/${createResponse.id}`)
-				.set('x-auth', token)
+				.set("x-auth", token)
 				.expect(StatusCode.ok);
-			expect(getResponse.name).equal('test');
+			expect(getResponse.name).equal("test");
 
 			// Get all users
-			const {body: getListRes} = await request.get(`/api/users`).set('x-auth', token).expect(StatusCode.ok);
-			const {items, count} = getListRes;
+			const { body: getListRes } = await request
+				.get(`/api/users`)
+				.set("x-auth", token)
+				.expect(StatusCode.ok);
+			const { items, count } = getListRes;
 			expect(items.length).equal(1);
 			expect(count).equal(1);
 
 			// Successfully update user
-			const {body: updateResponse} = await request
+			const { body: updateResponse } = await request
 				.patch(`/api/users/${createResponse.id}`)
 				.send({
-					email: 'test-user+1@panenco.com',
+					email: "test-user+1@panenco.com",
 				} as User)
-				.set('x-auth', token)
+				.set("x-auth", token)
 				.expect(StatusCode.ok);
 
-			expect(updateResponse.name).equal('test');
-			expect(updateResponse.email).equal('test-user+1@panenco.com');
+			expect(updateResponse.name).equal("test");
+			expect(updateResponse.email).equal("test-user+1@panenco.com");
 			expect(updateResponse.password).undefined; // middleware transformed the object to not include the password
 
 			// Get the newly created user
-			await request.delete(`/api/users/${createResponse.id}`).set('x-auth', token).expect(204);
+			await request
+				.delete(`/api/users/${createResponse.id}`)
+				.set("x-auth", token)
+				.expect(204);
 
 			// Get all users again after deleted the only user
-			const {body: getNoneResponse} = await request.get(`/api/users`).set('x-auth', token).expect(StatusCode.ok);
-			const {count: getNoneCount} = getNoneResponse;
+			const { body: getNoneResponse } = await request
+				.get(`/api/users`)
+				.set("x-auth", token)
+				.expect(StatusCode.ok);
+			const { count: getNoneCount } = getNoneResponse;
 			expect(getNoneCount).equal(0);
 		});
 	});
@@ -1284,35 +1310,35 @@ decorator based approach we're using.
 
 2 things to understand:
 
-- [OpenAPI](https://swagger.io/specification/): A specification for how to
-  describe an API. It's the standardized format we need to serve into a
-  graphical interface of our endpoints. It will contain all information about
-  the contracts and endpoints.
-- [Swagger](https://swagger.io/solutions/api-documentation/): The actual
-  interface we use to display the documentation.
+-   [OpenAPI](https://swagger.io/specification/): A specification for how to
+    describe an API. It's the standardized format we need to serve into a
+    graphical interface of our endpoints. It will contain all information about
+    the contracts and endpoints.
+-   [Swagger](https://swagger.io/solutions/api-documentation/): The actual
+    interface we use to display the documentation.
 
 ## Configure swagger
 
 ### Add packages
 
 ```bash
-pnpm add class-validator-jsonschema routing-controllers-openapi swagger-ui-express
+pnpm add class-validator-jsonschema@5.0.0 routing-controllers-openapi@4.0.0 swagger-ui-express@4.4.0
 ```
 
-- `class-validator-jsonschema` to convert all the data from the decorators (
-  metadata) to an OpenAPI json schema
-- `swagger-ui-express` to display the documentation
-- `routing-controllers-openapi` to hook up `routing-controllers` with swagger
+-   `class-validator-jsonschema` to convert all the data from the decorators (
+    metadata) to an OpenAPI json schema
+-   `swagger-ui-express` to display the documentation
+-   `routing-controllers-openapi` to hook up `routing-controllers` with swagger
 
 add module overrides in package.json to fix a dependency issue with routing controllers
 
 ```json
 {
-  "pnpm": {
-    "overrides": {
-      "openapi3-ts": "3.2.0"
-    }
-  }
+	"pnpm": {
+		"overrides": {
+			"openapi3-ts": "3.2.0"
+		}
+	}
 }
 ```
 
@@ -1339,21 +1365,26 @@ class App {
 		};
 
 		const storage = getMetadataArgsStorage();
-		const spec = routingControllersToSpec(storage, routingControllersOptions, {
-			components: {
-				schemas,
-				securitySchemes: {
-					JWT: {
-						in: "header",
-						name: "x-auth",
-						type: "apiKey",
-						bearerFormat: "JWT",
-						description: "JWT Authorization header using the JWT scheme. Example: \"x-auth: {token}\"",
+		const spec = routingControllersToSpec(
+			storage,
+			routingControllersOptions,
+			{
+				components: {
+					schemas,
+					securitySchemes: {
+						JWT: {
+							in: "header",
+							name: "x-auth",
+							type: "apiKey",
+							bearerFormat: "JWT",
+							description:
+								'JWT Authorization header using the JWT scheme. Example: "x-auth: {token}"',
+						},
 					},
 				},
-			},
-			security: [{JWT: []}],
-		});
+				security: [{ JWT: [] }],
+			}
+		);
 
 		this.host.use("/docs", swaggerUi.serve, swaggerUi.setup(spec));
 	}
@@ -1386,10 +1417,10 @@ on [localhost:3000/docs](http://localhost:3000/docs).
 
 For instance, execute a flow in there:
 
-- Create a user
-- Get login
-- Configure it in the top right with the "Authorize" button
-- Get your user
+-   Create a user
+-   Get login
+-   Configure it in the top right with the "Authorize" button
+-   Get your user
 
 In the end the `app.ts` should look like this:
 
@@ -1397,20 +1428,20 @@ In the end the `app.ts` should look like this:
 <summary>app.ts</summary>
 
 ```ts
-import 'express-async-errors';
-import { errorMiddleware, getAuthenticator } from '@panenco/papi';
-import express, { Application } from 'express';
+import "express-async-errors";
+import { errorMiddleware, getAuthenticator } from "@panenco/papi";
+import express, { Application } from "express";
 import {
 	getMetadataArgsStorage,
 	RoutingControllersOptions,
-	useExpressServer
-} from 'routing-controllers';
-import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
-import { routingControllersToSpec } from 'routing-controllers-openapi';
-import swaggerUi from 'swagger-ui-express';
+	useExpressServer,
+} from "routing-controllers";
+import { validationMetadatasToSchemas } from "class-validator-jsonschema";
+import { routingControllersToSpec } from "routing-controllers-openapi";
+import swaggerUi from "swagger-ui-express";
 import { getMetadataStorage } from "class-validator";
-import { UserController } from './controllers/users/user.controller.js';
-import { AuthController } from './controllers/auth/auth.controller.js';
+import { UserController } from "./controllers/users/user.controller.js";
+import { AuthController } from "./controllers/auth/auth.controller.js";
 
 export class App {
 	host: Application;
@@ -1424,8 +1455,8 @@ export class App {
 			console.log(req.method, req.url);
 			next();
 		});
-		this.host.get('/', (req, res, next) => {
-			res.send('Hello World @ Panenco!');
+		this.host.get("/", (req, res, next) => {
+			res.send("Hello World @ Panenco!");
 		});
 		const controllers = [AuthController, UserController];
 		this.initializeControllers(controllers);
@@ -1444,14 +1475,14 @@ export class App {
 		useExpressServer(this.host, {
 			// Link the express host to routing-controllers
 			cors: {
-				origin: '*', // Allow all origins, any application on any url can call our api. This is why we also added the `cors` package.
+				origin: "*", // Allow all origins, any application on any url can call our api. This is why we also added the `cors` package.
 				credentials: true,
-				exposedHeaders: ['x-auth'], // Allow the header `x-auth` to be exposed to the client. This is needed for the authentication to work later.
+				exposedHeaders: ["x-auth"], // Allow the header `x-auth` to be exposed to the client. This is needed for the authentication to work later.
 			},
 			controllers, // Provide the controllers. Currently this won't work yet, first we need to convert the Route to a routing-controllers controller.
 			defaultErrorHandler: false, // Disable the default error handler. We will handle errors through papi later.
-			routePrefix: '/api', // Map all routes to the `/api` path.
-			authorizationChecker: getAuthenticator('jwtSecretFromConfigHere'), // Tell routing-controllers to use the papi authentication checker
+			routePrefix: "/api", // Map all routes to the `/api` path.
+			authorizationChecker: getAuthenticator("jwtSecretFromConfigHere"), // Tell routing-controllers to use the papi authentication checker
 		});
 	}
 
@@ -1466,21 +1497,26 @@ export class App {
 		};
 
 		const storage = getMetadataArgsStorage();
-		const spec = routingControllersToSpec(storage, routingControllersOptions, {
-			components: {
-				schemas,
-				securitySchemes: {
-					JWT: {
-						in: "header",
-						name: "x-auth",
-						type: "apiKey",
-						bearerFormat: "JWT",
-						description: "JWT Authorization header using the JWT scheme. Example: \"x-auth: {token}\"",
+		const spec = routingControllersToSpec(
+			storage,
+			routingControllersOptions,
+			{
+				components: {
+					schemas,
+					securitySchemes: {
+						JWT: {
+							in: "header",
+							name: "x-auth",
+							type: "apiKey",
+							bearerFormat: "JWT",
+							description:
+								'JWT Authorization header using the JWT scheme. Example: "x-auth: {token}"',
+						},
 					},
 				},
-			},
-			security: [{JWT: []}],
-		});
+				security: [{ JWT: [] }],
+			}
+		);
 
 		this.host.use("/docs", swaggerUi.serve, swaggerUi.setup(spec));
 	}
@@ -1523,28 +1559,28 @@ information about the image to use and the variables used to configure it.
 
 1. Add a `docker-compose.yml` file in the root of the project:
 
-   ```yaml
-   version: '3'
-   services:
-     postgres:
-       container_name: example-postgres
-       image: postgres:latest
-       ports:
-         - '5432:5432'
-       volumes:
-         - ./data/postgres:/data/example-postgres
-       env_file:
-         - docker.env
-   ```
+    ```yaml
+    version: "3"
+    services:
+        postgres:
+            container_name: example-postgres
+            image: postgres:latest
+            ports:
+                - "5432:5432"
+            volumes:
+                - ./data/postgres:/data/example-postgres
+            env_file:
+                - docker.env
+    ```
 
 2. Add a `docker.env` file in the root of the project to configure postgres:
 
-   ```env
-   POSTGRES_USER=root
-   POSTGRES_PASSWORD=root
-   POSTGRES_DB=example
-   POSTGRES_CONTAINER=example-postgres
-   ```
+    ```env
+    POSTGRES_USER=root
+    POSTGRES_PASSWORD=root
+    POSTGRES_DB=example
+    POSTGRES_CONTAINER=example-postgres
+    ```
 
 ### Running a compose file
 
@@ -1627,7 +1663,7 @@ specific functionality. Migrations are needed to easily keep our database and
 code in sync, more on that later!
 
 ```bash
-pnpm add @mikro-orm/core @mikro-orm/postgresql @mikro-orm/migrations uuid @mikro-orm/cli
+pnpm add @mikro-orm/core@5.2.3 @mikro-orm/postgresql@5.2.3 @mikro-orm/migrations@5.2.3 uuid @mikro-orm/cli@5.2.3
 ```
 
 ### Config
@@ -1636,17 +1672,17 @@ The ORM config file specifies items as how to connect to the database, how to
 read the code, where to find certain files and how to run migrations. We discuss
 migrations soon.
 
-- `src/orm.config.ts`
+-   `src/orm.config.ts`
 
 ```ts
-import { Options } from '@mikro-orm/core';
-import { PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { Options } from "@mikro-orm/core";
+import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import * as url from "node:url";
-import path from 'node:path';
+import path from "node:path";
 
-import config from './config.js';
+import config from "./config.js";
 
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 export default {
 	debug: true,
@@ -1667,45 +1703,49 @@ export default {
 	port: config.postgres.port,
 	ssl: false,
 } as Options<PostgreSqlDriver>;
-
 ```
+
 On line 6, you'll notice that a `config` parameter is imported from a `./config.js` file, located in the same folder as `orm.config.ts`.
 We therefore must create this config file as well:
 
-- `src/config.ts`
+-   `src/config.ts`
+
 ```ts
-import loader from '@ljobse/appsettings-loader';
+import loader from "@ljobse/appsettings-loader";
 import * as fs from "node:fs";
 
-const json = await fs.promises.readFile('./config.json', 'utf8');
+const json = await fs.promises.readFile("./config.json", "utf8");
 
 const config = loader.applyEnvConfig(JSON.parse(json));
 
 // We need a default export here. Otherwise the imported object might be undefined.
 export default config;
-```  
+```
+
 This config file loads a JSON and exports it so it can be loaded into `src/orm.config.ts`.
 The JSON file contains the configurations that are going to be re-used across the application.
 To make this work, install the loader package:
+
 ```bash
 pnpm add @ljobse/appsettings-loader
 ```
+
 Finally, the actual configuration is stored in the `./config.json` file, so we need to create that as well.
 
-- `./config.json`
+-   `./config.json`
+
 ```json
 {
-  "port": 3000,
-  "postgres": {
-    "db": "example",
-    "host": "localhost",
-    "password": "root",
-    "port": 5432,
-    "user": "root"
-  }
+	"port": 3000,
+	"postgres": {
+		"db": "example",
+		"host": "localhost",
+		"password": "root",
+		"port": 5432,
+		"user": "root"
+	}
 }
 ```
-
 
 Connecting to the database and initializing MikroORM occurs when bootstrapping
 your application, right before you start listening to incoming requests.
@@ -1714,7 +1754,7 @@ In `server.ts` we replace the existing code with this asynchronous step and call
 the function:
 
 ```ts
-import { App } from './app.js';
+import { App } from "./app.js";
 
 (async () => {
 	const app = new App();
@@ -1727,11 +1767,11 @@ The `createConnection` method lives in `app.ts` and initializes MikroORM and
 provides a database connection using the database credentials we safe in a
 config file:
 
-- `app.ts`
+-   `app.ts`
 
 ```ts
-import { MikroORM, RequestContext } from '@mikro-orm/core';
-import ormConfig from './orm.config.js';
+import { MikroORM, RequestContext } from "@mikro-orm/core";
+import ormConfig from "./orm.config.js";
 
 export class App {
 	public orm: MikroORM<PostgreSqlDriver>;
@@ -1742,7 +1782,7 @@ export class App {
 		try {
 			this.orm = await MikroORM.init(ormConfig);
 		} catch (error) {
-			console.log('Error while connecting to the database', error);
+			console.log("Error while connecting to the database", error);
 		}
 	}
 }
@@ -1779,18 +1819,18 @@ UUID (string).
 <summary>`src/entities/user.entity.ts`</summary>
 
 ```ts
-import { BaseEntity, Entity, PrimaryKey, Property } from '@mikro-orm/core';
-import { randomUUID } from 'node:crypto';
+import { BaseEntity, Entity, PrimaryKey, Property } from "@mikro-orm/core";
+import { randomUUID } from "node:crypto";
 
 @Entity()
-export class User extends BaseEntity<User, 'id'> {
-	@PrimaryKey({columnType: 'uuid'})
+export class User extends BaseEntity<User, "id"> {
+	@PrimaryKey({ columnType: "uuid" })
 	public id: string = randomUUID();
 
 	@Property()
 	public name: string;
 
-	@Property({unique: true})
+	@Property({ unique: true })
 	public email: string;
 
 	@Property()
@@ -1802,11 +1842,11 @@ export class User extends BaseEntity<User, 'id'> {
 
 There are a couple of things to note here:
 
-- We are using UUIDs (type string), instead of the numerical incremental ids
-  from earlier.
-- We extend from MikroORM's BaseEntity to be able to access public helper
-  methods (assign...) defined by the ORM. For more info, read the
-  docs [here](https://mikro-orm.io/docs/entity-helper#wrappedentity-and-wrap-helper).
+-   We are using UUIDs (type string), instead of the numerical incremental ids
+    from earlier.
+-   We extend from MikroORM's BaseEntity to be able to access public helper
+    methods (assign...) defined by the ORM. For more info, read the
+    docs [here](https://mikro-orm.io/docs/entity-helper#wrappedentity-and-wrap-helper).
 
 #### Migrations
 
@@ -1822,12 +1862,10 @@ package.json file:
 
 ```json
 {
-  "mikro-orm": {
-    "useTsNode": true,
-    "configPaths": [
-      "./src/orm.config.ts"
-    ]
-  }
+	"mikro-orm": {
+		"useTsNode": true,
+		"configPaths": ["./src/orm.config.ts"]
+	}
 }
 ```
 
@@ -1841,8 +1879,8 @@ To create and execute a migration:
 Now that the migration ran, a refresh of your database (`⌘+R` or `ctrl+R`) in
 TablePlus should show you two tables:
 
-- migrations, containing the migrations executed and with a timestamp
-- user, containing the properties we defined
+-   migrations, containing the migrations executed and with a timestamp
+-   user, containing the properties we defined
 
 To find out more details about your database schema, click the 'Structure'
 button in the bottom of the TablePlus app (located next to Data).
@@ -1850,10 +1888,10 @@ button in the bottom of the TablePlus app (located next to Data).
 Since database migrations can run on large amounts of critical production data,
 some security measures are in effect:
 
-- They are executed in transactions, rolling previous statements back when a
-  single SQL statement fails
-- They are carefully stored and saved, allowing one to trigger a rollback in
-  case something went wrong: `pnpm mikro-orm-esm migration:down`
+-   They are executed in transactions, rolling previous statements back when a
+    single SQL statement fails
+-   They are carefully stored and saved, allowing one to trigger a rollback in
+    case something went wrong: `pnpm mikro-orm-esm migration:down`
 
 ## Updating the handlers
 
@@ -1875,7 +1913,7 @@ them to the database at once.
 To ensure Identity Maps of different EMs don't collide, we need to fork the EM
 for each request. We can use MikroORM's RequestContext for this.
 
-- In `app.ts`'s constructor:
+-   In `app.ts`'s constructor:
 
 ```ts
 this.host.use((req, __, next: NextFunction) => {
@@ -1904,10 +1942,10 @@ equivalent actions:
 <summary>create.handler.ts</summary>
 
 ```ts
-import { RequestContext } from '@mikro-orm/core';
+import { RequestContext } from "@mikro-orm/core";
 
-import { UserBody } from '../../../contracts/user.body.js';
-import { User } from '../../../entities/user.entity.js';
+import { UserBody } from "../../../contracts/user.body.js";
+import { User } from "../../../entities/user.entity.js";
 
 export const create = async (body: UserBody) => {
 	const em = RequestContext.getEntityManager();
@@ -1924,9 +1962,9 @@ export const create = async (body: UserBody) => {
 <summary>getList.handler.ts</summary>
 
 ```ts
-import { RequestContext } from '@mikro-orm/core';
+import { RequestContext } from "@mikro-orm/core";
 
-import { User } from '../../../entities/user.entity.js';
+import { User } from "../../../entities/user.entity.js";
 
 export const getList = async (search: string) => {
 	const em = RequestContext.getEntityManager();
@@ -1934,8 +1972,11 @@ export const getList = async (search: string) => {
 		User,
 		search
 			? {
-				$or: [{name: {$ilike: `%${search}%`}}, {email: {$ilike: `%${search}%`}}],
-			}
+					$or: [
+						{ name: { $ilike: `%${search}%` } },
+						{ email: { $ilike: `%${search}%` } },
+					],
+			  }
 			: {}
 	);
 };
@@ -1947,16 +1988,16 @@ export const getList = async (search: string) => {
 <summary>get.handler.ts</summary>
 
 ```ts
-import { RequestContext } from '@mikro-orm/core';
-import { NotFound } from '@panenco/papi';
+import { RequestContext } from "@mikro-orm/core";
+import { NotFound } from "@panenco/papi";
 
-import { User } from '../../../entities/user.entity.js';
+import { User } from "../../../entities/user.entity.js";
 
 export const get = async (id: string) => {
 	const em = RequestContext.getEntityManager();
-	const user = await em.findOne(User, {id});
+	const user = await em.findOne(User, { id });
 	if (!user) {
-		throw new NotFound('userNotFound', 'User not found');
+		throw new NotFound("userNotFound", "User not found");
 	}
 	return user;
 };
@@ -1968,18 +2009,18 @@ export const get = async (id: string) => {
 <summary>update.handler.ts</summary>
 
 ```ts
-import { RequestContext } from '@mikro-orm/core';
-import { NotFound } from '@panenco/papi';
+import { RequestContext } from "@mikro-orm/core";
+import { NotFound } from "@panenco/papi";
 
-import { UserBody } from '../../../contracts/user.body.js';
-import { User } from '../../../entities/user.entity.js';
+import { UserBody } from "../../../contracts/user.body.js";
+import { User } from "../../../entities/user.entity.js";
 
 export const update = async (id: string, body: UserBody) => {
 	const em = RequestContext.getEntityManager();
-	const user = await em.findOne(User, {id});
+	const user = await em.findOne(User, { id });
 
 	if (!user) {
-		throw new NotFound('userNotFound', 'User not found');
+		throw new NotFound("userNotFound", "User not found");
 	}
 	user.assign(body);
 	await em.flush();
@@ -1993,16 +2034,16 @@ export const update = async (id: string, body: UserBody) => {
 <summary>delete.handler.ts</summary>
 
 ```ts
-import { RequestContext } from '@mikro-orm/core';
-import { NotFound } from '@panenco/papi';
+import { RequestContext } from "@mikro-orm/core";
+import { NotFound } from "@panenco/papi";
 
-import { User } from '../../../entities/user.entity.js';
+import { User } from "../../../entities/user.entity.js";
 
 export const deleteUser = async (id: string) => {
 	const em = RequestContext.getEntityManager();
-	const user = await em.findOne(User, {id});
+	const user = await em.findOne(User, { id });
 	if (!user) {
-		throw new NotFound('userNotFound', 'User not found');
+		throw new NotFound("userNotFound", "User not found");
 	}
 	await em.removeAndFlush(user);
 };
@@ -2012,18 +2053,22 @@ export const deleteUser = async (id: string) => {
 <summary>login.handler.ts</summary>
 
 ```ts
-import { RequestContext } from '@mikro-orm/core';
-import { createAccessToken, Unauthorized } from '@panenco/papi';
+import { RequestContext } from "@mikro-orm/core";
+import { createAccessToken, Unauthorized } from "@panenco/papi";
 
-import { LoginBody } from '../../../contracts/login.body.js';
-import { User } from '../../../entities/user.entity.js';
+import { LoginBody } from "../../../contracts/login.body.js";
+import { User } from "../../../entities/user.entity.js";
 
 export const login = async (body: LoginBody) => {
-	const user = await RequestContext.getEntityManager().findOne(User, {email: body.email});
+	const user = await RequestContext.getEntityManager().findOne(User, {
+		email: body.email,
+	});
 	if (!user || user.password !== body.password) {
-		throw new Unauthorized('unauthorized', 'Invalid credentials');
+		throw new Unauthorized("unauthorized", "Invalid credentials");
 	}
-	const result = await createAccessToken('jwtSecretFromConfigHere', 60 * 10, {userId: user.id});
+	const result = await createAccessToken("jwtSecretFromConfigHere", 60 * 10, {
+		userId: user.id,
+	});
 	return result;
 };
 ```
@@ -2040,14 +2085,17 @@ support for `findOneOrFail()`, however this throws a 400 while we want a 404.
 
 We can customize this by adding a custom error handler:
 
-- `src/utils/extensions.ts`
+-   `src/utils/extensions.ts`
 
 ```ts
-import { Dictionary } from '@mikro-orm/core';
-import { IPrimaryKeyValue } from '@mikro-orm/core/typings';
-import { NotFound } from '@panenco/papi';
+import { Dictionary } from "@mikro-orm/core";
+import { IPrimaryKeyValue } from "@mikro-orm/core/typings";
+import { NotFound } from "@panenco/papi";
 
-export const noEntityFoundError = function (entityName: string, where: Dictionary<any> | IPrimaryKeyValue): Error {
+export const noEntityFoundError = function (
+	entityName: string,
+	where: Dictionary<any> | IPrimaryKeyValue
+): Error {
 	throw new NotFound(`entityNotFound`, `${entityName} ${NotFound.name}`);
 };
 ```
@@ -2073,20 +2121,20 @@ but our tests have not been updated.
 
 For integration tests, not a lot of changes are required:
 
-- For each test suite we create a connection to the database and save a
-  reference to the orm.
-- Instead of setting the users to an empty array in the beforeEach, we now have
-  to clear the database and run the initial migration file again.
-- If somewhere in the test file data is looked up from the database outside of a
-  request, we should use a fork of the EM to do this, to ensure no race
-  conditions.
+-   For each test suite we create a connection to the database and save a
+    reference to the orm.
+-   Instead of setting the users to an empty array in the beforeEach, we now have
+    to clear the database and run the initial migration file again.
+-   If somewhere in the test file data is looked up from the database outside of a
+    request, we should use a fork of the EM to do this, to ensure no race
+    conditions.
 
 <details>
 <summary>user.integration.test.ts</summary>
 
 ```ts
-describe('Integration tests', () => {
-	describe('User Tests', () => {
+describe("Integration tests", () => {
+	describe("User Tests", () => {
 		let request: supertest.SuperTest<supertest.Test>;
 		let orm: MikroORM<PostgreSqlDriver>;
 		before(async () => {
@@ -2097,7 +2145,9 @@ describe('Integration tests', () => {
 		});
 
 		beforeEach(async () => {
-			await orm.em.execute(`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`);
+			await orm.em.execute(
+				`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`
+			);
 			await orm.getMigrator().up();
 		});
 		// ...
@@ -2124,35 +2174,35 @@ express routes, meaning no RequestContext is created, and the EM is not forked.
 <summary>user.handler.test.ts</summary>
 
 ```ts
-import { MikroORM, RequestContext } from '@mikro-orm/core';
-import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { expect } from 'chai';
-import { before, beforeEach, describe, it } from 'mocha';
+import { MikroORM, RequestContext } from "@mikro-orm/core";
+import { PostgreSqlDriver } from "@mikro-orm/postgresql";
+import { expect } from "chai";
+import { before, beforeEach, describe, it } from "mocha";
 
-import { create } from '../../controllers/users/handlers/create.handler.js';
-import { deleteUser } from '../../controllers/users/handlers/delete.handler.js';
-import { get } from '../../controllers/users/handlers/get.handler.js';
-import { getList } from '../../controllers/users/handlers/getList.handler.js';
-import { update } from '../../controllers/users/handlers/update.handler.js';
-import { User } from '../../entities/user.entity.js';
-import ormConfig from '../../orm.config.js';
+import { create } from "../../controllers/users/handlers/create.handler.js";
+import { deleteUser } from "../../controllers/users/handlers/delete.handler.js";
+import { get } from "../../controllers/users/handlers/get.handler.js";
+import { getList } from "../../controllers/users/handlers/getList.handler.js";
+import { update } from "../../controllers/users/handlers/update.handler.js";
+import { User } from "../../entities/user.entity.js";
+import ormConfig from "../../orm.config.js";
 import { randomUUID } from "node:crypto";
 
 const userFixtures: User[] = [
 	{
-		name: 'test1',
-		email: 'test-user+1@panenco.com',
-		password: 'password1',
+		name: "test1",
+		email: "test-user+1@panenco.com",
+		password: "password1",
 	} as User,
 	{
-		name: 'test2',
-		email: 'test-user+2@panenco.com',
-		password: 'password2',
+		name: "test2",
+		email: "test-user+2@panenco.com",
+		password: "password2",
 	} as User,
 ];
 
-describe('Handler tests', () => {
-	describe('User Tests', () => {
+describe("Handler tests", () => {
+	describe("User Tests", () => {
 		let orm: MikroORM<PostgreSqlDriver>;
 		let users: User[];
 		before(async () => {
@@ -2160,71 +2210,73 @@ describe('Handler tests', () => {
 		});
 
 		beforeEach(async () => {
-			await orm.em.execute(`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`);
+			await orm.em.execute(
+				`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`
+			);
 			await orm.getMigrator().up();
 			const em = orm.em.fork();
 			users = userFixtures.map((x) => em.create(User, x));
 			await em.persistAndFlush(users);
 		});
 
-		it('should get users', async () => {
+		it("should get users", async () => {
 			await RequestContext.createAsync(orm.em.fork(), async () => {
 				const [res, total] = await getList(null);
-				expect(res.some((x) => x.name === 'test2')).true;
+				expect(res.some((x) => x.name === "test2")).true;
 			});
 		});
 
-		it('should get user by id', async () => {
+		it("should get user by id", async () => {
 			await RequestContext.createAsync(orm.em.fork(), async () => {
 				const res = await get(users[1].id);
 
-				expect(res.name).equal('test2');
-				expect(res.email).equal('test-user+2@panenco.com');
+				expect(res.name).equal("test2");
+				expect(res.email).equal("test-user+2@panenco.com");
 			});
 		});
 
-		it('should fail when getting user by unknown id', async () => {
+		it("should fail when getting user by unknown id", async () => {
 			await RequestContext.createAsync(orm.em.fork(), async () => {
 				try {
 					await get(randomUUID());
 				} catch (error) {
-					expect(error.message).equal('User not found');
+					expect(error.message).equal("User not found");
 					return;
 				}
-				expect(true, 'should have thrown an error').false;
+				expect(true, "should have thrown an error").false;
 			});
 		});
 
-		it('should create user', async () => {
+		it("should create user", async () => {
 			await RequestContext.createAsync(orm.em.fork(), async () => {
 				const body = {
-					email: 'test-user+new@panenco.com',
-					name: 'newUser',
-					password: 'reallysecretstuff',
+					email: "test-user+new@panenco.com",
+					name: "newUser",
+					password: "reallysecretstuff",
 				} as User;
 				const res = await create(body);
 
-				expect(res.name).equal('newUser');
-				expect(res.email).equal('test-user+new@panenco.com');
+				expect(res.name).equal("newUser");
+				expect(res.email).equal("test-user+new@panenco.com");
 			});
 		});
 
-		it('should update user', async () => {
+		it("should update user", async () => {
 			await RequestContext.createAsync(orm.em.fork(), async () => {
 				const body = {
-					email: 'test-user+updated@panenco.com',
+					email: "test-user+updated@panenco.com",
 				} as User;
 				const id = users[0].id;
 				const res = await update(id.toString(), body);
 
 				expect(res.email).equal(body.email);
-				expect(res.name).equal('test1');
-				const foundUser = await orm.em.findOne(User, {id});
+				expect(res.name).equal("test1");
+				const foundUser = await orm.em.findOne(User, { id });
 				expect(foundUser.email).equal(body.email);
 			});
 		});
 
-		it('should delete user by id', async () => {
+		it("should delete user by id", async () => {
 			await RequestContext.createAsync(orm.em.fork(), async () => {
 				const initialCount = await orm.em.count(User);
 				await deleteUser(users[0].id);
