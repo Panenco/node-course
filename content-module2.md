@@ -4,9 +4,9 @@ In the first module we focused mainly on the basics of node and express. In this
 second module we'll be adding some aspects to our code to make it more scalable
 and maintainable. We will:
 
-- Convert the app from Javascript to Typescript for type safety.
-- Add validation on our input and output.
-- Add tests that cover the application code & functionality.
+-   Convert the app from Javascript to Typescript for type safety.
+-   Add validation on our input and output.
+-   Add tests that cover the application code & functionality.
 
 # Typescript
 
@@ -34,11 +34,11 @@ when the code actually runs.
 // Typescript example
 type Course = {
 	title: string;
-}
+};
 
 const printCourse = (course: Course): void => console.log(course.title);
 // Error would be highlighted on the line below
-printCourse({name: "node course"});
+printCourse({ name: "node course" });
 ```
 
 ```
@@ -101,7 +101,7 @@ This can be done via SWC (Speedy Web Compiler)
 Installation
 
 ```shell
-pnpm add -D  @swc/cli @swc/core @swc/helpers  @swc-node/register chokidar 
+pnpm add -D  @swc/cli @swc/core @swc/helpers  @swc-node/register chokidar
 ```
 
 ## Configure swc
@@ -175,19 +175,23 @@ export class UserStore {
 
 	static find(search?: string): User[] {
 		return this.users.filter(
-			(user) => !search || Object.values(user).some((value) => value?.toString().includes(search))
+			(user) =>
+				!search ||
+				Object.values(user).some((value) =>
+					value?.toString().includes(search)
+				)
 		);
 	}
 
-	static add(user: Omit<User, 'id'>): User {
-		const u = {...user, id: this.users.length};
+	static add(user: Omit<User, "id">): User {
+		const u = { ...user, id: this.users.length };
 		this.users.push(u);
 		return u;
 	}
 
 	static update(id: number, input: User): User {
 		const current = this.get(id);
-		const user = {...current, ...input};
+		const user = { ...current, ...input };
 		this.users.splice(
 			this.users.findIndex((x) => x === current),
 			1,
@@ -226,14 +230,18 @@ Example of converted handler:
 
 ```ts
 // controllers/users/handlers/create.handler.ts
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, Response } from "express";
 
-import { UserStore } from './user.store.js';
+import { UserStore } from "./user.store.js";
 
-export const create = async (req: Request, res: Response, next: NextFunction) => {
+export const create = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	if (!req.body.name) {
 		return res.status(400).json({
-			error: 'name is required',
+			error: "name is required",
 		});
 	}
 	const user = UserStore.add(req.body);
@@ -271,7 +279,7 @@ Make sure all files are renamed to .ts extension,
 event `server.js`, `app.js`,...
 
 ```bash
-pnpm dev 
+pnpm dev
 ```
 
 ## VSCode debugger
@@ -280,32 +288,11 @@ Debugging your code is a very important aspect when developing web applications.
 It allows you to place breakpoints in your code and stop the code at a certain
 point to look at the value of parameters and other important stuff.
 
-To enable debugging add a `launch.json` file in a new `/.vscode` directory. This
-new directory should exist in your project root, not in src.
+VSCode makes debugging in node very easy. You can start a debugging session by opening a new terminal session of type `javascript debug terminal` and running simply running `pnpm xxx` command. This will run the command with a debugger attached
 
-```jsonc
-{
-  // /.vscode/launch.json
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "request": "launch",
-      "name": "Dev",
-      "skipFiles": ["<node_internals>/**"],
-      "command": "pnpm dev",
-      "type": "node-terminal"
-    }
-  ]
-}
-```
+![](assets/js-debug-terminal.png)
 
-To start a debugging session press F5 or fn + F5 (depending on your keyboard
-configuration).
-
-Now place a breakpoint in `app.ts` on line 17 and run visit the root url of your
+Now place a breakpoint in `app.ts` on line 17, run and visit the root url of your
 application. You will be able to hover over parameters and see what value they
 have at runtime. Any time you have an error you can use this to easily find a
 solution and know what's actually going on.
@@ -369,8 +356,8 @@ And set these to false to make Typescript a bit less strict
 ```ts
 //user.body.ts
 
-import { Exclude, Expose } from 'class-transformer';
-import { IsEmail, IsString, Length } from 'class-validator';
+import { Exclude, Expose } from "class-transformer";
+import { IsEmail, IsString, Length } from "class-validator";
 
 // For safety we'll exclude everything from being transformed by placing a @Exclude() decorator on the class declaration
 @Exclude()
@@ -414,8 +401,8 @@ const user = UserStore.add(transformed);
 3. Try it out by using the POST `/api/users` endpoint with both a valid and an
    invalid JSON body. also feel free to play around with the different
    decorators to add more advanced validation for example.
-   > Note: If this produces a 500 instead of a 400 for you, you probably have an
-   issue with your error handling middleware in `app.ts`
+    > Note: If this produces a 500 instead of a 400 for you, you probably have an
+    > issue with your error handling middleware in `app.ts`
 
 ## Explicit representation
 
@@ -424,8 +411,8 @@ const user = UserStore.add(transformed);
    file `user.view.ts`
 
 ```ts
-import { Exclude, Expose } from 'class-transformer';
-import { IsEmail, IsNumber, IsString } from 'class-validator';
+import { Exclude, Expose } from "class-transformer";
+import { IsEmail, IsNumber, IsString } from "class-validator";
 
 @Exclude()
 export class UserView {
@@ -461,7 +448,11 @@ we'll make this more flexible as we go.
 1. Add these functions to `user.route.ts`
 
 ```ts
-const patchValidationMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+const patchValidationMiddleware = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	const transformed = plainToInstance(UserBody, req.body, {
 		// undefined properties not taken into account
 		exposeUnsetFields: false,
@@ -481,7 +472,11 @@ const patchValidationMiddleware = async (req: Request, res: Response, next: Next
 ```
 
 ```ts
-const representationMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+const representationMiddleware = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	const transformed = plainToInstance(UserView, res.locals.body); // Note the use of res.locals here. Locals is a way to transport data from one middleware to another.
 	res.json(transformed);
 };
@@ -491,7 +486,7 @@ const representationMiddleware = async (req: Request, res: Response, next: NextF
 
 ```ts
 this.router.patch(
-	'/:id',
+	"/:id",
 	// first transform and validate
 	patchValidationMiddleware,
 	// handle actual logic
@@ -505,15 +500,15 @@ this.router.patch(
 
 ```ts
 // update.handler.ts
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, Response } from "express";
 
-import { UserStore } from './user.store.js';
+import { UserStore } from "./user.store.js";
 
 export const update = (req: Request, res: Response, next: NextFunction) => {
 	const id = Number(req.params.id);
 	const user = UserStore.get(id);
 	if (!user) {
-		return res.status(404).json({error: 'User not found'});
+		return res.status(404).json({ error: "User not found" });
 	}
 	const updated = UserStore.update(id, req.body);
 	res.locals.body = updated; // Set the result on the locals object to pass it to the representation middleware.
@@ -531,29 +526,29 @@ how we develop fast and reliable applications.
 
 Automated tests are great for a number of reasons:
 
-- Reduce risk on regression
-- Easy to validate new features (It's usually quicker to write a few tests than
-  to manually test a feature)
-- Provides extra insights on the feature (For reviews, frontend developers,
-  future modifications)
-- It makes you think a second time about what you are building and you might
-  find a better way to do it
-- Easily integrated into CI/CD pipelines
-- ...
+-   Reduce risk on regression
+-   Easy to validate new features (It's usually quicker to write a few tests than
+    to manually test a feature)
+-   Provides extra insights on the feature (For reviews, frontend developers,
+    future modifications)
+-   It makes you think a second time about what you are building and you might
+    find a better way to do it
+-   Easily integrated into CI/CD pipelines
+-   ...
 
 ## Testing guidelines
 
-- Always write a test to validate code before manually testing a feature.
-- Test functional flows as integration tests
-- Test all code paths
-- Test all possible error cases
-- Always try to achieve 100% test coverage
-- Write meaningful assertions
-- Always mock external dependencies/integrations
-- Build robust tests, tests should remain valid when fixture data is extended
-	- Don't validate database counts
-	- Validate behavior instead of explicit data
-	- Try to, when it makes sense, create new fixtures for new features
+-   Always write a test to validate code before manually testing a feature.
+-   Test functional flows as integration tests
+-   Test all code paths
+-   Test all possible error cases
+-   Always try to achieve 100% test coverage
+-   Write meaningful assertions
+-   Always mock external dependencies/integrations
+-   Build robust tests, tests should remain valid when fixture data is extended
+    -   Don't validate database counts
+    -   Validate behavior instead of explicit data
+    -   Try to, when it makes sense, create new fixtures for new features
 
 ### Handler tests guidelines
 
@@ -562,9 +557,9 @@ handlers directly from tests. They test a single handler with a specified input
 set where the output has to match the expected result. For one handler (
 endpoint) there usually should be multiple tests.
 
-- Test all handlers
-- Add multiple tests for one handler
-- Test all possible scenarios for a single handler
+-   Test all handlers
+-   Add multiple tests for one handler
+-   Test all possible scenarios for a single handler
 
 ### Integration tests guidelines
 
@@ -572,10 +567,10 @@ Integration tests are tests that execute endpoints and test complete flows. The
 entire application is bootstrapped and the endpoints are served by a testing
 framework.
 
-- Each endpoint should be at least tested once
-- Verify all possible middleware code, code that can't be reached from a handler
-  test
-- Test happy flows
+-   Each endpoint should be at least tested once
+-   Verify all possible middleware code, code that can't be reached from a handler
+    test
+-   Test happy flows
 
 ## Setting up Mocha
 
@@ -618,33 +613,33 @@ The most straightforward assertion is to check if a value is equal to a fixed
 value, like this:
 
 ```ts
-expect(res.email).equal('test-user+2@panenco.com');
+expect(res.email).equal("test-user+2@panenco.com");
 ```
 
 ### Mocha test file structure
 
 There are 2 main concepts to create a structure in a test file:
 
-- describe: A group of tests that share the same name.
-- it: The test itself
+-   describe: A group of tests that share the same name.
+-   it: The test itself
 
 Within the describe block we can implement a few functions:
 
-- beforeEach: A function that is executed before each test.
-- afterEach: A function that is executed after each test.
-- before: A function that is executed before the first test in the group.
-- after: A function that is executed after the last test in the group.
+-   beforeEach: A function that is executed before each test.
+-   afterEach: A function that is executed after each test.
+-   before: A function that is executed before the first test in the group.
+-   after: A function that is executed after the last test in the group.
 
 So with those tools you can create a test file like this:
 
 ```ts
-describe('Handler tests', () => {
-	describe('User Tests', () => {
+describe("Handler tests", () => {
+	describe("User Tests", () => {
 		beforeEach(() => {
-			console.log('beforeEach');
+			console.log("beforeEach");
 		});
 
-		it('should test absolutely nothing', () => {
+		it("should test absolutely nothing", () => {
 			expect(true).true;
 		});
 	});
@@ -665,21 +660,21 @@ into`UserStore.users`
 ```ts
 const userFixtures: User[] = [
 	{
-		name: 'test1',
-		email: 'test-user+1@panenco.com',
+		name: "test1",
+		email: "test-user+1@panenco.com",
 		id: 0,
-		password: 'password1',
+		password: "password1",
 	},
 	{
-		name: 'test2',
-		email: 'test-user+2@panenco.com',
+		name: "test2",
+		email: "test-user+2@panenco.com",
 		id: 1,
-		password: 'password2',
+		password: "password2",
 	},
 ];
 
-describe('Handler tests', () => {
-	describe('User Tests', () => {
+describe("Handler tests", () => {
+	describe("User Tests", () => {
 		beforeEach(() => {
 			UserStore.users = [...userFixtures]; // Clone the array
 		});
@@ -722,15 +717,15 @@ So putting that all together and adding an assertion to check if the result
 contains a specified user we end up with this:
 
 ```ts
-it('should search users', () => {
+it("should search users", () => {
 	let res: User[];
 	getList(
-		{query: {search: 'test1'} as any} as Request,
-		{json: (val) => (res = val)} as Response,
+		{ query: { search: "test1" } as any } as Request,
+		{ json: (val) => (res = val) } as Response,
 		null as NextFunction
 	);
 
-	expect(res.some((x) => x.name === 'test1')).true;
+	expect(res.some((x) => x.name === "test1")).true;
 });
 ```
 
@@ -746,13 +741,13 @@ Make sure to add meaningful assertions to your tests.
 
 To help you a bit, here is a list of tests I ended up with:
 
-- should get users
-- should search users
-- should get user by id
-- should fail when getting user by unknown id
-- should create user
-- should update user
-- should delete user by id
+-   should get users
+-   should search users
+-   should get user by id
+-   should fail when getting user by unknown id
+-   should create user
+-   should update user
+-   should delete user by id
 
 ## Adding integration tests
 
@@ -775,8 +770,8 @@ returned request.
 // src/tests/integration/user.integration.test.ts
 
 // bootstrapping the server with supertest
-describe('Integration tests', () => {
-	describe('User Tests', () => {
+describe("Integration tests", () => {
+	describe("User Tests", () => {
 		let request: supertest.SuperTest<supertest.Test>;
 		beforeEach(() => {
 			const app = new App();
@@ -788,14 +783,14 @@ describe('Integration tests', () => {
 
 ```ts
 // calling an endpoint
-const {body: createResponse} = await request
+const { body: createResponse } = await request
 	.post(`/api/users`) // post a certain route
 	.send({
-		name: 'test',
-		email: 'test-user+1@panenco.com',
-		password: 'real secret stuff',
+		name: "test",
+		email: "test-user+1@panenco.com",
+		password: "real secret stuff",
 	} as User) // Send a request body
-	.set('x-auth', 'api-key') // Set some header
+	.set("x-auth", "api-key") // Set some header
 	.expect(200); // Here you can already expect a certain status code.
 ```
 
@@ -834,10 +829,7 @@ Create a `.vscode/settings.json` file with the following contents:
 {
 	"mochaExplorer.files": "./src/tests/**/*.test.ts",
 	"mochaExplorer.watch": "./src/tests/**/*.test.ts",
-	"mochaExplorer.nodeArgv": [
-		"--loader",
-		"@swc-node/register/esm"
-	],
+	"mochaExplorer.nodeArgv": ["--loader", "@swc-node/register/esm"],
 	"mochaExplorer.env": {
 		"NODE_ENV": "test",
 		"SWCRC": "true"
@@ -873,82 +865,98 @@ There are 2 ways to run tests in the explorer:
 > working.
 
 ```ts
-it('should get users', () => {
-	let res: User[];
-	getList({query: {}} as Request, {json: (val) => (res = val)} as Response, null as NextFunction);
-
-	expect(res.some((x) => x.name === 'test2')).true;
-});
-
-it('should search users', () => {
+it("should get users", () => {
 	let res: User[];
 	getList(
-		{query: {search: 'test1'} as any} as Request,
-		{json: (val) => (res = val)} as Response,
+		{ query: {} } as Request,
+		{ json: (val) => (res = val) } as Response,
 		null as NextFunction
 	);
 
-	expect(res.some((x) => x.name === 'test1')).true;
+	expect(res.some((x) => x.name === "test2")).true;
 });
 
-it('should get user by id', () => {
+it("should search users", () => {
+	let res: User[];
+	getList(
+		{ query: { search: "test1" } as any } as Request,
+		{ json: (val) => (res = val) } as Response,
+		null as NextFunction
+	);
+
+	expect(res.some((x) => x.name === "test1")).true;
+});
+
+it("should get user by id", () => {
 	let res: User;
-	get({params: {id: '1'} as any} as Request, {json: (val) => (res = val)} as Response, null as NextFunction);
+	get(
+		{ params: { id: "1" } as any } as Request,
+		{ json: (val) => (res = val) } as Response,
+		null as NextFunction
+	);
 
-	expect(res.name).equal('test2');
-	expect(res.email).equal('test-user+2@panenco.com');
+	expect(res.name).equal("test2");
+	expect(res.email).equal("test-user+2@panenco.com");
 });
 
-it('should fail when getting user by unknown id', () => {
+it("should fail when getting user by unknown id", () => {
 	let res: any;
 	get(
-		{params: {id: '999'} as any} as Request,
-		{status: (s) => ({json: (val) => (res = val)})} as Response,
+		{ params: { id: "999" } as any } as Request,
+		{ status: (s) => ({ json: (val) => (res = val) }) } as Response,
 		null as NextFunction
 	);
 
-	expect(res.error).equal('User not found');
+	expect(res.error).equal("User not found");
 });
 
-it('should create user', async () => {
+it("should create user", async () => {
 	let res: User;
 	const body = {
-		email: 'test-user+new@panenco.com',
-		name: 'newUser',
-		password: 'reallysecretstuff',
+		email: "test-user+new@panenco.com",
+		name: "newUser",
+		password: "reallysecretstuff",
 	} as User;
-	await create({body} as Request, {json: (val) => (res = val)} as Response, null as NextFunction);
+	await create(
+		{ body } as Request,
+		{ json: (val) => (res = val) } as Response,
+		null as NextFunction
+	);
 
-	expect(res.name).equal('newUser');
-	expect(res.email).equal('test-user+new@panenco.com');
+	expect(res.name).equal("newUser");
+	expect(res.email).equal("test-user+new@panenco.com");
 	expect(res.password).undefined;
 });
 
-it('should update user', async () => {
-	const res = {locals: {}} as Response;
+it("should update user", async () => {
+	const res = { locals: {} } as Response;
 	const body = {
-		email: 'test-user+updated@panenco.com',
+		email: "test-user+updated@panenco.com",
 	} as User;
 	const id = 0;
-	update({
-		body,
-		params: {id} as any
-	} as Request, res, () => null as NextFunction);
+	update(
+		{
+			body,
+			params: { id } as any,
+		} as Request,
+		res,
+		() => null as NextFunction
+	);
 
 	expect(res.locals.body.email).equal(body.email);
-	expect(res.locals.body.name).equal('test1');
+	expect(res.locals.body.name).equal("test1");
 	expect(UserStore.users.find((x) => x.id === id).email).equal(body.email);
 });
 
-it('should delete user by id', () => {
+it("should delete user by id", () => {
 	const initialCount = UserStore.users.length;
 	let status: number;
 	deleteUser(
-		{params: {id: '1'} as any} as Request,
+		{ params: { id: "1" } as any } as Request,
 		{
 			status: (s) => {
 				status = s;
-				return {end: () => null};
+				return { end: () => null };
 			},
 		} as Response,
 		null as NextFunction
@@ -970,51 +978,59 @@ it('should delete user by id', () => {
 > working.
 
 ```ts
-it('should CRUD users', async () => {
+it("should CRUD users", async () => {
 	// Unauthorized without "api-key"
 	await request.post(`/api/users`).expect(401);
 
 	// Successfully create new user
-	const {body: createResponse} = await request
+	const { body: createResponse } = await request
 		.post(`/api/users`)
 		.send({
-			name: 'test',
-			email: 'test-user+1@panenco.com',
-			password: 'real secret stuff',
+			name: "test",
+			email: "test-user+1@panenco.com",
+			password: "real secret stuff",
 		} as User)
-		.set('x-auth', 'api-key')
+		.set("x-auth", "api-key")
 		.expect(200);
 
 	expect(UserStore.users.some((x) => x.email === createResponse.email)).true;
 
 	// Get the newly created user
-	const {body: getResponse} = await request.get(`/api/users/${createResponse.id}`).expect(200);
-	expect(getResponse.name).equal('test');
+	const { body: getResponse } = await request
+		.get(`/api/users/${createResponse.id}`)
+		.expect(200);
+	expect(getResponse.name).equal("test");
 
 	// Successfully update user
-	const {body: updateResponse} = await request
+	const { body: updateResponse } = await request
 		.patch(`/api/users/${createResponse.id}`)
 		.send({
-			email: 'test-user+updated@panenco.com',
+			email: "test-user+updated@panenco.com",
 		} as User)
 		.expect(200);
 
-	expect(updateResponse.name).equal('test');
-	expect(updateResponse.email).equal('test-user+updated@panenco.com');
+	expect(updateResponse.name).equal("test");
+	expect(updateResponse.email).equal("test-user+updated@panenco.com");
 	expect(updateResponse.password).undefined; // middleware transformed the object to not include the password
 
 	// Get all users
-	const {body: getAllResponse} = await request.get(`/api/users`).expect(200);
+	const { body: getAllResponse } = await request
+		.get(`/api/users`)
+		.expect(200);
 
-	const newUser = getAllResponse.find((x: User) => x.name === getResponse.name);
+	const newUser = getAllResponse.find(
+		(x: User) => x.name === getResponse.name
+	);
 	expect(newUser).not.undefined;
-	expect(newUser.email).equal('test-user+updated@panenco.com');
+	expect(newUser.email).equal("test-user+updated@panenco.com");
 
 	// Delete the newly created user
 	await request.delete(`/api/users/${createResponse.id}`).expect(204);
 
 	// Get all users again after deleted the only user
-	const {body: getNoneResponse} = await request.get(`/api/users`).expect(200);
+	const { body: getNoneResponse } = await request
+		.get(`/api/users`)
+		.expect(200);
 	expect(getNoneResponse.length).equal(0);
 });
 ```
@@ -1055,9 +1071,9 @@ code {path}
 
 In there you can find 3 build directories:
 
-- `cjs`
-- `esm5`
-- `esm2015`
+-   `cjs`
+-   `esm5`
+-   `esm2015`
 
 You need to edit the `TransformOperationExecutor.js` file in all 3 directories.
 
@@ -1071,9 +1087,11 @@ it should be around:
 
 ```js
 let newValue = source ? source : {};
-if (!source &&
+if (
+	!source &&
 	(this.transformationType === TransformationType.PLAIN_TO_CLASS ||
-		this.transformationType === TransformationType.CLASS_TO_CLASS)) {
+		this.transformationType === TransformationType.CLASS_TO_CLASS)
+) {
 	if (isMap) {
 		newValue = new Map();
 	} else if (targetType) {
@@ -1087,7 +1105,7 @@ if (!source &&
 add the following line after it:
 
 ```js
- for (const key of Object.keys(newValue)) {
+for (const key of Object.keys(newValue)) {
 	delete newValue[key];
 }
 ```
@@ -1096,7 +1114,7 @@ So it will look like:
 
 ```js
 if (isMap) {
-// ...
+	// ...
 } else if (targetType) {
 	newValue = new targetType();
 
@@ -1104,7 +1122,7 @@ if (isMap) {
 		delete newValue[key];
 	}
 } else {
-// ...
+	// ...
 }
 ```
 
@@ -1117,6 +1135,7 @@ pnpm patch-commit {path}
 ```
 
 You should find the `pathes` directory in your project root and the following record in the package.json:
+
 ```
 "pnpm": {
 	"patchedDependencies": {
@@ -1125,7 +1144,7 @@ You should find the `pathes` directory in your project root and the following re
 }
 ```
 
-Commit the changes and 
+Commit the changes and
 
 ```shell
 pnpm install
