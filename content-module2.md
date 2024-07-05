@@ -838,11 +838,6 @@ Create a `.vscode/settings.json` file with the following contents:
 }
 ```
 
-For IntelliJ users, you should edit the mocha template configuration to add the
-`--loader tsx` argument.
-
-![mocha template configuration](assets/intellij-mocha.png)
-
 That's all. Now when you navigate to the tests section in vscode you should see
 the 2 suites showing up. If that's not the case you can reload your window.
 
