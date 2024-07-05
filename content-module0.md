@@ -9,7 +9,7 @@ The tools you will need to effectively develop the API
 Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine. This means we write our code in JavaScript/TypeScript.
 
 Node.js should **never** be installed independently on your machine.  
-Instead you should install it through [nvm (node version manager)](https://formulae.brew.sh/formula/nvm).  
+Instead you should install it through [nvm (node version manager)](https://formulae.brew.sh/formula/nvm).
 
 ### NVM
 
@@ -60,9 +60,9 @@ brew install pnpm
 
 Visual Studio Code is our preferred editor for Node.js because it's:
 
-- Performant
-- Customizable
-- Strong JS/TS support
+-   Performant
+-   Customizable
+-   Strong JS/TS support
 
 Install [vscode](https://code.visualstudio.com/)
 
@@ -70,12 +70,11 @@ Install [vscode](https://code.visualstudio.com/)
 
 The following extensions will make your life a lot easier:
 
-- [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker)
-- [Eslint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
-- [Gitlens](https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens)
-- [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-- [Mocha Test Explorer](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-mocha-test-adapter)
-- [Typescript Hero](https://marketplace.visualstudio.com/items?itemName=rbbit.typescript-hero)
+-   [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker)
+-   [Eslint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
+-   [Gitlens](https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens)
+-   [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+-   [Mocha Test Explorer](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-mocha-test-adapter)
 
 If the name of the extension is not clear, you can check it out in the marketplace where they are all well documented.
 

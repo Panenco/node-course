@@ -21,12 +21,12 @@ than others for our purposes.
 
 The most interesting sections are:
 
-- 3 - Node.js Module System (Notes App)
-- 6 - Asynchronous Node.js (Weather App)
-- 7 - Web Servers (Weather App)
-- 9 - Application Deployment (Weather App)
-- 11 - REST APIs and Mongoose (Task App)
-- 13 - Sorting, Pagination, and Filtering (Task App)
+-   3 - Node.js Module System (Notes App)
+-   6 - Asynchronous Node.js (Weather App)
+-   7 - Web Servers (Weather App)
+-   9 - Application Deployment (Weather App)
+-   11 - REST APIs and Mongoose (Task App)
+-   13 - Sorting, Pagination, and Filtering (Task App)
 
 Rather than explicitly watching the entire course up front I would recommend to
 find a section that is of interest whenever something is not clear to you.
@@ -42,19 +42,7 @@ express routing concepts.
 ## Init new node project
 
 1. Create a new directory and open it in vscode
-2. Set the node version to 18 in `.nvmrc` file
-
-```shell
-echo "v18.12.0" > .nvmrc
-```
-
-```shell
-nvm use
-# or
-fnm use
-```
-
-3. Open the terminal and run the following command:
+2. Open the terminal and run the following command:
 
 ```bash
   pnpm init
@@ -68,72 +56,72 @@ fnm use
 
 5. Add files
 
-	- `src/app.js`  
-	  Create a class to initialize a `host` (express app) in the constructor and
-	  add a method to start listening on port 3000.  
-	  That should give you something like this:
+    - `src/app.js`  
+      Create a class to initialize a `host` (express app) in the constructor and
+      add a method to start listening on port 3000.  
+      That should give you something like this:
 
-	  ```js
-	  // src/app.js
-	  import express from 'express';
- 
-	  export class App {
-		constructor() {
-		  // Init server
-		  this.host = express();
-		}
- 
-		listen() {
-		  this.host.listen(3000, () => {
-			console.info(`🚀 http://localhost:3000`);
-			console.info(`========================`);
-		  });
-		}
-	  }
-	  ```
+        ```js
+        // src/app.js
+        import express from "express";
 
-	- `src/server.js`  
-	  This is actually just a simple, almost empty entrypoint that will be
-	  starting initializing the app class.
-	  It should look like this:
+        export class App {
+        	constructor() {
+        		// Init server
+        		this.host = express();
+        	}
 
-	  ```js
-	  // src/server.js
-	  import { App } from './app.js';
- 
-	  const app = new App();
-	  app.listen();
-	  ```
+        	listen() {
+        		this.host.listen(3000, () => {
+        			console.info(`🚀 http://localhost:3000`);
+        			console.info(`========================`);
+        		});
+        	}
+        }
+        ```
 
-	- Running the server  
-	  Add an NPM script in the package.json that runs the server:
+    - `src/server.js`  
+      This is actually just a simple, almost empty entrypoint that will be
+      starting initializing the app class.
+      It should look like this:
 
-	  ```jsonc
-	  // package.json
-	  "scripts": {
-		 "start": "node ./src/server.js"
-	  },
-	  ```
+        ```js
+        // src/server.js
+        import { App } from "./app.js";
 
-	  Now you can run the server by simply executing `pnpm start` from your
-	  terminal.
+        const app = new App();
+        app.listen();
+        ```
 
-	  Since we are using ES6 import (ESM) syntax this won't work and you'll get
-	  an error on
-	  the first import statement when running this. To fix this we need to allow
-	  ES6 syntax by modifying the package.json a bit. Add `type`=`module` as a
-	  property in the package.json.
+    - Running the server  
+      Add an NPM script in the package.json that runs the server:
 
-	  ```jsonc
-	  // package.json
-	  "scripts": {
-		 "start": "node src/server.js"
-	  },
-	  "type": "module",
-	  ```
+        ```jsonc
+        // package.json
+        "scripts": {
+         "start": "node ./src/server.js"
+        },
+        ```
 
-	  Currently this is quite useless though as we don't have any API code to
-	  run yet.
+        Now you can run the server by simply executing `pnpm start` from your
+        terminal.
+
+        Since we are using ES6 import (ESM) syntax this won't work and you'll get
+        an error on
+        the first import statement when running this. To fix this we need to allow
+        ES6 syntax by modifying the package.json a bit. Add `type`=`module` as a
+        property in the package.json.
+
+        ```jsonc
+        // package.json
+        "scripts": {
+         "start": "node src/server.js"
+        },
+        "type": "module",
+        ```
+
+        Currently this is quite useless though as we don't have any API code to
+        run yet.
 
 ## Watch mode
 
@@ -170,8 +158,8 @@ and `next`. Use the response to `send` a "Hello world" string when the route is
 hit.
 
 ```js
-this.host.get('/', (req, res, next) => {
-	res.send('Hello World!');
+this.host.get("/", (req, res, next) => {
+	res.send("Hello World!");
 });
 ```
 
@@ -194,11 +182,11 @@ Let's build sample CRUD endpoints for users.
 Instead of extending app.js infinitely you should create a maintainable
 structure.
 
-- `src/controllers` (holds all routes and handlers)
-	- `src/controllers/users` (or any other
-	  CRUD) - `src/controllers/users/user.route.js` (the route
-	  definition) - `src/controllers/users/handlers` (the handlers, logic to be
-	  executed by the routes)
+-   `src/controllers` (holds all routes and handlers)
+    -   `src/controllers/users` (or any other
+        CRUD) - `src/controllers/users/user.route.js` (the route
+        definition) - `src/controllers/users/handlers` (the handlers, logic to be
+        executed by the routes)
 
 To simply create everything you can run the following commands:
 
@@ -226,11 +214,11 @@ First create the get all users route.
 2. Initialize a root path and new instance of express `Router`
 3. Add a `get` route to the `Router` with the following handler:
 
-   ```js
-   router.get('/', (req, res, next) => {
-     res.send('Get all users');
-   });
-   ```
+    ```js
+    router.get("/", (req, res, next) => {
+    	res.send("Get all users");
+    });
+    ```
 
 4. Now create a handler (exported arrow function) `getList.js` in the handlers
    folder with the same middleware code as previously written in the route.
@@ -240,15 +228,15 @@ As a result you should have something like this:
 
 ```js
 // user.route.js
-import { Router } from 'express';
-import { getList } from './handlers/getList.handler.js';
+import { Router } from "express";
+import { getList } from "./handlers/getList.handler.js";
 
 export class UserRoute {
 	constructor() {
 		this.router = Router();
-		this.path = 'users';
+		this.path = "users";
 
-		this.router.get('/', getList);
+		this.router.get("/", getList);
 	}
 }
 ```
@@ -256,7 +244,7 @@ export class UserRoute {
 ```js
 // handlers/getList.handler.js
 export const getList = async (req, res, next) => {
-	res.send('Get all users');
+	res.send("Get all users");
 };
 ```
 
@@ -276,6 +264,12 @@ response
 
 ```shell
 curl -X GET http://localhost:3000/api/users
+```
+
+When you want to import with .js extension automatically in VSCode you can add this setting to user settings
+
+```
+"javascript.preferences.importModuleSpecifierEnding": "js"
 ```
 
 ### User store
@@ -304,19 +298,23 @@ export class UserStore {
 
 	static find(search = undefined) {
 		return this.users.filter(
-			(user) => !search || Object.values(user).some((value) => value?.toString().includes(search))
+			(user) =>
+				!search ||
+				Object.values(user).some((value) =>
+					value?.toString().includes(search)
+				)
 		);
 	}
 
 	static add(user) {
-		const u = {...user, id: this.users.length};
+		const u = { ...user, id: this.users.length };
 		this.users.push(u);
 		return u;
 	}
 
 	static update(id, input) {
 		const current = this.get(id);
-		const user = {...current, ...input};
+		const user = { ...current, ...input };
 		this.users.splice(
 			this.users.findIndex((x) => x === current),
 			1,
@@ -345,7 +343,7 @@ res.json(users);
 ```
 
 ```js
-const users = UserStore.find('<name>');
+const users = UserStore.find("<name>");
 res.json(users); // returns all users with name containing <name>
 ```
 
@@ -382,14 +380,14 @@ next part (Module 2) we will dive deeper into automated testing using Mocha.
 Lets add a basic user creation endpoint.
 
 1. Add a new handler `create.handler.js` to the handlers folder.
-	- The body will be located on `req.body`
-	- Pass the body to `UserStore.add` to create a new user.
-	- Set the result as a json response.
+    - The body will be located on `req.body`
+    - Pass the body to `UserStore.add` to create a new user.
+    - Set the result as a json response.
 2. Add a new route `post` to the `UserRoute` class that uses this handler.
 
 ```js
 // create.handler.js
-import { UserStore } from './user.store.js';
+import { UserStore } from "./user.store.js";
 
 export const create = async (req, res, next) => {
 	const user = UserStore.add(req.body);
@@ -399,13 +397,13 @@ export const create = async (req, res, next) => {
 
 ```js
 // user.route.js
-this.router.post('/', create);
+this.router.post("/", create);
 ```
 
-When you try out this endpoint with a JSON body now you'll get an error because
+When you try out this endpoint with a JSON body now it will be ignored because
 express doesn't know how to parse the body yet.
 
-Why that happens?
+Why does this happen?
 The framework relies on the `Content-Type` header to determine how to parse the
 body. Since we didn't specify a `Content-Type` header the framework doesn't know
 how to parse the body.
@@ -431,82 +429,82 @@ the rest of the CRUD operations.
    To use queryparams you can use the request in the handler like you would do
    with the body
 
-   `example-api.panenco.com?search=<somevalue>` would translate to
+    `example-api.panenco.com?search=<somevalue>` would translate to
 
-   ```js
-   req.query.search; // = <somevalue>
-   ```
+    ```js
+    req.query.search; // = <somevalue>
+    ```
 
-   The Udemy course has a great explanation on this topic
-   in [Section 8 - 54. The Query String](https://www.udemy.com/course/the-complete-nodejs-developer-course-2/learn/lecture/13729060#overview)
+    The Udemy course has a great explanation on this topic
+    in [Section 8 - 54. The Query String](https://www.udemy.com/course/the-complete-nodejs-developer-course-2/learn/lecture/13729060#overview)
 
 2. Path parameters
    To use path parameters you can use the request in the handler like you would
    do with the body but you need to use the `:` symbol to indicate the parameter
    in the route.
 
-   ```js
-   this.router.get('/:id', get);
-   ```
+    ```js
+    this.router.get("/:id", get);
+    ```
 
-   `example-api.panenco.com/<someId>` would translate to
+    `example-api.panenco.com/<someId>` would translate to
 
-   ```js
-   req.params.id; // = <someId>
-   ```
+    ```js
+    req.params.id; // = <someId>
+    ```
 
 Add the following endpoints:
 
-- `GET /api/users/:id` - get a user by id
-- `PATCH /api/users/:id` - update a user by id
-- `DELETE /api/users/:id` - delete a user by id
+-   `GET /api/users/:id` - get a user by id
+-   `PATCH /api/users/:id` - update a user by id
+-   `DELETE /api/users/:id` - delete a user by id
 
 Once that's working we can add a few small things:
 
-- `GET /api/users/:id`
-  Validate if the user exists. If not return a 404 with a JSON error message.
-- `GET /api/users`
-  Use the search query param to filter the users.
-- `POST /api/users`
-  Validate if the user's name has been provided and if not return a 400 with a
-  JSON error message.
+-   `GET /api/users/:id`
+    Validate if the user exists. If not return a 404 with a JSON error message.
+-   `GET /api/users`
+    Use the search query param to filter the users.
+-   `POST /api/users`
+    Validate if the user's name has been provided and if not return a 400 with a
+    JSON error message.
 
 <details>
 <summary>Spoiler alert > View the result</summary>
 
 ```js
 // user.route.js
-import { Router } from 'express';
+import { Router } from "express";
 
-import { create } from './handlers/create.handler.js';
-import { deleteUser } from './handlers/delete.handler.js';
-import { get } from './handlers/get.handler.js';
-import { getList } from './handlers/getList.handler.js';
-import { update } from './handlers/update.handler.js';
+import { create } from "./handlers/create.handler.js";
+import { deleteUser } from "./handlers/delete.handler.js";
+import { get } from "./handlers/get.handler.js";
+import { getList } from "./handlers/getList.handler.js";
+import { update } from "./handlers/update.handler.js";
 
 export class UserRoute {
 	constructor() {
 		this.router = Router();
-		this.path = 'users';
+		this.path = "users";
 
-		this.router.post('/', create);
-		this.router.get('/', getList);
-		this.router.get('/:id', get);
-		this.router.patch('/:id', update);
-		this.router.delete('/:id', deleteUser);
+		this.router.post("/", create);
+		this.router.get("/", getList);
+		this.router.get("/:id", get);
+		this.router.patch("/:id", update);
+		this.router.delete("/:id", deleteUser);
 	}
 }
 ```
 
 ```js
 // create.handler.js
-import { UserStore } from './user.store.js';
+import { UserStore } from "./user.store.js";
 
 export const create = async (req, res, next) => {
 	if (!req.body.name) {
 		// Set the status of the response and send the error message
 		return res.status(400).json({
-			error: 'name is required',
+			error: "name is required",
 		});
 		// We don't want to continue if the name is missing. So we return here.
 	}
@@ -523,7 +521,7 @@ export const deleteUser = async (req, res, next) => {
 	const user = UserStore.get(req.params.id);
 	// Duplicated in multiple places for now. This will be refactored later.
 	if (!user) {
-		return res.status(404).json({error: "User not found"});
+		return res.status(404).json({ error: "User not found" });
 	}
 	UserStore.delete(req.params.id);
 	res.status(204);
@@ -538,7 +536,7 @@ import { UserStore } from "./user.store.js";
 export const get = async (req, res, next) => {
 	const user = UserStore.get(req.params.id);
 	if (!user) {
-		res.status(404).json({error: "User not found"});
+		res.status(404).json({ error: "User not found" });
 		return;
 	}
 	res.json(user);
@@ -557,12 +555,12 @@ export const getList = async (req, res, next) => {
 
 ```js
 // update.handler.js
-import { UserStore } from './user.store.js';
+import { UserStore } from "./user.store.js";
 
 export const update = async (req, res, next) => {
 	const user = UserStore.get(req.params.id);
 	if (!user) {
-		res.status(404).json({error: 'User not found'});
+		res.status(404).json({ error: "User not found" });
 		return;
 	}
 	const updated = UserStore.update(req.params.id, req.body);
@@ -574,23 +572,23 @@ export const update = async (req, res, next) => {
 
 ## Middleware
 
-Middleware is the absolute core of express. Endpoints consist of mainly only
+Middleware is the absolute core of express. Endpoints consist mostly of a chain of
 middleware.
 For instance:
 
-- `express.json` we added before is middleware that parses the json body for us.
-- Each handler we added is middleware.
+-   `express.json` we added before is middleware that parses the json body for us.
+-   Each handler we added is middleware.
 
 Currently, we only have these, but we can add middleware for whatever we need,
 like authentication, logging, error handling or validation.
 
 Middleware can be applied within a few different scopes:
 
-- General: applied to all endpoints, configured in `App` on the express host
-- Router: applied on all endpoints within a router, configured in
-  the `*.route.js` files on the router instance.
-- Endpoint: applied only to the specified endpoint. Configured when defining the
-  endpoint.
+-   General: applied to all endpoints, configured in `App` on the express host
+-   Router: applied on all endpoints within a router, configured in
+    the `*.route.js` files on the router instance.
+-   Endpoint: applied only to the specified endpoint. Configured when defining the
+    endpoint.
 
 The **order** of middleware is very important.  
 The first middleware that's applied will be the first one that's called. If we
@@ -653,7 +651,7 @@ Code:
 
 ```js
 this.host.use((req, res, next) => {
-	res.status(404).send('No Endpoint found');
+	res.status(404).send("No Endpoint found");
 });
 ```
 
@@ -667,13 +665,13 @@ the endpoint.
 The easiest (not really secure) way to validate access is to check the request
 for a fixed value. Requests can hold headers, like an `x-auth` header.
 
-- Add an arrow function at the top of `user.route.js` with the same arguments as
-  the other middleware, give it the name `adminMiddleware`.
-- In the function body check if the `x-auth` header matches a certain value.
-- If not, send a 401 response with a message.
-- Otherwise call the `next` function
-- Now add the middleware to the post route as a third argument before the
-  handler.
+-   Add an arrow function at the top of `user.route.js` with the same arguments as
+    the other middleware, give it the name `adminMiddleware`.
+-   In the function body check if the `x-auth` header matches a certain value.
+-   If not, send a 401 response with a message.
+-   Otherwise call the `next` function
+-   Now add the middleware to the post route as a third argument before the
+    handler.
 
 That's it, when calling the create user endpoint without the `x-auth` header set
 to your value you should get a 401 response.
@@ -708,17 +706,17 @@ You need to build 2 things:
 
 1. The actual middleware
 
-- Add middleware at the end of the constructor in `App` with the 4th
-  argument `(error, req, res, next)`
-- Set response status to 400 and send the error as json response.
+-   Add middleware at the end of the constructor in `App` with the 4th
+    argument `(error, req, res, next)`
+-   Set response status to 400 and send the error as json response.
 
 2. Add an error to handle
-	- Before we would have sent the error response directly from the handler.
-	  Now we can reuse the error handler
-	- In the create handler you should already have some validation in place. So
-	  you can simply replace `res.status(400).json` with `next` and the error
-	  will be handled by the error middleware.
-	- Make sure to return so the remaining code of your handler is not executed
+    - Before we would have sent the error response directly from the handler.
+      Now we can reuse the error handler
+    - In the create handler you should already have some validation in place. So
+      you can simply replace `res.status(400).json` with `next` and the error
+      will be handled by the error middleware.
+    - Make sure to return so the remaining code of your handler is not executed
 
 ![](assets/error-middleware-required-name.png)
 
@@ -735,7 +733,7 @@ this.host.use((error, req, res, next) => {
 // create.handler.js
 if (!req.body.name) {
 	return next({
-		error: 'name is required',
+		error: "name is required",
 	});
 }
 ```
