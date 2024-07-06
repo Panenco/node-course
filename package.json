@@ -1,0 +1,16 @@
+{
+	"name": "node-course",
+	"type": "module",
+	"packageManager": "pnpm@9.1.0-0+sha256.c557b24d2298d9b5e3be7086ebf55a28253b008324d545f72645a6de89844102",
+	"dependencies": {
+		"find-my-way": "^8.2.0",
+		"sanitize-html": "^2.13.0"
+	},
+	"devDependencies": {
+		"@doichev-kostia/config": "^0.0.1",
+		"@types/node": "^20.12.7",
+		"@types/sanitize-html": "^2.11.0",
+		"tsx": "^4.7.3",
+		"typescript": "^5.4.5"
+	}
+}
