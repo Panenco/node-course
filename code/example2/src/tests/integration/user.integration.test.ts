@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { beforeEach, describe, it } from "mocha";
 import supertest from "supertest";
+import TestAgent from "supertest/lib/agent.js";
 
 import { App } from "../../app.js";
 import {
@@ -10,7 +11,7 @@ import {
 
 describe("Integration tests", () => {
 	describe("User Tests", () => {
-		let request: supertest.SuperTest<supertest.Test>;
+		let request: TestAgent<supertest.Test>;
 		beforeEach(() => {
 			UserStore.users = [];
 			const app = new App();
@@ -30,7 +31,7 @@ describe("Integration tests", () => {
 					email: "test-user+1@panenco.com",
 					password: "real secret stuff",
 				} as User)
-				.set("auth", "api-key")
+				.set("x-auth", "api-key")
 				.expect(200);
 
 			expect(UserStore.users.some((x) => x.email === createResponse.email))
@@ -48,7 +49,6 @@ describe("Integration tests", () => {
 				.send({
 					email: "test-user+updated@panenco.com",
 				} as User)
-				.set("auth", "api-key")
 				.expect(200);
 
 			expect(updateResponse.name).equal("test");
