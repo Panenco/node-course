@@ -8,7 +8,7 @@ export const update = (req: Request, res: Response, next: NextFunction) => {
   if (!user) {
     return res.status(404).json({ error: "User not found" });
   }
-  const updated = UserStore.update(id, req.body);
+  const updated = UserStore.update(id, res.locals.body);
   res.locals.body = updated;
   next();
 };

@@ -243,7 +243,7 @@ export class UserRoute {
 
 ```js
 // handlers/getList.handler.js
-export const getList = async (req, res, next) => {
+export const getList = (req, res, next) => {
 	res.send("Get all users");
 };
 ```
@@ -389,7 +389,7 @@ Lets add a basic user creation endpoint.
 // create.handler.js
 import { UserStore } from "./user.store.js";
 
-export const create = async (req, res, next) => {
+export const create = (req, res, next) => {
 	const user = UserStore.add(req.body);
 	res.json(user);
 };
@@ -500,7 +500,7 @@ export class UserRoute {
 // create.handler.js
 import { UserStore } from "./user.store.js";
 
-export const create = async (req, res, next) => {
+export const create = (req, res, next) => {
 	if (!req.body.name) {
 		// Set the status of the response and send the error message
 		return res.status(400).json({
@@ -517,7 +517,7 @@ export const create = async (req, res, next) => {
 // delete.handler.js
 import { UserStore } from "./user.store.js";
 
-export const deleteUser = async (req, res, next) => {
+export const deleteUser = (req, res, next) => {
 	const user = UserStore.get(req.params.id);
 	// Duplicated in multiple places for now. This will be refactored later.
 	if (!user) {
@@ -533,7 +533,7 @@ export const deleteUser = async (req, res, next) => {
 // get.handler.js
 import { UserStore } from "./user.store.js";
 
-export const get = async (req, res, next) => {
+export const get = (req, res, next) => {
 	const user = UserStore.get(req.params.id);
 	if (!user) {
 		res.status(404).json({ error: "User not found" });
@@ -547,7 +547,7 @@ export const get = async (req, res, next) => {
 // getList.handler.js
 import { UserStore } from "./user.store.js";
 
-export const getList = async (req, res, next) => {
+export const getList = (req, res, next) => {
 	const users = UserStore.find(req.query.search);
 	res.json(users);
 };
@@ -557,7 +557,7 @@ export const getList = async (req, res, next) => {
 // update.handler.js
 import { UserStore } from "./user.store.js";
 
-export const update = async (req, res, next) => {
+export const update = (req, res, next) => {
 	const user = UserStore.get(req.params.id);
 	if (!user) {
 		res.status(404).json({ error: "User not found" });
