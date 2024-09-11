@@ -64,8 +64,7 @@ pnpm add -D typescript @types/node @types/express
 > Your @types/node major version (first number in semver x.x.x) should match
 > your current node version.
 > You can check your node version by running `node -v` in your terminal.
-> So, if you use node 18, you should have "@types/node": "18.x.x".
-> You can use `@types/node@18` to install the correct version for node 18.
+> So, if you use node 18, you should have "@types/node": "18.x.x"
 
 ## Initialize typescript with a tsconfig.json
 
@@ -291,7 +290,7 @@ Debugging your code is a very important aspect when developing web applications.
 It allows you to place breakpoints in your code and stop the code at a certain
 point to look at the value of parameters and other important stuff.
 
-VSCode makes debugging in node very easy. You can start a debugging session by opening a new terminal session of type `javascript debug terminal` and simply running `pnpm xxx` command. This will run the command with a debugger attached
+VSCode makes debugging in node very easy. You can start a debugging session by opening a new terminal session of type `javascript debug terminal` and running simply running `pnpm xxx` command. This will run the command with a debugger attached
 
 ![](assets/js-debug-terminal.png)
 
@@ -314,7 +313,7 @@ with class-transformer as explained in
 their [docs](https://github.com/typestack/class-transformer)
 
 class-validator allows us to validate objects. It does this with the help of
-decorators. More about class-validator specifically in
+decorators. more about class-validator specifically in
 their [docs](https://github.com/typestack/class-validator)
 
 Add the packages
@@ -322,75 +321,6 @@ Add the packages
 ```bash
 pnpm add -D class-transformer class-validator
 ```
-
-### NOTE
-
-class-transformer has a bug that we need to fix first. Create a folder `patches` in the root directory of the project. Inside this folder, create the file `class-transformer@0.5.1.patch`. Inside this file, paste the following content.
-
-<details>
-<summary>class-transformer@0.5.1.patch</summary>
-
-```
-diff --git a/cjs/TransformOperationExecutor.js b/cjs/TransformOperationExecutor.js
-index 2e40fb4fb2b9ba5e95960f2ed76d26e34d389481..74c11050714618de8ac4e7242b485669f480d984 100644
---- a/cjs/TransformOperationExecutor.js
-+++ b/cjs/TransformOperationExecutor.js
-@@ -145,6 +145,10 @@ class TransformOperationExecutor {
-                 }
-                 else if (targetType) {
-                     newValue = new targetType();
-+
-+                    for (const key of Object.keys(newValue)) {
-+                        delete newValue[key];
-+                    }
-                 }
-                 else {
-                     newValue = {};
-diff --git a/esm2015/TransformOperationExecutor.js b/esm2015/TransformOperationExecutor.js
-index d38971615be89e7bebf123291c7b2ce5f1f48cc1..bdc7abaabac3d61d5daad0da2e9a42f43bb521e3 100644
---- a/esm2015/TransformOperationExecutor.js
-+++ b/esm2015/TransformOperationExecutor.js
-@@ -142,6 +142,9 @@ export class TransformOperationExecutor {
-                 }
-                 else if (targetType) {
-                     newValue = new targetType();
-+                    for (const key of Object.keys(newValue)) {
-+                        delete newValue[key];
-+                    }
-                 }
-                 else {
-                     newValue = {};
-diff --git a/esm5/TransformOperationExecutor.js b/esm5/TransformOperationExecutor.js
-index 4ccb83f515f8d9f1b35243fc4d156069361ee64e..47bc409fe414425d0c482fc0ac3043d3afdaa82c 100644
---- a/esm5/TransformOperationExecutor.js
-+++ b/esm5/TransformOperationExecutor.js
-@@ -155,6 +155,10 @@ var TransformOperationExecutor = /** @class */ (function () {
-                 }
-                 else if (targetType) {
-                     newValue = new targetType();
-+
-+                    for (const key of Object.keys(newValue)) {
-+                        delete newValue[key];
-+                    }
-                 }
-                 else {
-                     newValue = {};
-
-```
-
-</details>
-
-In `package.json`, add the following:
-
-```
-"pnpm": {
-	"patchedDependencies": {
-		"class-transformer@0.5.1": "patches/class-transformer@0.5.1.patch"
-	}
-}
-```
-
-Finally, run `pnpm install`.
 
 ## Decorators
 
@@ -422,7 +352,7 @@ And set these to false to make Typescript a bit less strict
 ## Explicit validation
 
 1. First add a UserBody class which we'll use to transform and validate our
-   input when creating a user. Put this in a `src/contracts` folder and name
+   input when creating a user. Put this in a `src/contracts` folder. and name
    the file `user.body.ts`
 
 ```ts
@@ -538,18 +468,18 @@ const patchValidationMiddleware = async (
 	if (validationErrors.length) {
 		return next(validationErrors);
 	}
-	res.locals.body = transformed; // Note the use of res.locals here. Locals is a way to transport data from one middleware to another.
+	req.body = transformed;
 	next();
 };
 ```
 
 ```ts
-const representationMiddleware = (
+const representationMiddleware = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ) => {
-	const transformed = plainToInstance(UserView, res.locals.body);
+	const transformed = plainToInstance(UserView, res.locals.body); // Note the use of res.locals here. Locals is a way to transport data from one middleware to another.
 	res.json(transformed);
 };
 ```
@@ -582,7 +512,7 @@ export const update = (req: Request, res: Response, next: NextFunction) => {
 	if (!user) {
 		return res.status(404).json({ error: "User not found" });
 	}
-	const updated = UserStore.update(id, res.locals.body);
+	const updated = UserStore.update(id, req.body);
 	res.locals.body = updated; // Set the result on the locals object to pass it to the representation middleware.
 	next(); // call next so the representation middleware is actually fired
 };
@@ -844,7 +774,7 @@ returned request.
 // bootstrapping the server with supertest
 describe("Integration tests", () => {
 	describe("User Tests", () => {
-		let request: TestAgent<supertest.Test>;
+		let request: supertest.SuperTest<supertest.Test>;
 		beforeEach(() => {
 			const app = new App();
 			request = supertest(app.host);
@@ -997,7 +927,7 @@ it("should create user", async () => {
 	expect(res.password).undefined;
 });
 
-it("should update user", () => {
+it("should update user", async () => {
 	const res = { locals: {} } as Response;
 	const body = {
 		email: "test-user+updated@panenco.com",
@@ -1106,10 +1036,7 @@ it("should CRUD users", async () => {
 
 </details>
 
-# Dev notes
-
-<details>
-<summary>Dependency patching</summary>
+### Dependency patching
 
 You may notice that some of your tests are failing because the `undefined` value
 is somehow coming through the validator.
@@ -1206,7 +1133,7 @@ After you are done, close that project and run:
 pnpm patch-commit {path}
 ```
 
-You should find the `patches` directory in your project root and the following record in the package.json:
+You should find the `pathes` directory in your project root and the following record in the package.json:
 
 ```
 "pnpm": {
@@ -1221,5 +1148,3 @@ Commit the changes and
 ```shell
 pnpm install
 ```
-
-</details>

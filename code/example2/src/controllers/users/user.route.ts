@@ -11,56 +11,56 @@ import { getList } from './handlers/getList.handler.js';
 import { update } from './handlers/update.handler.js';
 
 const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
-	if (req.header("x-auth") !== "api-key") {
-		return res.status(401).send("Unauthorized");
-	}
-	next();
+  if (req.header("auth") !== "api-key") {
+    return res.status(401).send("Unauthorized");
+  }
+  next();
 };
 const patchValidationMiddleware = async (
-	req: Request,
-	res: Response,
-	next: NextFunction
+  req: Request,
+  res: Response,
+  next: NextFunction
 ) => {
-	const transformed = plainToInstance(UserBody, req.body, {
-		exposeUnsetFields: false,
-	});
-	const validationErrors = await validate(transformed, {
-		skipMissingProperties: true,
-		whitelist: true,
-		forbidNonWhitelisted: true,
-	});
-	if (validationErrors.length) {
-		return next(validationErrors);
-	}
-	res.locals.body = transformed;
-	next();
+  const transformed = plainToInstance(UserBody, req.body, {
+    exposeUnsetFields: false,
+  });
+  const validationErrors = await validate(transformed, {
+    skipMissingProperties: true,
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  });
+  if (validationErrors.length) {
+    return next(validationErrors);
+  }
+  req.body = transformed;
+  next();
 };
-const representationMiddleware = (
-	req: Request,
-	res: Response,
-	next: NextFunction
+const representationMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
 ) => {
-	const transformed = plainToInstance(UserView, res.locals.body);
-	res.json(transformed);
+  const transformed = plainToInstance(UserView, res.locals.body);
+  res.json(transformed);
 };
 
 export class UserRoute {
-	router: Router;
-	path: string;
+  router: Router;
+  path: string;
 
-	constructor() {
-		this.router = Router();
-		this.path = "users";
+  constructor() {
+    this.router = Router();
+    this.path = "users";
 
-		this.router.post("/", adminMiddleware, create);
-		this.router.get("/", getList);
-		this.router.get("/:id", get);
-		this.router.patch(
-			"/:id",
-			patchValidationMiddleware,
-			update,
-			representationMiddleware
-		);
-		this.router.delete("/:id", deleteUser);
-	}
+    this.router.post("/", adminMiddleware, create);
+    this.router.get("/", getList);
+    this.router.get("/:id", get);
+    this.router.patch(
+      "/:id",
+      patchValidationMiddleware,
+      update,
+      representationMiddleware
+    );
+    this.router.delete("/:id", deleteUser);
+  }
 }

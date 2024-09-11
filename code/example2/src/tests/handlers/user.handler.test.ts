@@ -72,7 +72,7 @@ describe("Handler tests", () => {
 
 		it("should create user", async () => {
 			let res: User;
-			const body: Omit<User, "id"> = {
+			const body = {
 				email: "test-user+new@panenco.com",
 				name: "newUser",
 				password: "reallysecretstuff",
@@ -84,18 +84,14 @@ describe("Handler tests", () => {
 			expect(res.password).undefined;
 		});
 
-		it("should update user", () => {
-			const body: Omit<User, "name" | "password" | "id"> = {
+		it("should update user", async () => {
+			const res = {locals: {}} as Response;
+			const body = {
 				email: "test-user+updated@panenco.com",
-			};
-			const res = {
-				locals: {
-					body: body,
-				},
-			} as unknown as Response;
+			} as User;
 			const id = 0;
 			update({
-					body,
+				body,
 				params: {id} as any
 			} as Request, res, () => null as NextFunction);
 

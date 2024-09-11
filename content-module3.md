@@ -921,7 +921,7 @@ authorization technique (e.g. `api-key`).
 Luckily `papi` and `routing-controllers` provide a few utilities to easily
 implement this.
 
-We'll not go into a lot of detail on the basic principles here, but the Udemy
+We'll not go into a lot of detail on the basic principles here, but in the Udemy
 course has a quite extensive explanation on this
 topic: [Section 12: API Authentication and Security (Task App)](https://www.udemy.com/course/the-complete-nodejs-developer-course-2/learn/lecture/13729276#overview)
 
@@ -1302,7 +1302,7 @@ describe("Integration tests", () => {
 
 Manually writing and maintaining API documentation is a horrible task to do.
 Some things will always be incorrect or not up to date. Frontend developers will
-have a terrible experience as they don't have a correct guide on what endpoints
+have a terrible experience as the don't have a correct guide on what endpoints
 there are and what they do.
 
 Luckily it's amazingly easy to generate these docs automatically because of the
@@ -1341,8 +1341,6 @@ add module overrides in package.json to fix a dependency issue with routing cont
 	}
 }
 ```
-
-and run `pnpm install`.
 
 ### Configure swagger-ui in app.ts
 
@@ -1624,7 +1622,7 @@ Adding the database:
     - Database: example  
       ![](assets/table-plus-connection-details.png)
 3. Test and connect
-    - Hit the test button at the bottom, if no error shows up you're good to go
+    - Hit the test button at the bottom, if no error shows up you'r good to go
     - Connect  
       ![](assets/table-plus-connect.png)
 
@@ -1697,7 +1695,7 @@ export default {
 		emit: "ts",
 	},
 	type: "postgresql",
-	entities: [path.join(process.cwd(), "**", "*.entity.ts")],
+	entities: [path.join(process.cwd(), "**", "*.entity.js")],
 	user: config.postgres.user,
 	password: config.postgres.password,
 	dbName: config.postgres.db,
@@ -1707,7 +1705,7 @@ export default {
 } as Options<PostgreSqlDriver>;
 ```
 
-On line 6, you'll notice that a `config` parameter is imported from a `config.js` file, located in the same folder as `orm.config.ts`.
+On line 6, you'll notice that a `config` parameter is imported from a `./config.js` file, located in the same folder as `orm.config.ts`.
 We therefore must create this config file as well:
 
 -   `src/config.ts`
@@ -1732,9 +1730,9 @@ To make this work, install the loader package:
 pnpm add @ljobse/appsettings-loader
 ```
 
-Finally, the actual configuration is stored in the `config.json` file in the project root, so we need to create that as well.
+Finally, the actual configuration is stored in the `./config.json` file, so we need to create that as well.
 
--   `config.json`
+-   `./config.json`
 
 ```json
 {
@@ -1766,7 +1764,7 @@ import { App } from "./app.js";
 ```
 
 The `createConnection` method lives in `app.ts` and initializes MikroORM and
-provides a database connection using the database credentials we save in a
+provides a database connection using the database credentials we safe in a
 config file:
 
 -   `app.ts`
@@ -1874,10 +1872,9 @@ package.json file:
 To create and execute a migration:
 
 1. Make sure your database is up and running: `docker compose up -d`
-2. Install ts-node: `pnpm install ts-node`
-3. Generate the migration: `pnpm mikro-orm-esm migration:create`
-4. Check the migration (`migrations/Migration<id>.js`) on possible errors
-5. Run the pending migrations: `pnpm mikro-orm-esm migration:up`
+2. Generate the migration: `pnpm mikro-orm-esm migration:create`
+3. Check the migration (`migrations/Migration<id>.js`) on possible errors
+4. Run the pending migrations: `pnpm mikro-orm-esm migration:up`
 
 Now that the migration ran, a refresh of your database (`⌘+R` or `ctrl+R`) in
 TablePlus should show you two tables:
@@ -1916,7 +1913,7 @@ them to the database at once.
 To ensure Identity Maps of different EMs don't collide, we need to fork the EM
 for each request. We can use MikroORM's RequestContext for this.
 
--   In `app.ts`'s constructor, before initializing the controllers:
+-   In `app.ts`'s constructor:
 
 ```ts
 this.host.use((req, __, next: NextFunction) => {
@@ -2138,7 +2135,7 @@ For integration tests, not a lot of changes are required:
 ```ts
 describe("Integration tests", () => {
 	describe("User Tests", () => {
-		let request: TestAgent<supertest.Test>;
+		let request: supertest.SuperTest<supertest.Test>;
 		let orm: MikroORM<PostgreSqlDriver>;
 		before(async () => {
 			const app = new App();
