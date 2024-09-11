@@ -11,7 +11,7 @@ import { getList } from './handlers/getList.handler.js';
 import { update } from './handlers/update.handler.js';
 
 const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  if (req.header("auth") !== "api-key") {
+  if (req.header("x-auth") !== "api-key") {
     return res.status(401).send("Unauthorized");
   }
   next();
@@ -32,10 +32,10 @@ const patchValidationMiddleware = async (
   if (validationErrors.length) {
     return next(validationErrors);
   }
-  req.body = transformed;
+  res.locals.body = transformed;
   next();
 };
-const representationMiddleware = async (
+const representationMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction

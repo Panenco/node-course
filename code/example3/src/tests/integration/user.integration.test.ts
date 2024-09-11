@@ -4,13 +4,14 @@ import { StatusCode } from '@panenco/papi';
 import { expect } from 'chai';
 import { beforeEach, describe, it } from 'mocha';
 import supertest from 'supertest';
+import TestAgent from "supertest/lib/agent.js";
 
 import { App } from '../../app.js';
 import { User } from '../../entities/user.entity.js';
 
 describe('Integration tests', () => {
   describe('User Tests', () => {
-    let request: supertest.SuperTest<supertest.Test>;
+    let request: TestAgent<supertest.Test>;
     let orm: MikroORM<PostgreSqlDriver>;
     before(async () => {
       const app = new App();

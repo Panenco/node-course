@@ -72,7 +72,7 @@ describe("Handler tests", () => {
 
 		it("should create user", async () => {
 			let res: User;
-			const body = {
+			const body: Partial<User> = {
 				email: "test-user+new@panenco.com",
 				name: "newUser",
 				password: "reallysecretstuff",
@@ -85,10 +85,10 @@ describe("Handler tests", () => {
 		});
 
 		it("should update user", async () => {
-			const res = {locals: {}} as Response;
-			const body = {
+			const body: Partial<User> = {
 				email: "test-user+updated@panenco.com",
 			} as User;
+			const res = {locals: {body: body}} as unknown as Response;
 			const id = 0;
 			update({
 				body,
