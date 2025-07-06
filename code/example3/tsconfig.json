@@ -1,16 +1,17 @@
 {
 	"compilerOptions": {
-		"target": "esnext",
+		"target": "ES2020",
+		"module": "commonjs",
+		"outDir": "build",
+		"rootDir": "src",
+		"strict": false,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
-		"module": "esnext",
-		"moduleResolution": "nodenext",
-		"resolveJsonModule": true,
-		"allowJs": true,
-		"sourceMap": true,
-		"isolatedModules": true,
-		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
-		"skipLibCheck": true
-	}
+		"resolveJsonModule": true
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "build"]
 }

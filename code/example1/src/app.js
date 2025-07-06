@@ -1,8 +1,8 @@
-import express from 'express';
+const express = require('express');
 
-import { UserRoute } from './controllers/users/user.route.js';
+const { UserRoute } = require('./controllers/users/user.route.js');
 
-export class App {
+class App {
   constructor() {
     // Init server
     this.host = express();
@@ -41,3 +41,5 @@ export class App {
     });
   }
 }
+
+module.exports = { App };

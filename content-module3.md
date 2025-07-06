@@ -371,13 +371,13 @@ import {
 	UseBefore,
 } from "routing-controllers";
 
-import { SearchQuery } from "../../contracts/search.query.js";
-import { UserBody } from "../../contracts/user.body.js";
-import { create } from "./handlers/create.handler.js";
-import { deleteUser } from "./handlers/delete.handler.js";
-import { get } from "./handlers/get.handler.js";
-import { getList } from "./handlers/getList.handler.js";
-import { update } from "./handlers/update.handler.js";
+import { SearchQuery } from "../../contracts/search.query";
+import { UserBody } from "../../contracts/user.body";
+import { create } from "./handlers/create.handler";
+import { deleteUser } from "./handlers/delete.handler";
+import { get } from "./handlers/get.handler";
+import { getList } from "./handlers/getList.handler";
+import { update } from "./handlers/update.handler";
 
 const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
 	if (req.header("x-auth") !== "api-key") {
@@ -426,12 +426,15 @@ export class UserController {
 <summary>create.handler.ts</summary>
 
 ```ts
-import { UserBody } from "../../../contracts/user.body.js";
-import { UserStore } from "./user.store.js";
+import { RequestContext } from "@mikro-orm/core";
+
+import { UserBody } from "../../../contracts/user.body";
+import { User } from "../../../entities/user.entity";
 
 export const create = async (body: UserBody) => {
-	const user = UserStore.add(body);
-
+	const em = RequestContext.getEntityManager();
+	const user = em.create(User, body);
+	await em.persistAndFlush(user);
 	return user;
 };
 ```
@@ -442,10 +445,16 @@ export const create = async (body: UserBody) => {
 <summary>getList.handler.ts</summary>
 
 ```ts
-import { UserStore } from "./user.store.js";
+import { RequestContext } from "@mikro-orm/core";
 
-export const getList = (search: string) => {
-	const users = UserStore.find(search);
+import { User } from "../../../entities/user.entity";
+
+export const getList = async (search?: string) => {
+	const em = RequestContext.getEntityManager();
+	const users = await em.find(
+		User,
+		search ? { name: { $like: `%${search}%` } } : {}
+	);
 	return users;
 };
 ```
@@ -456,13 +465,14 @@ export const getList = (search: string) => {
 <summary>get.handler.ts</summary>
 
 ```ts
+import { RequestContext } from "@mikro-orm/core";
 import { NotFound } from "@panenco/papi";
 
-import { UserStore } from "./user.store.js";
+import { User } from "../../../entities/user.entity";
 
-export const get = (idString: string) => {
-	const id = Number(idString);
-	const user = UserStore.get(id);
+export const get = async (id: string) => {
+	const em = RequestContext.getEntityManager();
+	const user = await em.findOne(User, { id });
 	if (!user) {
 		throw new NotFound("userNotFound", "User not found");
 	}
@@ -476,19 +486,21 @@ export const get = (idString: string) => {
 <summary>update.handler.ts</summary>
 
 ```ts
+import { RequestContext } from "@mikro-orm/core";
 import { NotFound } from "@panenco/papi";
 
-import { UserBody } from "../../../contracts/user.body.js";
-import { UserStore } from "./user.store.js";
+import { UserBody } from "../../../contracts/user.body";
+import { User } from "../../../entities/user.entity";
 
-export const update = (idString: string, body: UserBody) => {
-	const id = Number(idString);
-	const user = UserStore.get(id);
+export const update = async (id: string, body: Partial<UserBody>) => {
+	const em = RequestContext.getEntityManager();
+	const user = await em.findOne(User, { id });
 	if (!user) {
 		throw new NotFound("userNotFound", "User not found");
 	}
-	const updated = UserStore.update(id, { ...user, ...body });
-	return updated;
+	em.assign(user, body);
+	await em.persistAndFlush(user);
+	return user;
 };
 ```
 
@@ -498,17 +510,18 @@ export const update = (idString: string, body: UserBody) => {
 <summary>delete.handler.ts</summary>
 
 ```ts
+import { RequestContext } from "@mikro-orm/core";
 import { NotFound } from "@panenco/papi";
 
-import { UserStore } from "./user.store.js";
+import { User } from "../../../entities/user.entity";
 
-export const deleteUser = (idString: string) => {
-	const id = Number(idString);
-	const user = UserStore.get(id);
+export const deleteUser = async (id: string) => {
+	const em = RequestContext.getEntityManager();
+	const user = await em.findOne(User, { id });
 	if (!user) {
 		throw new NotFound("userNotFound", "User not found");
 	}
-	UserStore.delete(id);
+	await em.removeAndFlush(user);
 };
 ```
 
@@ -710,15 +723,12 @@ Just pass in the arguments you need and get the return value to validate.
 import { expect } from "chai";
 import { beforeEach, describe, it } from "mocha";
 
-import { create } from "../../controllers/users/handlers/create.handler.js";
-import { deleteUser } from "../../controllers/users/handlers/delete.handler.js";
-import { get } from "../../controllers/users/handlers/get.handler.js";
-import { getList } from "../../controllers/users/handlers/getList.handler.js";
-import { update } from "../../controllers/users/handlers/update.handler.js";
-import {
-	User,
-	UserStore,
-} from "../../controllers/users/handlers/user.store.js";
+import { create } from "../../controllers/users/handlers/create.handler";
+import { deleteUser } from "../../controllers/users/handlers/delete.handler";
+import { get } from "../../controllers/users/handlers/get.handler";
+import { getList } from "../../controllers/users/handlers/getList.handler";
+import { update } from "../../controllers/users/handlers/update.handler";
+import { User, UserStore } from "../../controllers/users/handlers/user.store";
 
 const userFixtures: User[] = [
 	{
@@ -827,12 +837,9 @@ import { expect } from "chai";
 import { beforeEach, describe, it } from "mocha";
 import supertest from "supertest";
 
-import { App } from "../../app.js";
-import { UserBody } from "../../contracts/user.body.js";
-import {
-	User,
-	UserStore,
-} from "../../controllers/users/handlers/user.store.js";
+import { App } from "../../app";
+import { UserBody } from "../../contracts/user.body";
+import { User, UserStore } from "../../controllers/users/handlers/user.store";
 
 describe("Integration tests", () => {
 	describe("User Tests", () => {
@@ -1040,9 +1047,9 @@ export class AccessTokenView {
 import { Representer } from "@panenco/papi";
 import { Body, JsonController, Post } from "routing-controllers";
 
-import { AccessTokenView } from "../../contracts/accessToken.view.js";
-import { LoginBody } from "../../contracts/login.body.js";
-import { login } from "./handlers/login.handler.js";
+import { AccessTokenView } from "../../contracts/accessToken.view";
+import { LoginBody } from "../../contracts/login.body";
+import { login } from "./handlers/login.handler";
 
 @JsonController("/auth")
 export class AuthController {
@@ -1062,8 +1069,8 @@ export class AuthController {
 ```ts
 import { createAccessToken, Unauthorized } from "@panenco/papi";
 
-import { LoginBody } from "../../../contracts/login.body.js";
-import { UserStore } from "../../users/handlers/user.store.js";
+import { LoginBody } from "../../../contracts/login.body";
+import { UserStore } from "../../users/handlers/user.store";
 
 export const login = async (body: LoginBody) => {
 	const user = UserStore.getByEmail(body.email);
@@ -1144,14 +1151,14 @@ import {
 	Post,
 } from "routing-controllers";
 
-import { SearchQuery } from "../../contracts/search.query.js";
-import { UserBody } from "../../contracts/user.body.js";
-import { UserView } from "../../contracts/user.view.js";
-import { create } from "./handlers/create.handler.js";
-import { deleteUser } from "./handlers/delete.handler.js";
-import { get } from "./handlers/get.handler.js";
-import { getList } from "./handlers/getList.handler.js";
-import { update } from "./handlers/update.handler.js";
+import { SearchQuery } from "../../contracts/search.query";
+import { UserBody } from "../../contracts/user.body";
+import { UserView } from "../../contracts/user.view";
+import { create } from "./handlers/create.handler";
+import { deleteUser } from "./handlers/delete.handler";
+import { get } from "./handlers/get.handler";
+import { getList } from "./handlers/getList.handler";
+import { update } from "./handlers/update.handler";
 
 @JsonController("/users")
 export class UserController {
@@ -1205,11 +1212,8 @@ import { expect } from "chai";
 import { beforeEach, describe, it } from "mocha";
 import supertest from "supertest";
 
-import { App } from "../../app.js";
-import {
-	User,
-	UserStore,
-} from "../../controllers/users/handlers/user.store.js";
+import { App } from "../../app";
+import { User, UserStore } from "../../controllers/users/handlers/user.store";
 
 describe("Integration tests", () => {
 	describe("User Tests", () => {
@@ -1442,8 +1446,8 @@ import { validationMetadatasToSchemas } from "class-validator-jsonschema";
 import { routingControllersToSpec } from "routing-controllers-openapi";
 import swaggerUi from "swagger-ui-express";
 import { getMetadataStorage } from "class-validator";
-import { UserController } from "./controllers/users/user.controller.js";
-import { AuthController } from "./controllers/auth/auth.controller.js";
+import { UserController } from "./controllers/users/user.controller";
+import { AuthController } from "./controllers/auth/auth.controller";
 
 export class App {
 	host: Application;
@@ -1682,7 +1686,7 @@ import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import * as url from "node:url";
 import path from "node:path";
 
-import config from "./config.js";
+import config from "./config";
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
@@ -1756,7 +1760,7 @@ In `server.ts` we replace the existing code with this asynchronous step and call
 the function:
 
 ```ts
-import { App } from "./app.js";
+import { App } from "./app";
 
 (async () => {
 	const app = new App();
@@ -1773,7 +1777,7 @@ config file:
 
 ```ts
 import { MikroORM, RequestContext } from "@mikro-orm/core";
-import ormConfig from "./orm.config.js";
+import ormConfig from "./orm.config";
 
 export class App {
 	public orm: MikroORM<PostgreSqlDriver>;
@@ -1874,10 +1878,10 @@ package.json file:
 To create and execute a migration:
 
 1. Make sure your database is up and running: `docker compose up -d`
-2. Install ts-node: `pnpm install ts-node`
-3. Generate the migration: `pnpm mikro-orm-esm migration:create`
-4. Check the migration (`migrations/Migration<id>.js`) on possible errors
-5. Run the pending migrations: `pnpm mikro-orm-esm migration:up`
+2. ts-node should already be installed from Module 2
+3. Generate the migration: `pnpm mikro-orm migration:create`
+4. Check the migration (`migrations/Migration<id>.cjs`) on possible errors
+5. Run the pending migrations: `pnpm mikro-orm migration:up`
 
 Now that the migration ran, a refresh of your database (`⌘+R` or `ctrl+R`) in
 TablePlus should show you two tables:
@@ -1894,7 +1898,7 @@ some security measures are in effect:
 -   They are executed in transactions, rolling previous statements back when a
     single SQL statement fails
 -   They are carefully stored and saved, allowing one to trigger a rollback in
-    case something went wrong: `pnpm mikro-orm-esm migration:down`
+    case something went wrong: `pnpm mikro-orm migration:down`
 
 ## Updating the handlers
 
@@ -1947,8 +1951,8 @@ equivalent actions:
 ```ts
 import { RequestContext } from "@mikro-orm/core";
 
-import { UserBody } from "../../../contracts/user.body.js";
-import { User } from "../../../entities/user.entity.js";
+import { UserBody } from "../../../contracts/user.body";
+import { User } from "../../../entities/user.entity";
 
 export const create = async (body: UserBody) => {
 	const em = RequestContext.getEntityManager();
@@ -1967,7 +1971,7 @@ export const create = async (body: UserBody) => {
 ```ts
 import { RequestContext } from "@mikro-orm/core";
 
-import { User } from "../../../entities/user.entity.js";
+import { User } from "../../../entities/user.entity";
 
 export const getList = async (search: string) => {
 	const em = RequestContext.getEntityManager();
@@ -1994,7 +1998,7 @@ export const getList = async (search: string) => {
 import { RequestContext } from "@mikro-orm/core";
 import { NotFound } from "@panenco/papi";
 
-import { User } from "../../../entities/user.entity.js";
+import { User } from "../../../entities/user.entity";
 
 export const get = async (id: string) => {
 	const em = RequestContext.getEntityManager();
@@ -2015,8 +2019,8 @@ export const get = async (id: string) => {
 import { RequestContext } from "@mikro-orm/core";
 import { NotFound } from "@panenco/papi";
 
-import { UserBody } from "../../../contracts/user.body.js";
-import { User } from "../../../entities/user.entity.js";
+import { UserBody } from "../../../contracts/user.body";
+import { User } from "../../../entities/user.entity";
 
 export const update = async (id: string, body: UserBody) => {
 	const em = RequestContext.getEntityManager();
@@ -2040,7 +2044,7 @@ export const update = async (id: string, body: UserBody) => {
 import { RequestContext } from "@mikro-orm/core";
 import { NotFound } from "@panenco/papi";
 
-import { User } from "../../../entities/user.entity.js";
+import { User } from "../../../entities/user.entity";
 
 export const deleteUser = async (id: string) => {
 	const em = RequestContext.getEntityManager();
@@ -2059,8 +2063,8 @@ export const deleteUser = async (id: string) => {
 import { RequestContext } from "@mikro-orm/core";
 import { createAccessToken, Unauthorized } from "@panenco/papi";
 
-import { LoginBody } from "../../../contracts/login.body.js";
-import { User } from "../../../entities/user.entity.js";
+import { LoginBody } from "../../../contracts/login.body";
+import { User } from "../../../entities/user.entity";
 
 export const login = async (body: LoginBody) => {
 	const user = await RequestContext.getEntityManager().findOne(User, {
@@ -2138,8 +2142,9 @@ For integration tests, not a lot of changes are required:
 ```ts
 describe("Integration tests", () => {
 	describe("User Tests", () => {
-		let request: TestAgent<supertest.Test>;
+		let request: any;
 		let orm: MikroORM<PostgreSqlDriver>;
+
 		before(async () => {
 			const app = new App();
 			await app.createConnection();
@@ -2148,10 +2153,8 @@ describe("Integration tests", () => {
 		});
 
 		beforeEach(async () => {
-			await orm.em.execute(
-				`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`
-			);
-			await orm.getMigrator().up();
+			const generator = orm.getSchemaGenerator();
+			await generator.refreshDatabase();
 		});
 		// ...
 	});
@@ -2182,13 +2185,13 @@ import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { expect } from "chai";
 import { before, beforeEach, describe, it } from "mocha";
 
-import { create } from "../../controllers/users/handlers/create.handler.js";
-import { deleteUser } from "../../controllers/users/handlers/delete.handler.js";
-import { get } from "../../controllers/users/handlers/get.handler.js";
-import { getList } from "../../controllers/users/handlers/getList.handler.js";
-import { update } from "../../controllers/users/handlers/update.handler.js";
-import { User } from "../../entities/user.entity.js";
-import ormConfig from "../../orm.config.js";
+import { create } from "../../controllers/users/handlers/create.handler";
+import { deleteUser } from "../../controllers/users/handlers/delete.handler";
+import { get } from "../../controllers/users/handlers/get.handler";
+import { getList } from "../../controllers/users/handlers/getList.handler";
+import { update } from "../../controllers/users/handlers/update.handler";
+import { User } from "../../entities/user.entity";
+import ormConfig from "../../orm.config";
 import { randomUUID } from "node:crypto";
 
 const userFixtures: User[] = [
@@ -2208,15 +2211,15 @@ describe("Handler tests", () => {
 	describe("User Tests", () => {
 		let orm: MikroORM<PostgreSqlDriver>;
 		let users: User[];
+
 		before(async () => {
 			orm = await MikroORM.init(ormConfig);
 		});
 
 		beforeEach(async () => {
-			await orm.em.execute(
-				`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`
-			);
-			await orm.getMigrator().up();
+			const generator = orm.getSchemaGenerator();
+			await generator.refreshDatabase();
+
 			const em = orm.em.fork();
 			users = userFixtures.map((x) => em.create(User, x));
 			await em.persistAndFlush(users);
@@ -2224,7 +2227,7 @@ describe("Handler tests", () => {
 
 		it("should get users", async () => {
 			await RequestContext.createAsync(orm.em.fork(), async () => {
-				const [res, total] = await getList(null);
+				const res = await getList(undefined);
 				expect(res.some((x) => x.name === "test2")).true;
 			});
 		});
@@ -2256,7 +2259,7 @@ describe("Handler tests", () => {
 					email: "test-user+new@panenco.com",
 					name: "newUser",
 					password: "reallysecretstuff",
-				} as User;
+				};
 				const res = await create(body);
 
 				expect(res.name).equal("newUser");
@@ -2268,14 +2271,12 @@ describe("Handler tests", () => {
 			await RequestContext.createAsync(orm.em.fork(), async () => {
 				const body = {
 					email: "test-user+updated@panenco.com",
-				} as User;
+				};
 				const id = users[0].id;
-				const res = await update(id.toString(), body);
+				const res = await update(id, body);
 
 				expect(res.email).equal(body.email);
 				expect(res.name).equal("test1");
-				const foundUser = await orm.em.findOne(User, { id });
-				expect(foundUser.email).equal(body.email);
 			});
 		});
 

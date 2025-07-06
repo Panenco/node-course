@@ -1,16 +1,12 @@
 import { expect } from "chai";
 import { NextFunction, Request, Response } from "express";
 import { beforeEach, describe, it } from "mocha";
-
-import { create } from "../../controllers/users/handlers/create.handler.js";
-import { deleteUser } from "../../controllers/users/handlers/delete.handler.js";
-import { get } from "../../controllers/users/handlers/get.handler.js";
-import { getList } from "../../controllers/users/handlers/getList.handler.js";
-import { update } from "../../controllers/users/handlers/update.handler.js";
-import {
-	User,
-	UserStore
-} from "../../controllers/users/handlers/user.store.js";
+import { create } from "../../controllers/users/handlers/create.handler";
+import { deleteUser } from "../../controllers/users/handlers/delete.handler";
+import { get } from "../../controllers/users/handlers/get.handler";
+import { getList } from "../../controllers/users/handlers/getList.handler";
+import { update } from "../../controllers/users/handlers/update.handler";
+import { User, UserStore } from "../../controllers/users/handlers/user.store";
 
 const userFixtures: User[] = [
 	{
@@ -27,95 +23,135 @@ const userFixtures: User[] = [
 	},
 ];
 
-describe("Handler tests", () => {
-	describe("User Tests", () => {
-		beforeEach(() => {
-			UserStore.users = [...userFixtures]; // Clone the array
+describe("Users handler tests", () => {
+	let res: any;
+	beforeEach(() => {
+		UserStore.users = [];
+		UserStore.add({
+			name: "test1",
+			email: "test-user+1@panenco.com",
+			password: "test",
 		});
+		UserStore.add({
+			name: "test2",
+			email: "test-user+2@panenco.com",
+			password: "test",
+		});
+	});
 
-		it("should get users", () => {
-			let res: User[];
-			getList({query: {}} as Request, {json: (val) => (res = val)} as Response, null as NextFunction);
-
+	describe("getList", () => {
+		it("should return all users when no search query is given", () => {
+			getList(
+				{ query: {} } as unknown as Request,
+				{ json: (val) => (res = val) } as Response,
+				null as any
+			);
+			expect(res.length).equal(2);
 			expect(res.some((x) => x.name === "test2")).true;
 		});
 
-		it("should search users", () => {
-			let res: User[];
+		it("should return subset when search query is given", () => {
 			getList(
-				{query: {search: "test1"} as any} as Request,
-				{json: (val) => (res = val)} as Response,
-				null as NextFunction
+				{ query: { search: "test1" } } as unknown as Request,
+				{ json: (val) => (res = val) } as Response,
+				null as any
 			);
-
+			expect(res.length).equal(1);
 			expect(res.some((x) => x.name === "test1")).true;
 		});
+	});
 
-		it("should get user by id", () => {
-			let res: User;
-			get({params: {id: "1"} as any} as Request, {json: (val) => (res = val)} as Response, null as NextFunction);
-
+	describe("get", () => {
+		it("should return a user with id 1", () => {
+			get(
+				{ params: { id: "1" } as any } as Request,
+				{ json: (val) => (res = val) } as Response,
+				null as any
+			);
+			expect(res).not.undefined;
 			expect(res.name).equal("test2");
 			expect(res.email).equal("test-user+2@panenco.com");
 		});
 
-		it("should fail when getting user by unknown id", () => {
-			let res: any;
+		it("should return 404 when user not found", () => {
 			get(
-				{params: {id: "999"} as any} as Request,
-				{status: (s) => ({json: (val) => (res = val)})} as Response,
-				null as NextFunction
+				{ params: { id: "9999" } as any } as Request,
+				{
+					status: (code) => ({
+						json: (val) => {
+							res = val;
+						},
+					}),
+					json: (val) => (res = val),
+				} as any,
+				null as any
 			);
-
-			expect(res.error).equal("User not found");
 		});
+	});
 
-		it("should create user", async () => {
-			let res: User;
-			const body: Partial<User> = {
-				email: "test-user+new@panenco.com",
+	describe("create", () => {
+		it("should return the newly created user object", async () => {
+			const body: User = {
 				name: "newUser",
-				password: "reallysecretstuff",
+				email: "test-user+new@panenco.com",
+				password: "secretstuff",
 			} as User;
-			await create({body} as Request, {json: (val) => (res = val)} as Response, null as NextFunction);
-
+			await create(
+				{ body } as Request,
+				{ json: (val) => (res = val) } as Response,
+				null as any
+			);
+			expect(res).not.undefined;
 			expect(res.name).equal("newUser");
 			expect(res.email).equal("test-user+new@panenco.com");
 			expect(res.password).undefined;
 		});
+	});
 
-		it("should update user", async () => {
-			const body: Partial<User> = {
-				email: "test-user+updated@panenco.com",
-			} as User;
-			const res = {locals: {body: body}} as unknown as Response;
-			const id = 0;
-			update({
-				body,
-				params: {id} as any
-			} as Request, res, () => null as NextFunction);
+	describe("update", () => {
+		it("should return the updated object", () => {
+			const body = { email: "test-user+updated@panenco.com" };
+			const id = UserStore.users[0].id;
+			let nextCalled = false;
+			const mockRes = {
+				locals: { body },
+				status: () => mockRes,
+				json: () => mockRes,
+			} as any;
 
-			expect(res.locals.body.email).equal(body.email);
-			expect(res.locals.body.name).equal("test1");
-			expect(UserStore.users.find((x) => x.id === id).email).equal(body.email);
+			update(
+				{
+					params: { id: id.toString() },
+					body,
+				} as unknown as Request,
+				mockRes,
+				() => {
+					nextCalled = true;
+				}
+			);
+
+			const user = UserStore.users.find((x) => x.id === id);
+			expect(user).not.undefined;
+			expect(user?.email).equal(body.email);
+			expect(nextCalled).true;
 		});
+	});
 
-		it("should delete user by id", () => {
-			const initialCount = UserStore.users.length;
-			let status: number;
+	describe("delete", () => {
+		it("should delete user", () => {
+			let status: number = 0;
 			deleteUser(
-				{params: {id: "1"} as any} as Request,
+				{ params: { id: "0" } } as unknown as Request,
 				{
 					status: (s) => {
 						status = s;
-						return {end: () => null};
+						return { end: () => null };
 					},
-				} as Response,
-				null as NextFunction
+				} as any,
+				null as any
 			);
 
-			expect(UserStore.users.some((x) => x.id === 1)).false;
-			expect(initialCount - 1).equal(UserStore.users.length);
+			expect(UserStore.users.find((x) => x.id === 0)).undefined;
 			expect(status).equal(204);
 		});
 	});

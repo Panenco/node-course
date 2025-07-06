@@ -1,4 +1,4 @@
-export class UserStore {
+class UserStore {
   static users = [];
 
   static get(id) {
@@ -39,3 +39,5 @@ export class UserStore {
     );
   }
 }
+
+module.exports = { UserStore };

@@ -76,19 +76,20 @@ touch tsconfig.json
 ```jsonc
 {
 	"compilerOptions": {
-		"target": "esnext",
+		"target": "ES2020",
+		"module": "commonjs",
+		"outDir": "build",
+		"rootDir": "src",
+		"strict": false,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
-		"module": "nodenext",
-		"moduleResolution": "nodenext",
-		"allowJs": true,
-		"sourceMap": true,
-		"isolatedModules": true,
-		"allowSyntheticDefaultImports": true,
-		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
-		"skipLibCheck": true
-	}
+		"resolveJsonModule": true
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "build", "src/tests"]
 }
 ```
 
@@ -97,47 +98,15 @@ touch tsconfig.json
 TypeScript is not the first-class citizen in Node.js.
 The Node.js runtime only expects JavaScript.
 Consequently, we need to transpile the TypeScript code to JavaScript.
-This can be done via SWC (Speedy Web Compiler)
-
-We are using some specific versions for SWC to make sure the other configuration here keeps working.
+We'll use the standard TypeScript compiler (tsc) and ts-node for development.
 
 Installation
 
 ```shell
-pnpm add -D  @swc/cli@0.1.62 @swc/core@1.3.79 @swc/helpers@0.5.1  @swc-node/register@1.6.7 chokidar
+pnpm add -D ts-node
 ```
 
-## Configure swc
-
-create a `.swcrc` file in the root of the project with the following content
-
-```json
-{
-	"$schema": "https://json.schemastore.org/swcrc",
-	"jsc": {
-		"parser": {
-			"syntax": "typescript",
-			"decorators": true
-		},
-		"target": "es2022",
-		"loose": false,
-		"minify": {
-			"compress": false,
-			"mangle": false
-		},
-		"transform": {
-			"legacyDecorator": true,
-			"decoratorMetadata": true
-		}
-	},
-	"module": {
-		"type": "es6"
-	},
-	"minify": false,
-	"isModule": true,
-	"sourceMaps": true
-}
-```
+Note: `typescript` should already be installed from the previous step.
 
 ## Convert all files to .ts extension
 
@@ -158,12 +127,12 @@ other files.
 <summary>user.store.ts</summary>
 
 ```ts
-export type User = {
+export interface User {
 	id: number;
 	name: string;
 	email: string;
 	password: string;
-};
+}
 
 export class UserStore {
 	static users: User[] = [];
@@ -233,22 +202,31 @@ Example of converted handler:
 
 ```ts
 // controllers/users/handlers/create.handler.ts
+import { plainToInstance } from "class-transformer";
+import { validate } from "class-validator";
 import { NextFunction, Request, Response } from "express";
 
-import { UserStore } from "./user.store.js";
+import { UserBody } from "../../../contracts/user.body";
+import { UserView } from "../../../contracts/user.view";
+import { UserStore } from "./user.store";
 
 export const create = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ) => {
-	if (!req.body.name) {
-		return res.status(400).json({
-			error: "name is required",
-		});
+	const transformed = plainToInstance(UserBody, req.body);
+	const validationErrors = await validate(transformed, {
+		skipMissingProperties: false,
+		whitelist: true,
+		forbidNonWhitelisted: true,
+	});
+	if (validationErrors.length) {
+		return next(validationErrors);
 	}
-	const user = UserStore.add(req.body);
-	res.json(user);
+	const user = UserStore.add(transformed);
+
+	res.json(plainToInstance(UserView, user));
 };
 ```
 
@@ -257,32 +235,38 @@ This is exposed by express as `Application`.
 
 ## Adjust scripts in package.json
 
-```shell
-pnpm add -D concurrently
-```
-
 ```jsonc
 // package.json
 "scripts": {
-	"build": "swc src --out-dir build",
+	"build": "tsc",
 	"build:clean": "rm -rf build && pnpm run build",
-	"watch": "swc src -d build --watch",
 	"start": "node build/server.js",
-	"dev": "concurrently 'pnpm run watch' 'node --watch build/server.js'",
-	"test": "SWCRC=true NODE_OPTIONS='--loader @swc-node/register/esm' mocha ./src/tests/**/*.test.ts"
+	"dev": "ts-node src/server.ts",
+	"test": "mocha -r ts-node/register ./src/tests/**/*.test.ts"
 },
 ```
 
 Start the server in the `dev` mode to see if everything is OK. At this point,
-you probably won't
-have fixed everything yet. Go through the errors the compiler shows and fix them
+you probably won't have fixed everything yet. Go through the errors the compiler shows and fix them
 one by one until your server is working again.
 
 Make sure all files are renamed to .ts extension,
 event `server.js`, `app.js`,...
 
+**Important**: When using `ts-node` for development, remove the `.js` extensions from your import statements in TypeScript files. For example:
+
+-   Change `import { App } from "./app.js";` to `import { App } from "./app";`
+-   This is because `ts-node` resolves TypeScript files directly
+
 ```bash
 pnpm dev
+```
+
+For production builds, you can use:
+
+```bash
+pnpm build
+pnpm start
 ```
 
 ## VSCode debugger
@@ -433,7 +417,7 @@ import { IsEmail, IsString, Length } from "class-validator";
 
 // For safety we'll exclude everything from being transformed by placing a @Exclude() decorator on the class declaration
 @Exclude()
-export class UserBody {
+class UserBody {
 	// We can expose the properties we want included one by one
 	@Expose()
 	@IsString()
@@ -449,21 +433,27 @@ export class UserBody {
 	@Length(8)
 	public password: string;
 }
+
+export { UserBody };
 ```
 
-2. Now add some code to `create.handler.ts` to transform and validate the input
-   body
+2. The validation and transformation is already integrated in the `create.handler.ts`
+   example above. The key parts are:
 
 ```ts
-// transform the plain object to an instance of our UserBody class using the plainToInstance function from the class-transformer package
+// Import the required functions
+import { plainToInstance } from "class-transformer";
+import { validate } from "class-validator";
+
+// Transform the plain object to an instance of our UserBody class
 const transformed = plainToInstance(UserBody, req.body);
-// now validate the transformed object and retrieve possible errors
+// Validate the transformed object and retrieve possible errors
 const validationErrors = await validate(transformed, {
 	skipMissingProperties: false,
 	whitelist: true,
 	forbidNonWhitelisted: true,
 });
-// if errors were found pass them to the express NextFunction and express will skip any remaining non-error handling middleware and output these errors as the response.
+// If errors were found, pass them to the express NextFunction
 if (validationErrors.length) {
 	return next(validationErrors);
 }
@@ -487,7 +477,7 @@ import { Exclude, Expose } from "class-transformer";
 import { IsEmail, IsNumber, IsString } from "class-validator";
 
 @Exclude()
-export class UserView {
+class UserView {
 	// If we want to exclude this id property for example we can just omit it from the class or explicitly place a @Exclude() decorator on the property.
 	@Expose()
 	@IsNumber()
@@ -501,95 +491,71 @@ export class UserView {
 	@IsEmail()
 	public email: string;
 }
+
+export { UserView };
 ```
 
-2. Now replace the last line in `create.handler.ts` to transform the user object
+2. The representation is already integrated in the `create.handler.ts` example above:
 
 ```ts
+// Transform the user object before sending the response
 res.json(plainToInstance(UserView, user));
 ```
 
-## View/Body Middleware
+## Update handler with validation
 
-Off course to make our code reusable and clean you don't want to put the logic
-above in each handler where it would be needed. We can make use of express
-middleware again to separate this. This is still a very simplistic approach as
-the `UserBody` and `UserView` are hardcoded into the middleware. eventually
-we'll make this more flexible as we go.
+For the update handler, you'll want to apply the same validation and transformation
+pattern as the create handler. The main difference is that for updates, you typically
+want to allow partial data (not all fields are required).
 
-1. Add these functions to `user.route.ts`
+Here's how to implement the update handler with validation:
 
 ```ts
-const patchValidationMiddleware = async (
+// update.handler.ts
+import { plainToInstance } from "class-transformer";
+import { validate } from "class-validator";
+import { NextFunction, Request, Response } from "express";
+
+import { UserBody } from "../../../contracts/user.body";
+import { UserView } from "../../../contracts/user.view";
+import { UserStore } from "./user.store";
+
+export const update = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ) => {
 	const transformed = plainToInstance(UserBody, req.body, {
-		// undefined properties not taken into account
-		exposeUnsetFields: false,
+		exposeUnsetFields: false, // Don't include undefined properties
 	});
 	const validationErrors = await validate(transformed, {
-		// missing properties not validated -> we wouldn't want this when creating an entity for example
-		skipMissingProperties: true,
+		skipMissingProperties: true, // Allow partial updates
 		whitelist: true,
 		forbidNonWhitelisted: true,
 	});
 	if (validationErrors.length) {
 		return next(validationErrors);
 	}
-	res.locals.body = transformed; // Note the use of res.locals here. Locals is a way to transport data from one middleware to another.
-	next();
-};
-```
 
-```ts
-const representationMiddleware = (
-	req: Request,
-	res: Response,
-	next: NextFunction
-) => {
-	const transformed = plainToInstance(UserView, res.locals.body);
-	res.json(transformed);
-};
-```
-
-2. Apply it to the patch user route
-
-```ts
-this.router.patch(
-	"/:id",
-	// first transform and validate
-	patchValidationMiddleware,
-	// handle actual logic
-	update,
-	// finally transform the output
-	representationMiddleware
-);
-```
-
-3. Update the handler
-
-```ts
-// update.handler.ts
-import { NextFunction, Request, Response } from "express";
-
-import { UserStore } from "./user.store.js";
-
-export const update = (req: Request, res: Response, next: NextFunction) => {
-	const id = Number(req.params.id);
+	const id = parseInt(req.params.id);
 	const user = UserStore.get(id);
 	if (!user) {
 		return res.status(404).json({ error: "User not found" });
 	}
-	const updated = UserStore.update(id, res.locals.body);
-	res.locals.body = updated; // Set the result on the locals object to pass it to the representation middleware.
-	next(); // call next so the representation middleware is actually fired
+	const updated = UserStore.update(id, { ...user, ...transformed });
+
+	res.json(plainToInstance(UserView, updated));
 };
 ```
 
-4. Try it out by using the PATCH `/api/users/:id` endpoint with both a valid and
-   an invalid JSON body.
+Add this to your user route:
+
+```ts
+this.router.patch("/:id", update);
+```
+
+Try it out by using the PATCH `/api/users/:id` endpoint with both a valid and
+an invalid JSON body.
 
 # Automated Testing
 
@@ -659,7 +625,7 @@ pnpm add -D mocha @types/mocha
 
 ```jsonc
 // package.json
-"test": "SWCRC=true NODE_OPTIONS='--loader @swc-node/register/esm' mocha ./src/tests/**/*.test.ts"
+"test": "mocha -r ts-node/register ./src/tests/**/*.test.ts"
 
 ```
 
@@ -745,10 +711,19 @@ const userFixtures: User[] = [
 	},
 ];
 
-describe("Handler tests", () => {
-	describe("User Tests", () => {
-		beforeEach(() => {
-			UserStore.users = [...userFixtures]; // Clone the array
+describe("Users handler tests", () => {
+	let res: any;
+	beforeEach(() => {
+		UserStore.users = [];
+		UserStore.add({
+			name: "test1",
+			email: "test-user+1@panenco.com",
+			password: "test",
+		});
+		UserStore.add({
+			name: "test2",
+			email: "test-user+2@panenco.com",
+			password: "test",
 		});
 	});
 });
@@ -790,13 +765,12 @@ contains a specified user we end up with this:
 
 ```ts
 it("should search users", () => {
-	let res: User[];
 	getList(
-		{ query: { search: "test1" } as any } as Request,
+		{ query: { search: "test1" } } as unknown as Request,
 		{ json: (val) => (res = val) } as Response,
-		null as NextFunction
+		null as any
 	);
-
+	expect(res.length).equal(1);
 	expect(res.some((x) => x.name === "test1")).true;
 });
 ```
@@ -844,8 +818,9 @@ returned request.
 // bootstrapping the server with supertest
 describe("Integration tests", () => {
 	describe("User Tests", () => {
-		let request: TestAgent<supertest.Test>;
+		let request: any;
 		beforeEach(() => {
+			UserStore.users = [];
 			const app = new App();
 			request = supertest(app.host);
 		});
@@ -899,12 +874,10 @@ Create a `.vscode/settings.json` file with the following contents:
 
 ```json
 {
-	"mochaExplorer.files": "./src/tests/**/*.test.ts",
-	"mochaExplorer.watch": "./src/tests/**/*.test.ts",
-	"mochaExplorer.nodeArgv": ["--loader", "@swc-node/register/esm"],
+	"mochaExplorer.files": "src/tests/**/*.test.ts",
+	"mochaExplorer.nodeArgv": ["-r", "ts-node/register"],
 	"mochaExplorer.env": {
-		"NODE_ENV": "test",
-		"SWCRC": "true"
+		"TS_NODE_PROJECT": "./tsconfig.json"
 	},
 	"testExplorer.mergeSuites": true,
 	"mochaExplorer.timeout": 200000,
@@ -997,23 +970,23 @@ it("should create user", async () => {
 	expect(res.password).undefined;
 });
 
-it("should update user", () => {
-	const res = { locals: {} } as Response;
+it("should update user", async () => {
+	let res: User;
 	const body = {
 		email: "test-user+updated@panenco.com",
 	} as User;
 	const id = 0;
-	update(
+	await update(
 		{
 			body,
 			params: { id } as any,
 		} as Request,
-		res,
-		() => null as NextFunction
+		{ json: (val) => (res = val) } as Response,
+		null as NextFunction
 	);
 
-	expect(res.locals.body.email).equal(body.email);
-	expect(res.locals.body.name).equal("test1");
+	expect(res.email).equal(body.email);
+	expect(res.name).equal("test1");
 	expect(UserStore.users.find((x) => x.id === id).email).equal(body.email);
 });
 

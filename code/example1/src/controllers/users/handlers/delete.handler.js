@@ -1,6 +1,6 @@
-import { UserStore } from './user.store.js';
+const { UserStore } = require('./user.store.js');
 
-export const deleteUser = async (req, res, next) => {
+const deleteUser = async (req, res, next) => {
   const user = UserStore.get(req.params.id);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
@@ -8,3 +8,5 @@ export const deleteUser = async (req, res, next) => {
   UserStore.delete(req.params.id);
   res.status(204);
 };
+
+module.exports = { deleteUser };

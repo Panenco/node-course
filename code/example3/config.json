@@ -1,10 +1,11 @@
 {
-  "port": 3000,
-  "postgres": {
-    "db": "example",
-    "host": "localhost",
-    "password": "root",
-    "port": 5432,
-    "user": "root"
-  }
+	"port": 3000,
+	"jwtSecret": "jwtSecretFromConfigHere",
+	"postgres": {
+		"db": "example",
+		"host": "localhost",
+		"password": "root",
+		"port": 5432,
+		"user": "root"
+	}
 }

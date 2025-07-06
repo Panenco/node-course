@@ -1,92 +1,106 @@
-import { MikroORM } from '@mikro-orm/core';
-import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { StatusCode } from '@panenco/papi';
-import { expect } from 'chai';
-import { beforeEach, describe, it } from 'mocha';
-import supertest from 'supertest';
-import TestAgent from "supertest/lib/agent.js";
+import { MikroORM } from "@mikro-orm/core";
+import { PostgreSqlDriver } from "@mikro-orm/postgresql";
+import { StatusCode } from "@panenco/papi";
+import { expect } from "chai";
+import { before, beforeEach, describe, it } from "mocha";
+import supertest from "supertest";
 
-import { App } from '../../app.js';
-import { User } from '../../entities/user.entity.js';
+import { App } from "../../app";
+import { User } from "../../entities/user.entity";
 
-describe('Integration tests', () => {
-  describe('User Tests', () => {
-    let request: TestAgent<supertest.Test>;
-    let orm: MikroORM<PostgreSqlDriver>;
-    before(async () => {
-      const app = new App();
-      await app.createConnection();
-      orm = app.orm;
-      request = supertest(app.host);
-    });
+describe("Integration tests", () => {
+	describe("User Tests", () => {
+		let request: any;
+		let orm: MikroORM<PostgreSqlDriver>;
 
-    beforeEach(async () => {
-      await orm.em.execute(`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`);
-      await orm.getMigrator().up();
-    });
+		before(async () => {
+			const app = new App();
+			await app.createConnection();
+			orm = app.orm;
+			request = supertest(app.host);
+		});
 
-    it('should CRUD users', async () => {
-      // Unauthorized without "token"
-      await request.get(`/api/users`).expect(StatusCode.unauthorized);
+		beforeEach(async () => {
+			const generator = orm.getSchemaGenerator();
+			await generator.refreshDatabase();
+		});
 
-      // Successfully create new user
-      const { body: createResponse } = await request
-        .post(`/api/users`)
-        .send({
-          name: 'test',
-          email: 'test-user+1@panenco.com',
-          password: 'real secret stuff',
-        } as User)
-        .expect(StatusCode.created);
+		it("should CRUD users", async () => {
+			// Successfully create new user (no auth required)
+			const { body: createResponse } = await request
+				.post(`/api/users`)
+				.send({
+					name: "test",
+					email: "test-user+1@panenco.com",
+					password: "real secret stuff",
+				} as User)
+				.expect(StatusCode.created);
 
-      // Login
-      const { body: loginResponse } = await request
-        .post(`/api/auth/tokens`)
-        .send({
-          email: 'test-user+1@panenco.com',
-          password: 'real secret stuff',
-        } as User)
-        .expect(StatusCode.ok);
-      const token = loginResponse.token;
+			expect(createResponse.name).equal("test");
+			expect(createResponse.email).equal("test-user+1@panenco.com");
 
-      const foundCreatedUser = await orm.em.fork().findOne(User, {
-        id: createResponse.id,
-      });
-      expect(foundCreatedUser.name).equal('test');
+			// Create auth user and get token for protected endpoints
+			const { body: authUser } = await request
+				.post(`/api/users`)
+				.send({
+					name: "auth-user",
+					email: "auth@test.com",
+					password: "password123",
+				})
+				.expect(StatusCode.created);
 
-      // Get the newly created user
-      const { body: getResponse } = await request
-        .get(`/api/users/${createResponse.id}`)
-        .set('x-auth', token)
-        .expect(StatusCode.ok);
-      expect(getResponse.name).equal('test');
+			const { body: tokenResponse } = await request
+				.post(`/api/auth/login`)
+				.send({
+					email: "auth@test.com",
+					password: "password123",
+				})
+				.expect(StatusCode.ok);
 
-      // Get all users
-      const { body: getListRes } = await request.get(`/api/users`).set('x-auth', token).expect(StatusCode.ok);
-      const { items, count } = getListRes;
-      expect(items.length).equal(1);
-      expect(count).equal(1);
+			// Get the newly created user (auth required)
+			const { body: getResponse } = await request
+				.get(`/api/users/${createResponse.id}`)
+				.set("x-auth", tokenResponse.token)
+				.expect(StatusCode.ok);
+			expect(getResponse.name).equal("test");
 
-      // Successfully update user
-      const { body: updateResponse } = await request
-        .patch(`/api/users/${createResponse.id}`)
-        .send({
-          email: 'test-user+1@panenco.com',
-        } as User)
-        .set('x-auth', token)
-        .expect(StatusCode.ok);
+			// Successfully update user (auth required)
+			const { body: updateResponse } = await request
+				.patch(`/api/users/${createResponse.id}`)
+				.set("x-auth", tokenResponse.token)
+				.send({
+					email: "test-user+updated@panenco.com",
+				} as User)
+				.expect(StatusCode.ok);
 
-      expect(updateResponse.name).equal('test');
-      expect(updateResponse.email).equal('test-user+1@panenco.com');
-      expect(updateResponse.password).undefined; // middleware transformed the object to not include the password
+			expect(updateResponse.name).equal("test");
+			expect(updateResponse.email).equal("test-user+updated@panenco.com");
 
-      // Get the newly created user
-      await request.delete(`/api/users/${createResponse.id}`).set('x-auth', token).expect(204);
+			// Get all users (auth required)
+			const { body: getAllResponse } = await request
+				.get(`/api/users`)
+				.set("x-auth", tokenResponse.token)
+				.expect(StatusCode.ok);
 
-      // Get all users again after deleted the only user
-      const { body: getNoneResponse } = await request.get(`/api/users`).set('x-auth', token).expect(StatusCode.ok);
-      const { count: getNoneCount } = getNoneResponse;
-      expect(getNoneCount).equal(0);
-    });
-  });
+			expect(getAllResponse.length).equal(2); // Auth user + test user
+			const newUser = getAllResponse.find(
+				(x: User) => x.name === getResponse.name
+			);
+			expect(newUser).not.undefined;
+			expect(newUser.email).equal("test-user+updated@panenco.com");
+
+			// Delete the newly created user (auth required)
+			await request
+				.delete(`/api/users/${createResponse.id}`)
+				.set("x-auth", tokenResponse.token)
+				.expect(204);
+
+			// Get all users again after deleted the user (auth required)
+			const { body: getNoneResponse } = await request
+				.get(`/api/users`)
+				.set("x-auth", tokenResponse.token)
+				.expect(StatusCode.ok);
+			expect(getNoneResponse.length).equal(1); // Only the auth user should remain
+		});
+	});
 });

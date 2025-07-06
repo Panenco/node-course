@@ -1,10 +1,10 @@
-import { Router } from 'express';
+const { Router } = require('express');
 
-import { create } from './handlers/create.handler.js';
-import { deleteUser } from './handlers/delete.handler.js';
-import { get } from './handlers/get.handler.js';
-import { getList } from './handlers/getList.handler.js';
-import { update } from './handlers/update.handler.js';
+const { create } = require('./handlers/create.handler.js');
+const { deleteUser } = require('./handlers/delete.handler.js');
+const { get } = require('./handlers/get.handler.js');
+const { getList } = require('./handlers/getList.handler.js');
+const { update } = require('./handlers/update.handler.js');
 
 const adminMiddleware = (req, res, next) => {
   if (req.header("auth") !== "api-key") {
@@ -12,7 +12,8 @@ const adminMiddleware = (req, res, next) => {
   }
   next();
 };
-export class UserRoute {
+
+class UserRoute {
   constructor() {
     this.router = Router();
     this.path = "users";
@@ -24,3 +25,5 @@ export class UserRoute {
     this.router.delete("/:id", deleteUser);
   }
 }
+
+module.exports = { UserRoute };

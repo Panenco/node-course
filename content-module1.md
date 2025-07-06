@@ -63,9 +63,9 @@ express routing concepts.
 
         ```js
         // src/app.js
-        import express from "express";
+        const express = require("express");
 
-        export class App {
+        class App {
         	constructor() {
         		// Init server
         		this.host = express();
@@ -78,6 +78,8 @@ express routing concepts.
         		});
         	}
         }
+
+        module.exports = { App };
         ```
 
     - `src/server.js`  
@@ -87,7 +89,7 @@ express routing concepts.
 
         ```js
         // src/server.js
-        import { App } from "./app.js";
+        const { App } = require("./app.js");
 
         const app = new App();
         app.listen();
@@ -106,18 +108,15 @@ express routing concepts.
         Now you can run the server by simply executing `pnpm start` from your
         terminal.
 
-        Since we are using ES6 import (ESM) syntax this won't work and you'll get
-        an error on
-        the first import statement when running this. To fix this we need to allow
-        ES6 syntax by modifying the package.json a bit. Add `type`=`module` as a
-        property in the package.json.
+        Since we are using CommonJS require syntax (CJS), this should work directly
+        without any additional configuration. CommonJS is the default module system
+        for Node.js, so our require statements will work out of the box.
 
         ```jsonc
         // package.json
         "scripts": {
          "start": "node src/server.js"
         },
-        "type": "module",
         ```
 
         Currently this is quite useless though as we don't have any API code to
@@ -228,10 +227,10 @@ As a result you should have something like this:
 
 ```js
 // user.route.js
-import { Router } from "express";
-import { getList } from "./handlers/getList.handler.js";
+const { Router } = require("express");
+const { getList } = require("./handlers/getList.handler.js");
 
-export class UserRoute {
+class UserRoute {
 	constructor() {
 		this.router = Router();
 		this.path = "users";
@@ -239,13 +238,17 @@ export class UserRoute {
 		this.router.get("/", getList);
 	}
 }
+
+module.exports = { UserRoute };
 ```
 
 ```js
 // handlers/getList.handler.js
-export const getList = (req, res, next) => {
+const getList = (req, res, next) => {
 	res.send("Get all users");
 };
+
+module.exports = { getList };
 ```
 
 The only thing left is to actually use the route in `app.js`. Currently, it's
@@ -285,7 +288,7 @@ into `src/controllers/users/handlers/user.store.js`
    <summary>Show Code</summary>
 
 ```js
-export class UserStore {
+class UserStore {
 	static users = [];
 
 	static get(id) {
@@ -330,6 +333,8 @@ export class UserStore {
 		);
 	}
 }
+
+module.exports = { UserStore };
 ```
 
 </details>
@@ -387,12 +392,14 @@ Lets add a basic user creation endpoint.
 
 ```js
 // create.handler.js
-import { UserStore } from "./user.store.js";
+const { UserStore } = require("./user.store.js");
 
-export const create = (req, res, next) => {
+const create = (req, res, next) => {
 	const user = UserStore.add(req.body);
 	res.json(user);
 };
+
+module.exports = { create };
 ```
 
 ```js
@@ -474,15 +481,15 @@ Once that's working we can add a few small things:
 
 ```js
 // user.route.js
-import { Router } from "express";
+const { Router } = require("express");
 
-import { create } from "./handlers/create.handler.js";
-import { deleteUser } from "./handlers/delete.handler.js";
-import { get } from "./handlers/get.handler.js";
-import { getList } from "./handlers/getList.handler.js";
-import { update } from "./handlers/update.handler.js";
+const { create } = require("./handlers/create.handler.js");
+const { deleteUser } = require("./handlers/delete.handler.js");
+const { get } = require("./handlers/get.handler.js");
+const { getList } = require("./handlers/getList.handler.js");
+const { update } = require("./handlers/update.handler.js");
 
-export class UserRoute {
+class UserRoute {
 	constructor() {
 		this.router = Router();
 		this.path = "users";
@@ -494,13 +501,15 @@ export class UserRoute {
 		this.router.delete("/:id", deleteUser);
 	}
 }
+
+module.exports = { UserRoute };
 ```
 
 ```js
 // create.handler.js
-import { UserStore } from "./user.store.js";
+const { UserStore } = require("./user.store.js");
 
-export const create = (req, res, next) => {
+const create = (req, res, next) => {
 	if (!req.body.name) {
 		// Set the status of the response and send the error message
 		return res.status(400).json({
@@ -511,13 +520,15 @@ export const create = (req, res, next) => {
 	const user = UserStore.add(req.body);
 	res.json(user);
 };
+
+module.exports = { create };
 ```
 
 ```js
 // delete.handler.js
-import { UserStore } from "./user.store.js";
+const { UserStore } = require("./user.store.js");
 
-export const deleteUser = (req, res, next) => {
+const deleteUser = (req, res, next) => {
 	const user = UserStore.get(req.params.id);
 	// Duplicated in multiple places for now. This will be refactored later.
 	if (!user) {
@@ -527,13 +538,15 @@ export const deleteUser = (req, res, next) => {
 	res.status(204);
 	res.send();
 };
+
+module.exports = { deleteUser };
 ```
 
 ```js
 // get.handler.js
-import { UserStore } from "./user.store.js";
+const { UserStore } = require("./user.store.js");
 
-export const get = (req, res, next) => {
+const get = (req, res, next) => {
 	const user = UserStore.get(req.params.id);
 	if (!user) {
 		res.status(404).json({ error: "User not found" });
@@ -541,23 +554,27 @@ export const get = (req, res, next) => {
 	}
 	res.json(user);
 };
+
+module.exports = { get };
 ```
 
 ```js
 // getList.handler.js
-import { UserStore } from "./user.store.js";
+const { UserStore } = require("./user.store.js");
 
-export const getList = (req, res, next) => {
+const getList = (req, res, next) => {
 	const users = UserStore.find(req.query.search);
 	res.json(users);
 };
+
+module.exports = { getList };
 ```
 
 ```js
 // update.handler.js
-import { UserStore } from "./user.store.js";
+const { UserStore } = require("./user.store.js");
 
-export const update = (req, res, next) => {
+const update = (req, res, next) => {
 	const user = UserStore.get(req.params.id);
 	if (!user) {
 		res.status(404).json({ error: "User not found" });
@@ -566,6 +583,8 @@ export const update = (req, res, next) => {
 	const updated = UserStore.update(req.params.id, req.body);
 	res.json(updated);
 };
+
+module.exports = { update };
 ```
 
 </details>
@@ -663,17 +682,17 @@ For instance if you want to check if the user is authenticated before calling
 the endpoint.
 
 The easiest (not really secure) way to validate access is to check the request
-for a fixed value. Requests can hold headers, like an `x-auth` header.
+for a fixed value. Requests can hold headers, like an `auth` header.
 
 -   Add an arrow function at the top of `user.route.js` with the same arguments as
     the other middleware, give it the name `adminMiddleware`.
--   In the function body check if the `x-auth` header matches a certain value.
+-   In the function body check if the `auth` header matches a certain value.
 -   If not, send a 401 response with a message.
 -   Otherwise call the `next` function
 -   Now add the middleware to the post route as a third argument before the
     handler.
 
-That's it, when calling the create user endpoint without the `x-auth` header set
+That's it, when calling the create user endpoint without the `auth` header set
 to your value you should get a 401 response.
 ![](assets/basic-auth-middleware.png)
 
@@ -681,7 +700,7 @@ Code:
 
 ```js
 const adminMiddleware = (req, res, next) => {
-	if (req.header("x-auth") !== "api-key") {
+	if (req.header("auth") !== "api-key") {
 		return res.status(401).send("Unauthorized");
 	}
 	next();

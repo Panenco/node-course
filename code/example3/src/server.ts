@@ -1,7 +1,7 @@
-import { App } from './app.js';
+import { App } from "./app";
 
 (async () => {
-  const app = new App();
-  await app.createConnection();
-  app.listen();
+	const app = new App();
+	await app.createConnection();
+	app.listen();
 })();

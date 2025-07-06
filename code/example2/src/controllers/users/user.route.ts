@@ -1,66 +1,30 @@
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
-import { NextFunction, Request, Response, Router } from 'express';
+import { NextFunction, Request, Response, Router } from "express";
 
-import { UserBody } from '../../contracts/user.body.js';
-import { UserView } from '../../contracts/user.view.js';
-import { create } from './handlers/create.handler.js';
-import { deleteUser } from './handlers/delete.handler.js';
-import { get } from './handlers/get.handler.js';
-import { getList } from './handlers/getList.handler.js';
-import { update } from './handlers/update.handler.js';
+import { create } from "./handlers/create.handler";
+import { deleteUser } from "./handlers/delete.handler";
+import { get } from "./handlers/get.handler";
+import { getList } from "./handlers/getList.handler";
+import { update } from "./handlers/update.handler";
 
 const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  if (req.header("x-auth") !== "api-key") {
-    return res.status(401).send("Unauthorized");
-  }
-  next();
-};
-const patchValidationMiddleware = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const transformed = plainToInstance(UserBody, req.body, {
-    exposeUnsetFields: false,
-  });
-  const validationErrors = await validate(transformed, {
-    skipMissingProperties: true,
-    whitelist: true,
-    forbidNonWhitelisted: true,
-  });
-  if (validationErrors.length) {
-    return next(validationErrors);
-  }
-  res.locals.body = transformed;
-  next();
-};
-const representationMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const transformed = plainToInstance(UserView, res.locals.body);
-  res.json(transformed);
+	if (req.header("x-auth") !== "api-key") {
+		return res.status(401).send("Unauthorized");
+	}
+	next();
 };
 
 export class UserRoute {
-  router: Router;
-  path: string;
+	router: Router;
+	path: string;
 
-  constructor() {
-    this.router = Router();
-    this.path = "users";
+	constructor() {
+		this.router = Router();
+		this.path = "users";
 
-    this.router.post("/", adminMiddleware, create);
-    this.router.get("/", getList);
-    this.router.get("/:id", get);
-    this.router.patch(
-      "/:id",
-      patchValidationMiddleware,
-      update,
-      representationMiddleware
-    );
-    this.router.delete("/:id", deleteUser);
-  }
+		this.router.post("/", adminMiddleware, create);
+		this.router.get("/", getList);
+		this.router.get("/:id", get);
+		this.router.patch("/:id", update);
+		this.router.delete("/:id", deleteUser);
+	}
 }

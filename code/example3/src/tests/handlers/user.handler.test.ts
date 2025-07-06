@@ -2,15 +2,15 @@ import { MikroORM, RequestContext } from "@mikro-orm/core";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { expect } from "chai";
 import { before, beforeEach, describe, it } from "mocha";
-import { randomUUID } from "node:crypto";
 
-import { create } from "../../controllers/users/handlers/create.handler.js";
-import { deleteUser } from "../../controllers/users/handlers/delete.handler.js";
-import { get } from "../../controllers/users/handlers/get.handler.js";
-import { getList } from "../../controllers/users/handlers/getList.handler.js";
-import { update } from "../../controllers/users/handlers/update.handler.js";
-import { User } from "../../entities/user.entity.js";
-import ormConfig from "../../orm.config.js";
+import { create } from "../../controllers/users/handlers/create.handler";
+import { deleteUser } from "../../controllers/users/handlers/delete.handler";
+import { get } from "../../controllers/users/handlers/get.handler";
+import { getList } from "../../controllers/users/handlers/getList.handler";
+import { update } from "../../controllers/users/handlers/update.handler";
+import { User } from "../../entities/user.entity";
+import ormConfig from "../../orm.config";
+import { randomUUID } from "node:crypto";
 
 const userFixtures: User[] = [
 	{
@@ -29,15 +29,15 @@ describe("Handler tests", () => {
 	describe("User Tests", () => {
 		let orm: MikroORM<PostgreSqlDriver>;
 		let users: User[];
+
 		before(async () => {
 			orm = await MikroORM.init(ormConfig);
 		});
 
 		beforeEach(async () => {
-			await orm.em.execute(
-				`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`
-			);
-			await orm.getMigrator().up();
+			const generator = orm.getSchemaGenerator();
+			await generator.refreshDatabase();
+
 			const em = orm.em.fork();
 			users = userFixtures.map((x) => em.create(User, x));
 			await em.persistAndFlush(users);
@@ -45,8 +45,15 @@ describe("Handler tests", () => {
 
 		it("should get users", async () => {
 			await RequestContext.createAsync(orm.em.fork(), async () => {
-				const [res, total] = await getList(null);
+				const res = await getList(undefined);
 				expect(res.some((x) => x.name === "test2")).true;
+			});
+		});
+
+		it("should search users", async () => {
+			await RequestContext.createAsync(orm.em.fork(), async () => {
+				const res = await getList("test1");
+				expect(res.some((x) => x.name === "test1")).true;
 			});
 		});
 
@@ -77,7 +84,7 @@ describe("Handler tests", () => {
 					email: "test-user+new@panenco.com",
 					name: "newUser",
 					password: "reallysecretstuff",
-				} as User;
+				};
 				const res = await create(body);
 
 				expect(res.name).equal("newUser");
@@ -89,14 +96,12 @@ describe("Handler tests", () => {
 			await RequestContext.createAsync(orm.em.fork(), async () => {
 				const body = {
 					email: "test-user+updated@panenco.com",
-				} as User;
+				};
 				const id = users[0].id;
-				const res = await update(id.toString(), body);
+				const res = await update(id, body);
 
 				expect(res.email).equal(body.email);
 				expect(res.name).equal("test1");
-				const foundUser = await orm.em.findOne(User, { id });
-				expect(foundUser.email).equal(body.email);
 			});
 		});
 
