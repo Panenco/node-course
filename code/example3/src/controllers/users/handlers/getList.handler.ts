@@ -1,12 +1,27 @@
-import { RequestContext } from "@mikro-orm/core";
-
-import { User } from "../../../entities/user.entity";
+import { prisma } from "../../../lib/prisma";
 
 export const getList = async (search?: string) => {
-	const em = RequestContext.getEntityManager();
-	const users = await em.find(
-		User,
-		search ? { name: { $like: `%${search}%` } } : {}
-	);
-	return users;
+	const where = search
+		? {
+				OR: [
+					{
+						name: {
+							contains: search,
+							mode: "insensitive" as const,
+						},
+					},
+					{
+						email: {
+							contains: search,
+							mode: "insensitive" as const,
+						},
+					},
+				],
+		  }
+		: {};
+
+	return prisma.user.findMany({
+		where,
+		orderBy: { createdAt: "desc" },
+	});
 };

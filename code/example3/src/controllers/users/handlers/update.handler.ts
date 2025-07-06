@@ -1,16 +1,26 @@
-import { RequestContext } from "@mikro-orm/core";
+import { prisma } from "../../../lib/prisma";
 import { NotFound } from "@panenco/papi";
-
+import bcrypt from "bcryptjs";
 import { UserBody } from "../../../contracts/user.body";
-import { User } from "../../../entities/user.entity";
 
 export const update = async (id: string, body: Partial<UserBody>) => {
-	const em = RequestContext.getEntityManager();
-	const user = await em.findOne(User, { id });
-	if (!user) {
+	const existingUser = await prisma.user.findUnique({
+		where: { id },
+	});
+
+	if (!existingUser) {
 		throw new NotFound("userNotFound", "User not found");
 	}
-	em.assign(user, body);
-	await em.persistAndFlush(user);
-	return user;
+
+	const updateData: any = {};
+	if (body.name !== undefined) updateData.name = body.name;
+	if (body.email !== undefined) updateData.email = body.email;
+	if (body.password !== undefined) {
+		updateData.password = await bcrypt.hash(body.password, 10);
+	}
+
+	return prisma.user.update({
+		where: { id },
+		data: updateData,
+	});
 };

@@ -1,7 +1,5 @@
 import "express-async-errors";
 
-import { MikroORM, RequestContext } from "@mikro-orm/core";
-import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { errorMiddleware, getAuthenticator } from "@panenco/papi";
 import { validationMetadatasToSchemas } from "class-validator-jsonschema";
 import express, { Application, NextFunction, Request, Response } from "express";
@@ -17,11 +15,10 @@ import swaggerUi from "swagger-ui-express";
 import config from "./config";
 import { AuthController } from "./controllers/auth/auth.controller";
 import { UserController } from "./controllers/users/user.controller";
-import ormConfig from "./orm.config";
+import { prisma } from "./lib/prisma";
 
 export class App {
 	public host: Application;
-	public orm: MikroORM<PostgreSqlDriver>;
 
 	constructor() {
 		// Init server
@@ -44,12 +41,9 @@ export class App {
 
 	public async createConnection() {
 		try {
-			this.orm = await MikroORM.init(ormConfig);
-
-			// Set up RequestContext middleware after ORM is initialized
-			this.host.use((req, __, next: NextFunction) => {
-				RequestContext.create(this.orm.em, next);
-			});
+			// Test database connection
+			await prisma.$connect();
+			console.log("Database connected successfully");
 
 			// Initialize controllers after database connection
 			const controllers = [AuthController, UserController];
@@ -59,6 +53,7 @@ export class App {
 			this.host.use(errorMiddleware);
 		} catch (error) {
 			console.log("Error while connecting to the database", error);
+			process.exit(1);
 		}
 	}
 
@@ -68,6 +63,10 @@ export class App {
 			console.info(`🚀 http://localhost:${port}/docs`);
 			console.info(`================================`);
 		});
+	}
+
+	public async shutdown() {
+		await prisma.$disconnect();
 	}
 
 	private initializeControllers(controllers: Function[]) {

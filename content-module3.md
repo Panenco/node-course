@@ -371,13 +371,13 @@ import {
 	UseBefore,
 } from "routing-controllers";
 
-import { SearchQuery } from "../../contracts/search.query";
-import { UserBody } from "../../contracts/user.body";
-import { create } from "./handlers/create.handler";
-import { deleteUser } from "./handlers/delete.handler";
-import { get } from "./handlers/get.handler";
-import { getList } from "./handlers/getList.handler";
-import { update } from "./handlers/update.handler";
+import { SearchQuery } from "../../contracts/search.query.js";
+import { UserBody } from "../../contracts/user.body.js";
+import { create } from "./handlers/create.handler.js";
+import { deleteUser } from "./handlers/delete.handler.js";
+import { get } from "./handlers/get.handler.js";
+import { getList } from "./handlers/getList.handler.js";
+import { update } from "./handlers/update.handler.js";
 
 const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
 	if (req.header("x-auth") !== "api-key") {
@@ -426,15 +426,12 @@ export class UserController {
 <summary>create.handler.ts</summary>
 
 ```ts
-import { RequestContext } from "@mikro-orm/core";
-
-import { UserBody } from "../../../contracts/user.body";
-import { User } from "../../../entities/user.entity";
+import { UserBody } from "../../../contracts/user.body.js";
+import { UserStore } from "./user.store.js";
 
 export const create = async (body: UserBody) => {
-	const em = RequestContext.getEntityManager();
-	const user = em.create(User, body);
-	await em.persistAndFlush(user);
+	const user = UserStore.add(body);
+
 	return user;
 };
 ```
@@ -445,16 +442,10 @@ export const create = async (body: UserBody) => {
 <summary>getList.handler.ts</summary>
 
 ```ts
-import { RequestContext } from "@mikro-orm/core";
+import { UserStore } from "./user.store.js";
 
-import { User } from "../../../entities/user.entity";
-
-export const getList = async (search?: string) => {
-	const em = RequestContext.getEntityManager();
-	const users = await em.find(
-		User,
-		search ? { name: { $like: `%${search}%` } } : {}
-	);
+export const getList = (search: string) => {
+	const users = UserStore.find(search);
 	return users;
 };
 ```
@@ -465,14 +456,13 @@ export const getList = async (search?: string) => {
 <summary>get.handler.ts</summary>
 
 ```ts
-import { RequestContext } from "@mikro-orm/core";
 import { NotFound } from "@panenco/papi";
 
-import { User } from "../../../entities/user.entity";
+import { UserStore } from "./user.store.js";
 
-export const get = async (id: string) => {
-	const em = RequestContext.getEntityManager();
-	const user = await em.findOne(User, { id });
+export const get = (idString: string) => {
+	const id = Number(idString);
+	const user = UserStore.get(id);
 	if (!user) {
 		throw new NotFound("userNotFound", "User not found");
 	}
@@ -486,21 +476,19 @@ export const get = async (id: string) => {
 <summary>update.handler.ts</summary>
 
 ```ts
-import { RequestContext } from "@mikro-orm/core";
 import { NotFound } from "@panenco/papi";
 
-import { UserBody } from "../../../contracts/user.body";
-import { User } from "../../../entities/user.entity";
+import { UserBody } from "../../../contracts/user.body.js";
+import { UserStore } from "./user.store.js";
 
-export const update = async (id: string, body: Partial<UserBody>) => {
-	const em = RequestContext.getEntityManager();
-	const user = await em.findOne(User, { id });
+export const update = (idString: string, body: UserBody) => {
+	const id = Number(idString);
+	const user = UserStore.get(id);
 	if (!user) {
 		throw new NotFound("userNotFound", "User not found");
 	}
-	em.assign(user, body);
-	await em.persistAndFlush(user);
-	return user;
+	const updated = UserStore.update(id, { ...user, ...body });
+	return updated;
 };
 ```
 
@@ -510,18 +498,17 @@ export const update = async (id: string, body: Partial<UserBody>) => {
 <summary>delete.handler.ts</summary>
 
 ```ts
-import { RequestContext } from "@mikro-orm/core";
 import { NotFound } from "@panenco/papi";
 
-import { User } from "../../../entities/user.entity";
+import { UserStore } from "./user.store.js";
 
-export const deleteUser = async (id: string) => {
-	const em = RequestContext.getEntityManager();
-	const user = await em.findOne(User, { id });
+export const deleteUser = (idString: string) => {
+	const id = Number(idString);
+	const user = UserStore.get(id);
 	if (!user) {
 		throw new NotFound("userNotFound", "User not found");
 	}
-	await em.removeAndFlush(user);
+	UserStore.delete(id);
 };
 ```
 
@@ -723,12 +710,15 @@ Just pass in the arguments you need and get the return value to validate.
 import { expect } from "chai";
 import { beforeEach, describe, it } from "mocha";
 
-import { create } from "../../controllers/users/handlers/create.handler";
-import { deleteUser } from "../../controllers/users/handlers/delete.handler";
-import { get } from "../../controllers/users/handlers/get.handler";
-import { getList } from "../../controllers/users/handlers/getList.handler";
-import { update } from "../../controllers/users/handlers/update.handler";
-import { User, UserStore } from "../../controllers/users/handlers/user.store";
+import { create } from "../../controllers/users/handlers/create.handler.js";
+import { deleteUser } from "../../controllers/users/handlers/delete.handler.js";
+import { get } from "../../controllers/users/handlers/get.handler.js";
+import { getList } from "../../controllers/users/handlers/getList.handler.js";
+import { update } from "../../controllers/users/handlers/update.handler.js";
+import {
+	User,
+	UserStore,
+} from "../../controllers/users/handlers/user.store.js";
 
 const userFixtures: User[] = [
 	{
@@ -837,9 +827,12 @@ import { expect } from "chai";
 import { beforeEach, describe, it } from "mocha";
 import supertest from "supertest";
 
-import { App } from "../../app";
-import { UserBody } from "../../contracts/user.body";
-import { User, UserStore } from "../../controllers/users/handlers/user.store";
+import { App } from "../../app.js";
+import { UserBody } from "../../contracts/user.body.js";
+import {
+	User,
+	UserStore,
+} from "../../controllers/users/handlers/user.store.js";
 
 describe("Integration tests", () => {
 	describe("User Tests", () => {
@@ -1047,9 +1040,9 @@ export class AccessTokenView {
 import { Representer } from "@panenco/papi";
 import { Body, JsonController, Post } from "routing-controllers";
 
-import { AccessTokenView } from "../../contracts/accessToken.view";
-import { LoginBody } from "../../contracts/login.body";
-import { login } from "./handlers/login.handler";
+import { AccessTokenView } from "../../contracts/accessToken.view.js";
+import { LoginBody } from "../../contracts/login.body.js";
+import { login } from "./handlers/login.handler.js";
 
 @JsonController("/auth")
 export class AuthController {
@@ -1069,8 +1062,8 @@ export class AuthController {
 ```ts
 import { createAccessToken, Unauthorized } from "@panenco/papi";
 
-import { LoginBody } from "../../../contracts/login.body";
-import { UserStore } from "../../users/handlers/user.store";
+import { LoginBody } from "../../../contracts/login.body.js";
+import { UserStore } from "../../users/handlers/user.store.js";
 
 export const login = async (body: LoginBody) => {
 	const user = UserStore.getByEmail(body.email);
@@ -1151,14 +1144,14 @@ import {
 	Post,
 } from "routing-controllers";
 
-import { SearchQuery } from "../../contracts/search.query";
-import { UserBody } from "../../contracts/user.body";
-import { UserView } from "../../contracts/user.view";
-import { create } from "./handlers/create.handler";
-import { deleteUser } from "./handlers/delete.handler";
-import { get } from "./handlers/get.handler";
-import { getList } from "./handlers/getList.handler";
-import { update } from "./handlers/update.handler";
+import { SearchQuery } from "../../contracts/search.query.js";
+import { UserBody } from "../../contracts/user.body.js";
+import { UserView } from "../../contracts/user.view.js";
+import { create } from "./handlers/create.handler.js";
+import { deleteUser } from "./handlers/delete.handler.js";
+import { get } from "./handlers/get.handler.js";
+import { getList } from "./handlers/getList.handler.js";
+import { update } from "./handlers/update.handler.js";
 
 @JsonController("/users")
 export class UserController {
@@ -1212,8 +1205,11 @@ import { expect } from "chai";
 import { beforeEach, describe, it } from "mocha";
 import supertest from "supertest";
 
-import { App } from "../../app";
-import { User, UserStore } from "../../controllers/users/handlers/user.store";
+import { App } from "../../app.js";
+import {
+	User,
+	UserStore,
+} from "../../controllers/users/handlers/user.store.js";
 
 describe("Integration tests", () => {
 	describe("User Tests", () => {
@@ -1446,8 +1442,8 @@ import { validationMetadatasToSchemas } from "class-validator-jsonschema";
 import { routingControllersToSpec } from "routing-controllers-openapi";
 import swaggerUi from "swagger-ui-express";
 import { getMetadataStorage } from "class-validator";
-import { UserController } from "./controllers/users/user.controller";
-import { AuthController } from "./controllers/auth/auth.controller";
+import { UserController } from "./controllers/users/user.controller.js";
+import { AuthController } from "./controllers/auth/auth.controller.js";
 
 export class App {
 	host: Application;
@@ -1531,7 +1527,7 @@ export class App {
 
 </details>
 
-# Postgres
+# Database
 
 ## Intro
 
@@ -1635,7 +1631,7 @@ Adding the database:
 Naturally, there is not a lot to see here yet because we haven't created any
 tables or data yet. We'll do that next.
 
-# MikroORM
+# Prisma
 
 With our CRUD routes and database in place it is now time to migrate our
 handlers from using the in-memory store to functions modifying and reading our
@@ -1655,94 +1651,80 @@ this [stack overflow explanation](https://stackoverflow.com/a/1279678).
 
 Each ORM comes with its own superset of functionalities and
 advantages/disadvantages. While carefully following up on the newest industry
-trends, we choose to use [Mikro-orm](https://mikro-orm.io/).
+trends, we choose to use [Prisma](https://www.prisma.io/).
 
-MikroORM is an actively maintained TypeScript ORM coming with clever performance
-optimizations and many useful tools out of the box.
+Prisma is a modern TypeScript ORM with an intuitive data model, automated migrations, type-safety, and auto-completion.
 
-## Bootstrap MikroORM
+## Bootstrap Prisma
 
 ### Add packages
 
-Next to MikroORM's core package, the orm uses other packages to import language
-specific functionality. Migrations are needed to easily keep our database and
-code in sync, more on that later!
+Prisma consists of two main packages: the Prisma CLI for development tasks and the Prisma Client for runtime database access. We also need bcryptjs for password hashing:
 
 ```bash
-pnpm add @mikro-orm/core@5.7.12 @mikro-orm/postgresql@5.7.12 @mikro-orm/migrations@5.7.12 uuid @mikro-orm/cli@5.7.12
+pnpm add prisma @prisma/client bcryptjs
+pnpm add -D @types/bcryptjs
 ```
 
-### Config
+### Initialize Prisma
 
-The ORM config file specifies items as how to connect to the database, how to
-read the code, where to find certain files and how to run migrations. We discuss
-migrations soon.
-
--   `src/orm.config.ts`
-
-```ts
-import { Options } from "@mikro-orm/core";
-import { PostgreSqlDriver } from "@mikro-orm/postgresql";
-import * as url from "node:url";
-import path from "node:path";
-
-import config from "./config";
-
-const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
-
-export default {
-	debug: true,
-	migrations: {
-		path: path.join(__dirname, "migrations"),
-		tableName: "migrations",
-		transactional: true,
-		pattern: /^[\w-]+\d+\.(ts|js)$/,
-		disableForeignKeys: false,
-		emit: "ts",
-	},
-	type: "postgresql",
-	entities: [path.join(process.cwd(), "**", "*.entity.ts")],
-	user: config.postgres.user,
-	password: config.postgres.password,
-	dbName: config.postgres.db,
-	host: config.postgres.host,
-	port: config.postgres.port,
-	ssl: false,
-} as Options<PostgreSqlDriver>;
-```
-
-On line 6, you'll notice that a `config` parameter is imported from a `config.js` file, located in the same folder as `orm.config.ts`.
-We therefore must create this config file as well:
-
--   `src/config.ts`
-
-```ts
-import loader from "@ljobse/appsettings-loader";
-import * as fs from "node:fs";
-
-const json = await fs.promises.readFile("./config.json", "utf8");
-
-const config = loader.applyEnvConfig(JSON.parse(json));
-
-// We need a default export here. Otherwise the imported object might be undefined.
-export default config;
-```
-
-This config file loads a JSON and exports it so it can be loaded into `src/orm.config.ts`.
-The JSON file contains the configurations that are going to be re-used across the application.
-To make this work, install the loader package:
+First, we need to initialize Prisma in our project:
 
 ```bash
-pnpm add @ljobse/appsettings-loader
+npx prisma init
 ```
 
-Finally, the actual configuration is stored in the `config.json` file in the project root, so we need to create that as well.
+This creates:
+
+-   A `prisma` directory with a `schema.prisma` file
+-   A `.env` file for environment variables
+
+### Prisma Schema
+
+Prisma uses a single schema file to define your database structure. Replace the content of `prisma/schema.prisma`:
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+```
+
+### Environment Configuration
+
+Update your `docker.env` file to include the DATABASE_URL:
+
+```env
+POSTGRES_USER=root
+POSTGRES_PASSWORD=root
+POSTGRES_DB=example
+POSTGRES_CONTAINER=example-postgres
+DATABASE_URL="postgresql://root:root@localhost:5432/example?schema=public"
+```
+
+Keep the existing `config.json` file as it's still used for other application settings:
 
 -   `config.json`
 
 ```json
 {
 	"port": 3000,
+	"jwtSecret": "jwtSecretFromConfigHere",
 	"postgres": {
 		"db": "example",
 		"host": "localhost",
@@ -1753,124 +1735,124 @@ Finally, the actual configuration is stored in the `config.json` file in the pro
 }
 ```
 
-Connecting to the database and initializing MikroORM occurs when bootstrapping
+### Prisma Client Setup
+
+Create a Prisma client instance that will be used throughout your application. Create `src/lib/prisma.ts`:
+
+```ts
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as {
+	prisma: PrismaClient | undefined;
+};
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+```
+
+### Database Connection in App
+
+Connecting to the database and initializing Prisma occurs when bootstrapping
 your application, right before you start listening to incoming requests.
 
 In `server.ts` we replace the existing code with this asynchronous step and call
 the function:
 
 ```ts
-import { App } from "./app";
+import { App } from "./app.js";
 
-(async () => {
-	const app = new App();
+const app = new App();
+
+const startServer = async () => {
 	await app.createConnection();
 	app.listen();
-})();
+};
+
+startServer().catch(console.error);
 ```
 
-The `createConnection` method lives in `app.ts` and initializes MikroORM and
-provides a database connection using the database credentials we save in a
-config file:
+The `createConnection` method lives in `app.ts` and initializes Prisma and
+provides a database connection:
 
 -   `app.ts`
 
 ```ts
-import { MikroORM, RequestContext } from "@mikro-orm/core";
-import ormConfig from "./orm.config";
+import { prisma } from "./lib/prisma.js";
 
 export class App {
-	public orm: MikroORM<PostgreSqlDriver>;
-
 	// ...
 
 	public async createConnection() {
 		try {
-			this.orm = await MikroORM.init(ormConfig);
+			// Test database connection
+			await prisma.$connect();
+			console.log("Database connected successfully");
 		} catch (error) {
 			console.log("Error while connecting to the database", error);
+			process.exit(1);
 		}
 	}
 }
 ```
 
-> Note: Make sure not to import `MikroORM` from `@mikro-orm/core/MikroORM` but
-> directly from `@mikro-orm/core`.
-
-### Database Schema
+### Database Schema Management
 
 So now our application can connect to the database, however it remains empty and
 is not being used.
 
-#### Entities
+#### Prisma Schema
 
-To create our database schema, MikroORM allows users to define their tables and
-relations as simple javascript objects,
-called [entities](https://mikro-orm.io/docs/defining-entities).
+With Prisma, your database schema is defined in a single `schema.prisma` file using Prisma's schema language. This is much simpler than maintaining separate entity files.
 
-We define entities using MikroORM's _Decorated classes_ approach. The package
-provides [a series of decorators](https://mikro-orm.io/docs/decorators) with a
-variety of parameters, so users can customize their tables to great detail.
-Declare entities with the `@Entity()` decorator, and regular properties
-with `@Property()`. Other very useful decorators include the reference
-decorators (`@ManyToOne()`, `@OneToOne()`...) to specify entity relations.
+Our User model is already defined in the schema file we created earlier:
 
-Try to migrate our in-memory stored user object to a full fledged MikroORM user
-entity with the same properties, and check the solution afterwards.
+```prisma
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-To make the entity more realistic we'll switch the `id` property from int to a
-UUID (string).
-
-<details>
-<summary>`src/entities/user.entity.ts`</summary>
-
-```ts
-import { BaseEntity, Entity, PrimaryKey, Property } from "@mikro-orm/core";
-import { randomUUID } from "node:crypto";
-
-@Entity()
-export class User extends BaseEntity<User, "id"> {
-	@PrimaryKey({ columnType: "uuid" })
-	public id: string = randomUUID();
-
-	@Property()
-	public name: string;
-
-	@Property({ unique: true })
-	public email: string;
-
-	@Property()
-	public password: string;
+  @@map("users")
 }
 ```
 
-</details>
+Key features of this schema:
 
-There are a couple of things to note here:
+-   We are using UUIDs (String type with `@default(uuid())`) instead of numerical incremental ids
+-   The `@unique` directive ensures email uniqueness
+-   `createdAt` and `updatedAt` are automatically managed by Prisma
+-   `@@map("users")` maps the model to a "users" table in the database
 
--   We are using UUIDs (type string), instead of the numerical incremental ids
-    from earlier.
--   We extend from MikroORM's BaseEntity to be able to access public helper
-    methods (assign...) defined by the ORM. For more info, read the
-    docs [here](https://mikro-orm.io/docs/entity-helper#wrappedentity-and-wrap-helper).
+#### Generate Prisma Client
+
+After defining your schema, generate the Prisma Client:
+
+```bash
+npx prisma generate
+```
+
+This creates type-safe client code based on your schema that you can use in your application.
 
 #### Migrations
 
-Having defined the entity, this now needs to be translated to SQL statements to
+Having defined the schema, this now needs to be translated to SQL statements to
 create the accompanying database schema.
 
-MikroORM has built-in support to generate migrations after comparing the current
-database schema to the schema defined by your code entities.
+Prisma has excellent built-in support for database migrations with automatic generation and version control.
 
-Tell MikroORM where to find the config file by adding it at the end of the
-package.json file:
-,
+Add the following scripts to your `package.json`:
 
 ```json
 {
-	"mikro-orm": {
-		"useTsNode": true,
-		"configPaths": ["./src/orm.config.ts"]
+	"scripts": {
+		"db:generate": "prisma generate",
+		"db:push": "prisma db push",
+		"db:migrate": "prisma migrate dev",
+		"db:studio": "prisma studio"
 	}
 }
 ```
@@ -1878,86 +1860,74 @@ package.json file:
 To create and execute a migration:
 
 1. Make sure your database is up and running: `docker compose up -d`
-2. ts-node should already be installed from Module 2
-3. Generate the migration: `pnpm mikro-orm migration:create`
-4. Check the migration (`migrations/Migration<id>.cjs`) on possible errors
-5. Run the pending migrations: `pnpm mikro-orm migration:up`
+2. Set the DATABASE_URL environment variable: `export DATABASE_URL="postgresql://root:root@localhost:5432/example?schema=public"`
+3. For development, you can use: `pnpm db:push` (pushes schema without creating migration files)
+4. For production migrations: `pnpm db:migrate` (creates migration files and applies them)
+5. Generate the Prisma client: `pnpm db:generate`
 
-Now that the migration ran, a refresh of your database (`⌘+R` or `ctrl+R`) in
-TablePlus should show you two tables:
+For development, you typically use `prisma db push` which is faster:
 
--   migrations, containing the migrations executed and with a timestamp
--   user, containing the properties we defined
+```bash
+DATABASE_URL="postgresql://root:root@localhost:5432/example?schema=public" pnpm db:push
+```
+
+Now that the schema is pushed, a refresh of your database (`⌘+R` or `ctrl+R`) in
+TablePlus should show you the `users` table with all the properties we defined.
 
 To find out more details about your database schema, click the 'Structure'
 button in the bottom of the TablePlus app (located next to Data).
 
 Since database migrations can run on large amounts of critical production data,
-some security measures are in effect:
+Prisma provides safety features:
 
--   They are executed in transactions, rolling previous statements back when a
-    single SQL statement fails
--   They are carefully stored and saved, allowing one to trigger a rollback in
-    case something went wrong: `pnpm mikro-orm migration:down`
+-   Migrations are executed in transactions
+-   Migration history is tracked in the `_prisma_migrations` table
+-   You can reset your database: `prisma migrate reset`
 
 ## Updating the handlers
 
-With the database connected and our schema in place, we are almost ready to
+With the database connected and our schema in place, we are now ready to
 update the handlers to insert, update, fetch and delete the users from the
 database.
 
-### Entity Manager and Identity Map
+### Using Prisma Client
 
-However, there is one more essential concept to dig into first:
-MikroORM's [Entity Manager (EM)](https://mikro-orm.io/docs/entity-manager).
-
-As part of MikroORM's performance optimizations, the EM keeps track of all
-entities you have fetched from the database plus local entities you marked for
-future persisting to the database. The Identity Map is used for this. When
-calling the flush command, the EM calculates all pending changes and outputs
-them to the database at once.
-
-To ensure Identity Maps of different EMs don't collide, we need to fork the EM
-for each request. We can use MikroORM's RequestContext for this.
-
--   In `app.ts`'s constructor, before initializing the controllers:
-
-```ts
-this.host.use((req, __, next: NextFunction) => {
-	RequestContext.create(this.orm.em, next);
-});
-```
+The Prisma client we created in `src/lib/prisma.ts` can be imported and used anywhere in your application. Each method on the client is automatically type-safe based on your schema.
 
 ### Replacing the UserStore queries
 
-Now we replace all occurrences of the UserStore with either a query or other
-equivalent actions:
+Now we replace all occurrences of the UserStore with Prisma client queries:
 
-1. Get the Entity Manager from the RequestContext
-2. Look up and use the EM's find, findOne, findAndCount, flush, persistAndFlush,
-   deleteAndFlush methods to rewrite the handlers. (in production applications
-   we don't restrict us to these EM methods)
-   Some hints:
-    1. The BaseEntity has helper methods for updating an entity
-    2. If a search param is present when fetching a list, either the user's name
-       or email has to contain this param. You'll need to use
-       postgres' [ILIKE](https://www.postgresql.org/docs/current/functions-matching.html),
-       which is supported by MikroORM.
-3. Remove the UserStore
+1. Import the Prisma client in each handler: `import { prisma } from "../../../lib/prisma";`
+2. Add password hashing with bcrypt for security: `import bcrypt from "bcryptjs";`
+3. Use Prisma's intuitive query methods: `create`, `findMany`, `findUnique`, `update`, `delete`
+4. For search functionality, use Prisma's `contains` filter with case-insensitive mode
+5. Remove the UserStore
+
+Key features:
+
+-   Type-safe queries with auto-completion
+-   Automatic password hashing in create and update handlers
+-   Intuitive query syntax
 
 <details>
 <summary>create.handler.ts</summary>
 
 ```ts
-import { RequestContext } from "@mikro-orm/core";
-
+import { prisma } from "../../../lib/prisma";
 import { UserBody } from "../../../contracts/user.body";
-import { User } from "../../../entities/user.entity";
+import bcrypt from "bcryptjs";
 
 export const create = async (body: UserBody) => {
-	const em = RequestContext.getEntityManager();
-	const user = em.create(User, body);
-	await em.persistAndFlush(user);
+	const hashedPassword = await bcrypt.hash(body.password, 10);
+
+	const user = await prisma.user.create({
+		data: {
+			name: body.name,
+			email: body.email,
+			password: hashedPassword,
+		},
+	});
 
 	return user;
 };
@@ -1969,23 +1939,34 @@ export const create = async (body: UserBody) => {
 <summary>getList.handler.ts</summary>
 
 ```ts
-import { RequestContext } from "@mikro-orm/core";
+import { prisma } from "../../../lib/prisma";
 
-import { User } from "../../../entities/user.entity";
+export const getList = async (search?: string) => {
+	const where = search
+		? {
+				OR: [
+					{
+						name: {
+							contains: search,
+							mode: "insensitive" as const,
+						},
+					},
+					{
+						email: {
+							contains: search,
+							mode: "insensitive" as const,
+						},
+					},
+				],
+		  }
+		: {};
 
-export const getList = async (search: string) => {
-	const em = RequestContext.getEntityManager();
-	return em.findAndCount(
-		User,
-		search
-			? {
-					$or: [
-						{ name: { $ilike: `%${search}%` } },
-						{ email: { $ilike: `%${search}%` } },
-					],
-			  }
-			: {}
-	);
+	const users = await prisma.user.findMany({
+		where,
+		orderBy: { createdAt: "desc" },
+	});
+
+	return [users, users.length];
 };
 ```
 
@@ -1995,17 +1976,18 @@ export const getList = async (search: string) => {
 <summary>get.handler.ts</summary>
 
 ```ts
-import { RequestContext } from "@mikro-orm/core";
+import { prisma } from "../../../lib/prisma";
 import { NotFound } from "@panenco/papi";
 
-import { User } from "../../../entities/user.entity";
-
 export const get = async (id: string) => {
-	const em = RequestContext.getEntityManager();
-	const user = await em.findOne(User, { id });
+	const user = await prisma.user.findUnique({
+		where: { id },
+	});
+
 	if (!user) {
 		throw new NotFound("userNotFound", "User not found");
 	}
+
 	return user;
 };
 ```
@@ -2016,22 +1998,31 @@ export const get = async (id: string) => {
 <summary>update.handler.ts</summary>
 
 ```ts
-import { RequestContext } from "@mikro-orm/core";
+import { prisma } from "../../../lib/prisma";
 import { NotFound } from "@panenco/papi";
-
+import bcrypt from "bcryptjs";
 import { UserBody } from "../../../contracts/user.body";
-import { User } from "../../../entities/user.entity";
 
-export const update = async (id: string, body: UserBody) => {
-	const em = RequestContext.getEntityManager();
-	const user = await em.findOne(User, { id });
+export const update = async (id: string, body: Partial<UserBody>) => {
+	const existingUser = await prisma.user.findUnique({
+		where: { id },
+	});
 
-	if (!user) {
+	if (!existingUser) {
 		throw new NotFound("userNotFound", "User not found");
 	}
-	user.assign(body);
-	await em.flush();
-	return user;
+
+	const updateData: any = {};
+	if (body.name !== undefined) updateData.name = body.name;
+	if (body.email !== undefined) updateData.email = body.email;
+	if (body.password !== undefined) {
+		updateData.password = await bcrypt.hash(body.password, 10);
+	}
+
+	return prisma.user.update({
+		where: { id },
+		data: updateData,
+	});
 };
 ```
 
@@ -2041,18 +2032,21 @@ export const update = async (id: string, body: UserBody) => {
 <summary>delete.handler.ts</summary>
 
 ```ts
-import { RequestContext } from "@mikro-orm/core";
+import { prisma } from "../../../lib/prisma";
 import { NotFound } from "@panenco/papi";
 
-import { User } from "../../../entities/user.entity";
-
 export const deleteUser = async (id: string) => {
-	const em = RequestContext.getEntityManager();
-	const user = await em.findOne(User, { id });
-	if (!user) {
+	const existingUser = await prisma.user.findUnique({
+		where: { id },
+	});
+
+	if (!existingUser) {
 		throw new NotFound("userNotFound", "User not found");
 	}
-	await em.removeAndFlush(user);
+
+	await prisma.user.delete({
+		where: { id },
+	});
 };
 ```
 
@@ -2060,101 +2054,87 @@ export const deleteUser = async (id: string) => {
 <summary>login.handler.ts</summary>
 
 ```ts
-import { RequestContext } from "@mikro-orm/core";
+import { prisma } from "../../../lib/prisma";
 import { createAccessToken, Unauthorized } from "@panenco/papi";
-
+import bcrypt from "bcryptjs";
+import config from "../../../config";
 import { LoginBody } from "../../../contracts/login.body";
-import { User } from "../../../entities/user.entity";
 
 export const login = async (body: LoginBody) => {
-	const user = await RequestContext.getEntityManager().findOne(User, {
-		email: body.email,
+	const user = await prisma.user.findUnique({
+		where: { email: body.email },
 	});
-	if (!user || user.password !== body.password) {
-		throw new Unauthorized("unauthorized", "Invalid credentials");
+
+	if (!user) {
+		throw new Unauthorized("invalidCredentials", "Invalid credentials");
 	}
-	const result = await createAccessToken("jwtSecretFromConfigHere", 60 * 10, {
+
+	const isPasswordValid = await bcrypt.compare(body.password, user.password);
+	if (!isPasswordValid) {
+		throw new Unauthorized("invalidCredentials", "Invalid credentials");
+	}
+
+	return createAccessToken(config.jwtSecret, 60 * 10, {
 		userId: user.id,
 	});
-	return result;
 };
 ```
 
 </details>
 
-<br>
-
-### findOneOrFail
+### Error Handling with Prisma
 
 As you might have noticed, looking for an entity and throwing a `NotFound` error
-when not found, is a commonly returning pattern. Luckily MikroORM provides
-support for `findOneOrFail()`, however this throws a 400 while we want a 404.
+when not found, is a commonly returning pattern. With Prisma, this pattern is
+straightforward - you simply check if the result is null and throw the
+appropriate error.
 
-We can customize this by adding a custom error handler:
-
--   `src/utils/extensions.ts`
+Prisma's `findUnique` method returns `null` when no record is found, making it
+easy to handle the not-found case consistently across your handlers:
 
 ```ts
-import { Dictionary } from "@mikro-orm/core";
-import { IPrimaryKeyValue } from "@mikro-orm/core/typings";
-import { NotFound } from "@panenco/papi";
+const user = await prisma.user.findUnique({
+	where: { id },
+});
 
-export const noEntityFoundError = function (
-	entityName: string,
-	where: Dictionary<any> | IPrimaryKeyValue
-): Error {
-	throw new NotFound(`entityNotFound`, `${entityName} ${NotFound.name}`);
-};
+if (!user) {
+	throw new NotFound("userNotFound", "User not found");
+}
 ```
 
-In `orm.config.ts` we can then add a simple line:
-
-```
-  findOneOrFailHandler: noEntityFoundError,
-```
-
-Now we can replace all corresponding findOne's in our handlers and remove the
-explicit errors. Clean code.
+This approach is explicit and easy to understand.
 
 ## Fix tests
 
 At this point, our handlers exchanged the UserStore for working with a database,
 but our tests have not been updated.
 
-> Hint: add the line `debug: true,` to your `orm.config.ts` to examine the logs
-> and the queries being performed.
-
 ### Integration tests
 
-For integration tests, not a lot of changes are required:
+For integration tests:
 
--   For each test suite we create a connection to the database and save a
-    reference to the orm.
--   Instead of setting the users to an empty array in the beforeEach, we now have
-    to clear the database and run the initial migration file again.
--   If somewhere in the test file data is looked up from the database outside of a
-    request, we should use a fork of the EM to do this, to ensure no race
-    conditions.
+-   For each test suite we create a connection to the database through the App class
+-   Instead of setting the users to an empty array in the beforeEach, we now clear the database using Prisma
 
 <details>
 <summary>user.integration.test.ts</summary>
 
 ```ts
+import { prisma } from "../../lib/prisma";
+
 describe("Integration tests", () => {
 	describe("User Tests", () => {
 		let request: any;
-		let orm: MikroORM<PostgreSqlDriver>;
 
 		before(async () => {
 			const app = new App();
 			await app.createConnection();
-			orm = app.orm;
 			request = supertest(app.host);
 		});
 
 		beforeEach(async () => {
-			const generator = orm.getSchemaGenerator();
-			await generator.refreshDatabase();
+			// Clean up database before each test
+			await prisma.user.deleteMany();
 		});
 		// ...
 	});
@@ -2165,129 +2145,117 @@ describe("Integration tests", () => {
 
 ### Handler tests
 
-For our handler tests, this requires some extra work as they don't test the full
-express routes, meaning no RequestContext is created, and the EM is not forked.
+For our handler tests:
 
-1. Before running the suite, initialize your ORM and connection to the database
-   through MikroORM's init
-2. Drop and reinstantiate the database before each test. Create, persist and
-   flush the user fixtures.
-3. Simulate a `RequestContext` for each test by wrapping the test
-   using `RequestContext.createAsync`'s method, passing in a new fork of the EM
-   each time.
+1. Before running the suite, create test fixtures using Prisma
+2. Clean up the database before each test using `prisma.user.deleteMany()`
 
 <details>
 <summary>user.handler.test.ts</summary>
 
 ```ts
-import { MikroORM, RequestContext } from "@mikro-orm/core";
-import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { expect } from "chai";
-import { before, beforeEach, describe, it } from "mocha";
+import { beforeEach, describe, it } from "mocha";
+import bcrypt from "bcryptjs";
+import { randomUUID } from "node:crypto";
 
 import { create } from "../../controllers/users/handlers/create.handler";
 import { deleteUser } from "../../controllers/users/handlers/delete.handler";
 import { get } from "../../controllers/users/handlers/get.handler";
 import { getList } from "../../controllers/users/handlers/getList.handler";
 import { update } from "../../controllers/users/handlers/update.handler";
-import { User } from "../../entities/user.entity";
-import ormConfig from "../../orm.config";
-import { randomUUID } from "node:crypto";
+import { prisma } from "../../lib/prisma";
 
-const userFixtures: User[] = [
+const userFixtures = [
 	{
 		name: "test1",
 		email: "test-user+1@panenco.com",
 		password: "password1",
-	} as User,
+	},
 	{
 		name: "test2",
 		email: "test-user+2@panenco.com",
 		password: "password2",
-	} as User,
+	},
 ];
 
 describe("Handler tests", () => {
 	describe("User Tests", () => {
-		let orm: MikroORM<PostgreSqlDriver>;
-		let users: User[];
-
-		before(async () => {
-			orm = await MikroORM.init(ormConfig);
-		});
+		let users: any[];
 
 		beforeEach(async () => {
-			const generator = orm.getSchemaGenerator();
-			await generator.refreshDatabase();
+			// Clean up database
+			await prisma.user.deleteMany();
 
-			const em = orm.em.fork();
-			users = userFixtures.map((x) => em.create(User, x));
-			await em.persistAndFlush(users);
+			// Create test users
+			users = await Promise.all(
+				userFixtures.map(async (fixture) => {
+					const hashedPassword = await bcrypt.hash(
+						fixture.password,
+						10
+					);
+					return prisma.user.create({
+						data: {
+							name: fixture.name,
+							email: fixture.email,
+							password: hashedPassword,
+						},
+					});
+				})
+			);
 		});
 
 		it("should get users", async () => {
-			await RequestContext.createAsync(orm.em.fork(), async () => {
-				const res = await getList(undefined);
-				expect(res.some((x) => x.name === "test2")).true;
-			});
+			const [res] = await getList(undefined);
+			expect(res.some((x) => x.name === "test2")).true;
 		});
 
 		it("should get user by id", async () => {
-			await RequestContext.createAsync(orm.em.fork(), async () => {
-				const res = await get(users[1].id);
+			const res = await get(users[1].id);
 
-				expect(res.name).equal("test2");
-				expect(res.email).equal("test-user+2@panenco.com");
-			});
+			expect(res.name).equal("test2");
+			expect(res.email).equal("test-user+2@panenco.com");
 		});
 
 		it("should fail when getting user by unknown id", async () => {
-			await RequestContext.createAsync(orm.em.fork(), async () => {
-				try {
-					await get(randomUUID());
-				} catch (error) {
-					expect(error.message).equal("User not found");
-					return;
-				}
-				expect(true, "should have thrown an error").false;
-			});
+			try {
+				await get(randomUUID());
+			} catch (error) {
+				expect(error.message).equal("User not found");
+				return;
+			}
+			expect(true, "should have thrown an error").false;
 		});
 
 		it("should create user", async () => {
-			await RequestContext.createAsync(orm.em.fork(), async () => {
-				const body = {
-					email: "test-user+new@panenco.com",
-					name: "newUser",
-					password: "reallysecretstuff",
-				};
-				const res = await create(body);
+			const body = {
+				email: "test-user+new@panenco.com",
+				name: "newUser",
+				password: "reallysecretstuff",
+			};
+			const res = await create(body);
 
-				expect(res.name).equal("newUser");
-				expect(res.email).equal("test-user+new@panenco.com");
-			});
+			expect(res.name).equal("newUser");
+			expect(res.email).equal("test-user+new@panenco.com");
 		});
 
 		it("should update user", async () => {
-			await RequestContext.createAsync(orm.em.fork(), async () => {
-				const body = {
-					email: "test-user+updated@panenco.com",
-				};
-				const id = users[0].id;
-				const res = await update(id, body);
+			const body = {
+				email: "test-user+updated@panenco.com",
+			};
+			const id = users[0].id;
+			const res = await update(id, body);
 
-				expect(res.email).equal(body.email);
-				expect(res.name).equal("test1");
-			});
+			expect(res.email).equal(body.email);
+			expect(res.name).equal("test1");
 		});
 
 		it("should delete user by id", async () => {
-			await RequestContext.createAsync(orm.em.fork(), async () => {
-				const initialCount = await orm.em.count(User);
-				await deleteUser(users[0].id);
+			const initialCount = await prisma.user.count();
+			await deleteUser(users[0].id);
 
-				const newCount = await orm.em.count(User);
-				expect(initialCount - 1).equal(newCount);
-			});
+			const newCount = await prisma.user.count();
+			expect(initialCount - 1).equal(newCount);
 		});
 	});
 });

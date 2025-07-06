@@ -1,31 +1,33 @@
-import { MikroORM } from "@mikro-orm/core";
 import { expect } from "chai";
-import { User } from "../../entities/user.entity";
-import ormConfig from "../../orm.config";
+import { prisma } from "../../lib/prisma";
+import bcrypt from "bcryptjs";
 
 describe("Playground", () => {
 	it("should test database connection", async () => {
-		const orm = await MikroORM.init(ormConfig);
-		const generator = orm.getSchemaGenerator();
-		await generator.dropSchema();
-		await generator.createSchema();
+		// Clean up before test
+		await prisma.user.deleteMany();
 
-		const em = orm.em.fork();
-		const user = em.create(User, {
-			name: "Test User",
-			email: "test@example.com",
-			password: "password123",
+		// Create test user
+		const hashedPassword = await bcrypt.hash("password123", 10);
+		const user = await prisma.user.create({
+			data: {
+				name: "Test User",
+				email: "test@example.com",
+				password: hashedPassword,
+			},
 		});
-		await em.persistAndFlush(user);
 
-		const foundUser = await em.findOne(User, {
-			email: "test@example.com",
+		// Find the user
+		const foundUser = await prisma.user.findUnique({
+			where: { email: "test@example.com" },
 		});
+
 		expect(foundUser).not.null;
 		if (foundUser) {
 			expect(foundUser.name).equal("Test User");
 		}
 
-		await orm.close();
+		// Clean up after test
+		await prisma.user.deleteMany();
 	});
 });

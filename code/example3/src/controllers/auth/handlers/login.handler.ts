@@ -1,15 +1,22 @@
-import { RequestContext } from "@mikro-orm/core";
+import { prisma } from "../../../lib/prisma";
 import { createAccessToken, Unauthorized } from "@panenco/papi";
-
+import bcrypt from "bcryptjs";
 import config from "../../../config";
 import { LoginBody } from "../../../contracts/login.body";
-import { User } from "../../../entities/user.entity";
 
 export const createToken = async (body: LoginBody) => {
-	const em = RequestContext.getEntityManager();
-	const user = await em.findOne(User, { email: body.email });
-	if (!user || user.password !== body.password) {
+	const user = await prisma.user.findUnique({
+		where: { email: body.email },
+	});
+
+	if (!user) {
 		throw new Unauthorized("invalidCredentials", "Invalid credentials");
 	}
+
+	const isPasswordValid = await bcrypt.compare(body.password, user.password);
+	if (!isPasswordValid) {
+		throw new Unauthorized("invalidCredentials", "Invalid credentials");
+	}
+
 	return createAccessToken(config.jwtSecret, 3600, { userId: user.id });
 };

@@ -1,11 +1,17 @@
-import { RequestContext } from "@mikro-orm/core";
-
+import { prisma } from "../../../lib/prisma";
 import { UserBody } from "../../../contracts/user.body";
-import { User } from "../../../entities/user.entity";
+import bcrypt from "bcryptjs";
 
 export const create = async (body: UserBody) => {
-	const em = RequestContext.getEntityManager();
-	const user = em.create(User, body);
-	await em.persistAndFlush(user);
+	const hashedPassword = await bcrypt.hash(body.password, 10);
+
+	const user = await prisma.user.create({
+		data: {
+			name: body.name,
+			email: body.email,
+			password: hashedPassword,
+		},
+	});
+
 	return user;
 };
