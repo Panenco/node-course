@@ -1,19 +1,34 @@
-import { StatusCode } from "@panenco/papi";
 import { expect } from "chai";
 import { before, beforeEach, describe, it } from "mocha";
 import supertest from "supertest";
+import { Test } from "@nestjs/testing";
+import { INestApplication } from "@nestjs/common";
 
-import { App } from "../../app";
+import { AppModule } from "../../app.module";
 import { prisma } from "../../lib/prisma";
 
 describe("Integration tests", () => {
 	describe("User Tests", () => {
+		let app: INestApplication;
 		let request: any;
 
 		before(async () => {
-			const app = new App();
-			await app.createConnection();
-			request = supertest(app.host);
+			const moduleRef = await Test.createTestingModule({
+				imports: [AppModule],
+			}).compile();
+
+			app = moduleRef.createNestApplication();
+
+			// Setup the same configuration as in main.ts
+			app.setGlobalPrefix("api");
+			app.enableCors({
+				origin: "*",
+				credentials: true,
+				exposedHeaders: ["x-auth"],
+			});
+
+			await app.init();
+			request = supertest(app.getHttpServer());
 		});
 
 		beforeEach(async () => {
@@ -30,7 +45,7 @@ describe("Integration tests", () => {
 					email: "test-user+1@panenco.com",
 					password: "real secret stuff",
 				})
-				.expect(StatusCode.created);
+				.expect(201);
 
 			expect(createResponse.name).equal("test");
 			expect(createResponse.email).equal("test-user+1@panenco.com");
@@ -43,7 +58,7 @@ describe("Integration tests", () => {
 					email: "auth@test.com",
 					password: "password123",
 				})
-				.expect(StatusCode.created);
+				.expect(201);
 
 			const { body: tokenResponse } = await request
 				.post(`/api/auth/login`)
@@ -51,13 +66,13 @@ describe("Integration tests", () => {
 					email: "auth@test.com",
 					password: "password123",
 				})
-				.expect(StatusCode.ok);
+				.expect(200);
 
 			// Get the newly created user (auth required)
 			const { body: getResponse } = await request
 				.get(`/api/users/${createResponse.id}`)
 				.set("x-auth", tokenResponse.token)
-				.expect(StatusCode.ok);
+				.expect(200);
 			expect(getResponse.name).equal("test");
 
 			// Successfully update user (auth required)
@@ -67,7 +82,7 @@ describe("Integration tests", () => {
 				.send({
 					email: "test-user+updated@panenco.com",
 				})
-				.expect(StatusCode.ok);
+				.expect(200);
 
 			expect(updateResponse.name).equal("test");
 			expect(updateResponse.email).equal("test-user+updated@panenco.com");
@@ -76,7 +91,7 @@ describe("Integration tests", () => {
 			const { body: getAllResponse } = await request
 				.get(`/api/users`)
 				.set("x-auth", tokenResponse.token)
-				.expect(StatusCode.ok);
+				.expect(200);
 
 			expect(getAllResponse.length).equal(2); // Auth user + test user
 			const newUser = getAllResponse.find(
@@ -95,7 +110,7 @@ describe("Integration tests", () => {
 			const { body: getNoneResponse } = await request
 				.get(`/api/users`)
 				.set("x-auth", tokenResponse.token)
-				.expect(StatusCode.ok);
+				.expect(200);
 			expect(getNoneResponse.length).equal(1); // Only the auth user should remain
 		});
 	});

@@ -1,6 +1,8 @@
-import { prisma } from "../../../lib/prisma";
-import { createAccessToken, Unauthorized } from "@panenco/papi";
+import { UnauthorizedException } from "@nestjs/common";
+import * as jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+
+import { prisma } from "../../../lib/prisma";
 import config from "../../../config";
 import { LoginBody } from "../../../contracts/login.body";
 
@@ -10,13 +12,20 @@ export const createToken = async (body: LoginBody) => {
 	});
 
 	if (!user) {
-		throw new Unauthorized("invalidCredentials", "Invalid credentials");
+		throw new UnauthorizedException("Invalid credentials");
 	}
 
 	const isPasswordValid = await bcrypt.compare(body.password, user.password);
 	if (!isPasswordValid) {
-		throw new Unauthorized("invalidCredentials", "Invalid credentials");
+		throw new UnauthorizedException("Invalid credentials");
 	}
 
-	return createAccessToken(config.jwtSecret, 3600, { userId: user.id });
+	const token = jwt.sign({ userId: user.id }, config.jwtSecret, {
+		expiresIn: "1h",
+	});
+
+	return {
+		token,
+		expiresIn: 3600,
+	};
 };

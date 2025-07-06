@@ -1,6 +1,7 @@
-import { prisma } from "../../../lib/prisma";
-import { NotFound } from "@panenco/papi";
+import { NotFoundException } from "@nestjs/common";
 import bcrypt from "bcryptjs";
+
+import { prisma } from "../../../lib/prisma";
 import { UserBody } from "../../../contracts/user.body";
 
 export const update = async (id: string, body: Partial<UserBody>) => {
@@ -9,7 +10,7 @@ export const update = async (id: string, body: Partial<UserBody>) => {
 	});
 
 	if (!existingUser) {
-		throw new NotFound("userNotFound", "User not found");
+		throw new NotFoundException("User not found");
 	}
 
 	const updateData: any = {};

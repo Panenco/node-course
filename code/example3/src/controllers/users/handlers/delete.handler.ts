@@ -1,5 +1,6 @@
+import { NotFoundException } from "@nestjs/common";
+
 import { prisma } from "../../../lib/prisma";
-import { NotFound } from "@panenco/papi";
 
 export const deleteUser = async (id: string) => {
 	const existingUser = await prisma.user.findUnique({
@@ -7,7 +8,7 @@ export const deleteUser = async (id: string) => {
 	});
 
 	if (!existingUser) {
-		throw new NotFound("userNotFound", "User not found");
+		throw new NotFoundException("User not found");
 	}
 
 	await prisma.user.delete({

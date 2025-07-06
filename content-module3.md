@@ -5,32 +5,25 @@ go to a whole other level and create a real world setup.
 
 The next part will consist of a few large topics:
 
--   Papi & routing-controllers for easy controller definition and contract
-    validation/representation
--   Swagger for automatically generated API documentation
--   Authentication and authorization for access management
--   Databases for storing data
+-   **NestJS Framework** for scalable Node.js applications with dependency injection
+-   **Swagger** for automatically generated API documentation
+-   **Authentication and authorization** with JWT tokens and guards for access management
+-   **Databases** for storing data with Prisma ORM
 
-# papi & routing-controllers
+# NestJS Framework
 
-[@panenco/papi](https://www.npmjs.com/package/@panenco/papi) is package we
-developed in house to provide reusable utilities across products.
+[NestJS](https://nestjs.com/) is a progressive Node.js framework for building efficient, reliable and scalable server-side applications. It uses TypeScript by default and combines elements of OOP (Object Oriented Programming), FP (Functional Programming), and FRP (Functional Reactive Programming).
 
-The package is documented in
-it's [README](https://github.com/Panenco/papi/blob/main/README.md)
+NestJS is built with and fully supports TypeScript (yet still enables developers to code in pure JavaScript) and combines elements of OOP, FP, and FRP. Under the hood, NestJS makes use of robust HTTP Server frameworks like Express (the default) and optionally can be configured to use Fastify as well.
 
 ## Development Philosophy
 
-Papi is a small superset on top
-of [class validator](https://www.npmjs.com/package/class-validator), [class transformer](https://www.npmjs.com/package/class-transformer)
-and [routing-controllers](https://www.npmjs.com/package/routing-controllers) that
-forces our opinionated way of working. It highly depends on decorators to define
-endpoints and contracts.
+NestJS provides a level of abstraction above these common Node.js frameworks (Express/Fastify), but also exposes their APIs directly to the developer. This provides developers with the freedom to use the myriad of third-party modules which are available for the underlying platform.
 
 The default flow of a feature/endpoint always has 4 steps:
 
 1. Authorize the user
-    - Validate the token
+    - Validate the token with Guards
     - Validate the access rights to the resource
 2. Validate the input
     - Transform and strip the input
@@ -39,7 +32,7 @@ The default flow of a feature/endpoint always has 4 steps:
       correct type (ex. string to date)
     - Validate the input
       with [class validator](https://www.npmjs.com/package/class-validator)
-      trough our Body or Query decorators
+      through NestJS validation pipes
 3. Execute the business logic
     - The endpoint lands in the controller, the controller should contain
       absolutely no logic and should instantly call the handler
@@ -53,67 +46,88 @@ maintainable API's.
 
 ## Add packages
 
-There are 2 packages we still need to
-add [@panenco/papi](https://www.npmjs.com/package/@panenco/papi)
-and [routing-controllers](https://www.npmjs.com/package/routing-controllers)
-because previously we already added `class-transformer` and `class-validator`.
+There are several packages we need to add for NestJS framework support:
 
 ```bash
-pnpm add routing-controllers@0.10.4 @panenco/papi cors
+pnpm add @nestjs/common @nestjs/core @nestjs/platform-express @nestjs/swagger cors
+pnpm add -D @nestjs/cli @nestjs/testing
 ```
 
-Some warnings will be shown but they can be ignored as we are not impacted by
-them.
+We also need to create the NestJS configuration file:
 
-## Bootstrap in app.ts
-
-The initialization of routes works a little bit different
-with `routing-controllers` than plain `express`.
-
-Let's immediately clean up the code a bit and add a private
-method `initializeControllers` in the `App` class that takes as an argument a
-list of controllers (currently just [`UserRoute`]).
-
-```
-private initializeControllers(controllers: Function[]) {
-   useExpressServer(this.host, { // Link the express host to routing-controllers
-   cors: {
-      origin: "*", // Allow all origins, any application on any url can call our api. This is why we also added the `cors` package.
-      exposedHeaders: ["x-auth"], // Allow the header `x-auth` to be exposed to the client. This is needed for the authentication to work later.
-   },
-   controllers, // Provide the controllers. Currently this won't work yet, first we need to convert the Route to a routing-controllers controller.
-   defaultErrorHandler: false, // Disable the default error handler. We will handle errors through papi later.
-   routePrefix: "/api", // Map all routes to the `/api` path.
-   });
-}
+```bash
+echo '{"collection": "@nestjs/schematics", "sourceRoot": "src"}' > nest-cli.json
 ```
 
-Now you can replace the `UserRoute` initialization with a call
-to `initializeControllers` and pass the constructor of the route.
+## Bootstrap with NestJS
+
+The initialization of the application works different with NestJS than plain Express. NestJS uses a module-based architecture where we bootstrap the application using `NestFactory`.
+
+First, create an `app.module.ts` file that will serve as the root module:
 
 ```ts
-this.initializeControllers([UserRoute]);
+import { Module } from "@nestjs/common";
+import { UserController } from "./controllers/users/user.controller";
+
+@Module({
+	controllers: [UserController],
+})
+export class AppModule {}
 ```
 
-In addition, you can also automatically detect all controllers by making use of
-papi's `importClasses` function. If you'd like to do so you can find some
-info [here](https://github.com/Panenco/papi/blob/main/docs/modules.md#importclasses).
+Next, replace your `server.ts` with `main.ts` to bootstrap the NestJS application:
+
+```ts
+import { NestFactory } from "@nestjs/core";
+import { ValidationPipe } from "@nestjs/common";
+import { AppModule } from "./app.module";
+
+async function bootstrap() {
+	const app = await NestFactory.create(AppModule);
+
+	// Enable validation
+	app.useGlobalPipes(
+		new ValidationPipe({
+			whitelist: true,
+			forbidNonWhitelisted: true,
+			transform: true,
+		})
+	);
+
+	// Enable CORS
+	app.enableCors({
+		origin: "*",
+		credentials: true,
+		exposedHeaders: ["x-auth"],
+	});
+
+	// Set global prefix
+	app.setGlobalPrefix("api");
+
+	await app.listen(3000);
+	console.log("🚀 http://localhost:3000");
+}
+
+bootstrap();
+```
+
+You can also delete the old `app.ts` file as it's no longer needed with NestJS.
 
 ## Convert users route to controller
 
 ### Controller definition
 
-In `routing-controllers` what makes a controller a controller is simply
-the `JsonController` decorator. Because the class is decorated with this
-decorator `routing-controllers` will understand how to process the class.
+In NestJS what makes a controller a controller is simply
+the `@Controller` decorator. Because the class is decorated with this
+decorator NestJS will understand how to process the class.
 
 You need to specify the route path in the decorator, in our case this should
-be `/users`.
+be `users`.
 
 Your result should look like this:
 
 ```ts
-@JsonController("/users")
+@Controller("users")
 export class UserRoute {}
 ```
 
@@ -134,7 +148,7 @@ for
 each endpoint with some decorators.
 
 Very detailed examples and documentation can be found
-on [their github](https://github.com/typestack/routing-controllers).
+on [the NestJS documentation](https://docs.nestjs.com/controllers).
 
 Converting the code:
 
@@ -145,7 +159,7 @@ Converting the code:
     The controller should look like this now:
 
     ```ts
-    @JsonController("/users")
+    @Controller("users")
     export class UserController {
     	//   constructor() {
     	//     this.router = Router();
@@ -174,14 +188,14 @@ Converting the code:
     }
     ```
 
-4. Next up you should tell `routing-controllers` that these methods are the
+4. Next up you should tell NestJS that these methods are the
    routes, specify the path and the http-method.
 
-    `routing-controllers` has some decorators to accomplish this. For each
+    NestJS has some decorators to accomplish this. For each
     http-method there is a decorator, the argument you pass defines the path.
-    ex `@Post("/users")`
+    ex `@Post()`
 
-    When that's done `routing-controllers` will actually know the endpoints we
+    When that's done NestJS will actually know the endpoints we
     have defined.
 
 5. In the method body you can call the handlers now. Currently, that will still
@@ -195,7 +209,7 @@ Converting the code:
 The current code:
 
 ```ts
-@JsonController("/users")
+@Controller("users")
 export class UserController {
 	//     this.router.post("/", adminMiddleware, create);
 	//     this.router.patch(
@@ -214,28 +228,28 @@ export class UserController {
 		return getList();
 	}
 
-	@Get("/:id")
+	@Get(":id")
 	async get() {
 		return get();
 	}
 
-	@Patch("/:id")
+	@Patch(":id")
 	async update() {
 		return update();
 	}
 
-	@Delete("/:id")
+	@Delete(":id")
 	async delete() {
 		await deleteUser();
 	}
 }
 ```
 
-#### papi body decorator to inject body
+#### NestJS body decorator to inject body
 
 Previously we implemented body validation manually in the handler, after that we
 converted it into middleware.  
-Now we will be using papi's `body` decorator to inject the body into the
+Now we will be using NestJS's `@Body()` decorator to inject the body into the
 controller method and have the body automatically transformed and validated.
 
 The decorator should be used just before an argument, for example:
@@ -245,24 +259,21 @@ async create(@Body() body: UserBody) {}
 ```
 
 The type of `UserBody` will automatically be inferred and used for the
-transformation and validation.
+transformation and validation through NestJS's ValidationPipe that we configured in `main.ts`.
 
-> Note: `routing-controllers` also has a `@Body` decorator. Make sure you import
-> the one from `@panenco/papi` and **not** the one from `routing-controllers`.
-> The handler arguments will be changed later in this section.
-
-For updating an entity we don't want to require all properties to be provided,
-to skip these we can set some options in the decorator:
+For updating an entity we don't want to require all properties to be provided.
+NestJS will automatically handle partial validation when using class-validator
+decorators with `@IsOptional()` on optional fields.
 
 ```
-async update(@Body({}, {skipMissingProperties: true}) body: UserBody) {}
+async update(@Body() body: UserBody) {}
 ```
 
 That covers all body validations that previously were done manually. You can
 remove `patchValidationMiddleware` and the manual validation/transformation from
 the `create` handler now.
 
-#### papi query decorator to inject search param
+#### NestJS query decorator to inject search param
 
 The query decorator actually works exactly the same as the body decorator, only
 instead of processing `request.body` it processes `request.query`.
@@ -275,9 +286,9 @@ Defining the contract:
 
 ```ts
 // search.query.ts
-@Exclude()
+import { IsString, IsOptional } from "class-validator";
+
 export class SearchQuery {
-	@Expose()
 	@IsString()
 	@IsOptional()
 	public search?: string;
@@ -290,10 +301,10 @@ And use it like this:
 async getList(@Query() query: SearchQuery) {}
 ```
 
-#### routing-controllers Param decorator to inject id's (or other params)
+#### NestJS Param decorator to inject id's (or other params)
 
-`request.params` needs to be injected one by one with the `@Param` decorator
-from `routing-controllers`. Type conversion is not supported here so it will
+`request.params` needs to be injected one by one with the `@Param()` decorator
+from `@nestjs/common`. Type conversion is not supported here so it will
 always inject a string.
 
 It's used like this:
@@ -304,31 +315,14 @@ async get(@Param("id") id: string){}
 
 Apply this decorator to all endpoints containing an id.
 
-#### Middleware decorators
+#### Guards for authentication
 
 The last thing we need from the currently commented route definitions is
-the `adminMiddleware`.
+the authentication logic (the `adminMiddleware`).
 
-To allow middleware to be registered on endpoints, `routing-controllers` has
-the `@UseBefore` and `@UseAfter` decorators.
-
-The `@UseBefore` decorator is used to register middleware before the endpoint is
-called.
-The `@UseAfter` decorator is used to register middleware after the endpoint is
-called.
-
-We want the `adminMiddleware` to be called before the handler is hit so we
-use `@UseBefore`:
-
-```
-@Post()
-@UseBefore(adminMiddleware)
-async create(@Body() body: UserBody) {
-	return create(body);
-}
-```
-
-The view/representation middleware we'll cover in a bit.
+NestJS uses Guards instead of middleware for authentication and authorization.
+We'll create a proper JWT guard later in the authentication section, but for now
+you can remove the `adminMiddleware` as we'll replace it with a proper guard.
 
 So you can go ahead and remove the remaining commented
 code, `patchValidationMiddleware` and `representationMiddleware`.
@@ -349,7 +343,7 @@ Since we are injecting only the items we need now, this becomes a lot easier.
 3. Remove the validation/transformation as this has now been abstracted away
    with the decorators
 4. Remove the `next` function calls
-5. Throw a papi `NotFound` error when no user is found instead of manually
+5. Throw a NestJS `NotFoundException` when no user is found instead of manually
    returning an error (we'll come back to this in the next section)
 
 Now all references to `request`, `response` and `next` are gone. The build
@@ -359,37 +353,31 @@ errors in the handlers and controller should also be resolved.
 <summary>user.controller.ts</summary>
 
 ```ts
-import { Body, Query } from "@panenco/papi";
-import { NextFunction, Request, Response } from "express";
 import {
-	Delete,
+	Controller,
 	Get,
-	JsonController,
-	Param,
-	Patch,
 	Post,
-	UseBefore,
-} from "routing-controllers";
+	Body,
+	Patch,
+	Param,
+	Delete,
+	Query,
+	HttpCode,
+	HttpStatus,
+} from "@nestjs/common";
 
-import { SearchQuery } from "../../contracts/search.query.js";
-import { UserBody } from "../../contracts/user.body.js";
-import { create } from "./handlers/create.handler.js";
-import { deleteUser } from "./handlers/delete.handler.js";
-import { get } from "./handlers/get.handler.js";
-import { getList } from "./handlers/getList.handler.js";
-import { update } from "./handlers/update.handler.js";
+import { SearchQuery } from "../../contracts/search.query";
+import { UserBody } from "../../contracts/user.body";
+import { create } from "./handlers/create.handler";
+import { deleteUser } from "./handlers/delete.handler";
+import { get } from "./handlers/get.handler";
+import { getList } from "./handlers/getList.handler";
+import { update } from "./handlers/update.handler";
 
-const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
-	if (req.header("x-auth") !== "api-key") {
-		return res.status(401).send("Unauthorized");
-	}
-	next();
-};
-
-@JsonController("/users")
+@Controller("users")
 export class UserController {
 	@Post()
-	@UseBefore(adminMiddleware)
+	@HttpCode(HttpStatus.CREATED)
 	async create(@Body() body: UserBody) {
 		return create(body);
 	}
@@ -399,23 +387,20 @@ export class UserController {
 		return getList(query.search);
 	}
 
-	@Get("/:id")
+	@Get(":id")
 	async get(@Param("id") id: string) {
 		return get(id);
 	}
 
-	@Patch("/:id")
-	async update(
-		@Param("id") id: string,
-		@Body({}, { skipMissingProperties: true }) body: UserBody
-	) {
+	@Patch(":id")
+	async update(@Param("id") id: string, @Body() body: UserBody) {
 		return update(id, body);
 	}
 
-	@Delete("/:id")
+	@Delete(":id")
+	@HttpCode(HttpStatus.NO_CONTENT)
 	async delete(@Param("id") id: string) {
-		deleteUser(id);
-		return null;
+		await deleteUser(id);
 	}
 }
 ```
@@ -456,15 +441,15 @@ export const getList = (search: string) => {
 <summary>get.handler.ts</summary>
 
 ```ts
-import { NotFound } from "@panenco/papi";
+import { NotFoundException } from "@nestjs/common";
 
-import { UserStore } from "./user.store.js";
+import { UserStore } from "./user.store";
 
 export const get = (idString: string) => {
 	const id = Number(idString);
 	const user = UserStore.get(id);
 	if (!user) {
-		throw new NotFound("userNotFound", "User not found");
+		throw new NotFoundException("User not found");
 	}
 	return user;
 };
@@ -476,16 +461,16 @@ export const get = (idString: string) => {
 <summary>update.handler.ts</summary>
 
 ```ts
-import { NotFound } from "@panenco/papi";
+import { NotFoundException } from "@nestjs/common";
 
-import { UserBody } from "../../../contracts/user.body.js";
-import { UserStore } from "./user.store.js";
+import { UserBody } from "../../../contracts/user.body";
+import { UserStore } from "./user.store";
 
 export const update = (idString: string, body: UserBody) => {
 	const id = Number(idString);
 	const user = UserStore.get(id);
 	if (!user) {
-		throw new NotFound("userNotFound", "User not found");
+		throw new NotFoundException("User not found");
 	}
 	const updated = UserStore.update(id, { ...user, ...body });
 	return updated;
@@ -498,15 +483,15 @@ export const update = (idString: string, body: UserBody) => {
 <summary>delete.handler.ts</summary>
 
 ```ts
-import { NotFound } from "@panenco/papi";
+import { NotFoundException } from "@nestjs/common";
 
-import { UserStore } from "./user.store.js";
+import { UserStore } from "./user.store";
 
 export const deleteUser = (idString: string) => {
 	const id = Number(idString);
 	const user = UserStore.get(id);
 	if (!user) {
-		throw new NotFound("userNotFound", "User not found");
+		throw new NotFoundException("User not found");
 	}
 	UserStore.delete(id);
 };
@@ -515,175 +500,115 @@ export const deleteUser = (idString: string) => {
 </details>
 <br>
 
-### Papi Error handling
+### NestJS Error handling
 
 Handling expected errors manually is a bit of a pain as you might have noticed
 when doing so in a previous section. It's much easier to just be able to throw
-a `papi` error and have it handled in the background.
+a NestJS exception and have it handled in the background.
 
-You already implemented the `NotFound` error but there are
-other [errors](https://github.com/Panenco/papi/blob/main/docs/modules.md#error-classes)
+You already implemented the `NotFoundException` error but there are
+other [built-in HTTP exceptions](https://docs.nestjs.com/exception-filters#built-in-http-exceptions)
 as well.
 
-There are 2 things you need to do to set it up:
+NestJS automatically handles exceptions for you:
 
--   Use the papi `errorMiddleware`
--   Allow for async errors
+-   All unhandled exceptions are automatically caught by the built-in exception filter
+-   HTTP exceptions are automatically converted to proper HTTP responses
+-   Async errors are handled automatically (no need for express-async-errors)
 
-#### Papi error middleware
+The built-in exception filter returns JSON responses in the following format:
 
-Papi comes
-with [errorMiddleware](https://github.com/Panenco/papi/blob/main/docs/modules.md#errormiddleware)
-to handle papi errors, this way errors are consistently parsed and handled.
+```json
+{
+	"statusCode": 404,
+	"message": "User not found",
+	"error": "Not Found"
+}
+```
 
-Simply replace the custom error middleware in `app.ts` with the one from
-papi.
+NestJS comes with many built-in exceptions like:
+
+-   `BadRequestException`
+-   `UnauthorizedException`
+-   `NotFoundException`
+-   `ForbiddenException`
+-   `InternalServerErrorException`
+-   And many more...
+
+## Response Serialization
+
+NestJS automatically serializes responses and uses class-transformer to transform your response objects. When you return an object from your controller method, NestJS will automatically serialize it to JSON.
+
+To control what properties are exposed in the response, you can use class-transformer decorators in your view contracts:
+
+-   `@Exclude()` - Exclude the property from serialization
+-   `@Expose()` - Expose the property in serialization
+-   `@Transform()` - Transform the property value during serialization
+
+### Update UserView Contract
+
+Make sure your `UserView` contract properly excludes sensitive data:
 
 ```ts
-this.host.use(errorMiddleware);
+// src/contracts/user.view.ts
+import { Exclude, Expose } from "class-transformer";
+import { IsEmail, IsString, IsUUID } from "class-validator";
+
+@Exclude()
+export class UserView {
+	@Expose()
+	@IsUUID()
+	id: string;
+
+	@Expose()
+	@IsString()
+	name: string;
+
+	@Expose()
+	@IsEmail()
+	email: string;
+
+	// password is automatically excluded because it's not @Expose()d
+}
 ```
 
-#### Async errors
+### Setting HTTP Status Codes
 
-Throwing errors in an asynchronous context is a bit of a pain, luckily there is
-a package that takes care of
-this: [express-async-errors](https://www.npmjs.com/package/express-async-errors).
-It's basically a hack that changes some small things in the inner workings of
-express.
-
-In express v5 this will no longer be needed, but for now let's add it.
-
-Add the package:
-
-```bash
-pnpm add express-async-errors
-```
-
-Now it only needs to be imported once before anything else loads. So put it at
-the top of `app.ts`:
+You can explicitly set HTTP status codes using the `@HttpCode()` decorator:
 
 ```ts
-import "express-async-errors";
-```
-
-## Representer decorators
-
-By now I think you see the value of the decorators and how it can make life
-easier by abstracting recurring code away.
-
-Much like the Body/Query decorators there are also decorators to represent the
-response:
-
--   [Representer](https://github.com/Panenco/papi/blob/main/docs/modules.md#representer)
--   [ListRepresenter](https://github.com/Panenco/papi/blob/main/docs/modules.md#listrepresenter)
--   [ArrayRepresenter](https://github.com/Panenco/papi/blob/main/docs/modules.md#arrayrepresenter)
-
-These decorators ensure your output is correctly serialized and strip out all
-data not represented in the view.
-
-2 arguments can be passed to the decorators:
-
--   View: The view contract you want to be serialized, `null` if no response is
-    needed (Mandatory)
--   Status code: The status code you want to return (Optional)
-    -   Want to learn more
-        about [status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)?
-
-### Use the Representer
-
-Apply the `@Representer` decorator with the `UserView` on all endpoints except
-the get list endpoint.
-
-<details>
-<summary>The code</summary>
-
-```
 @Post()
-@UseBefore(adminMiddleware)
-@Representer(UserView, StatusCode.created)
+@HttpCode(HttpStatus.CREATED)
 async create(@Body() body: UserBody) {
 	return create(body);
 }
 
-@Get("/:id")
-@Representer(UserView)
-async get(@Param("id") id: string) {
-	return get(id);
-}
-
-@Patch("/:id")
-@Representer(UserView)
-async update(@Param("id")id: string, @Body({}, {skipMissingProperties: true}) body: UserBody) {
-	return update(id, body);
-}
-
-@Delete("/:id")
-@Representer(null)
-async delete (@Param("id") id: string) {
-	deleteUser(id);
+@Delete(":id")
+@HttpCode(HttpStatus.NO_CONTENT)
+async delete(@Param("id") id: string) {
+	await deleteUser(id);
 }
 ```
 
-</details>
+### List Responses
 
-### Use the ListRepresenter
-
-In real world applications, arrays should always
-be [paginated](https://stackoverflow.com/questions/12168624/pagination-response-payload-from-a-restful-api).
-That means only a certain amount of items should be returned. To get the next
-page some extra input is needed. `offset` and `limit` for instance.  
-However in our small example it makes no sense to fully implement pagination but
-let's cover the representation part of it already.
-
-When returning a paginated list we should also output the **total amount** of
-items. This way the client can show the amount of pages there are in total. For
-our example we will be returning the entire list at all times, so we can just
-return the length of the list.
-
-The `ListRepresenter` will return something like this to the client:
-
-```json
-{
-	"items": [],
-	"count": 0
-}
-```
-
-This would be the result of a return statement like this: `return [[], 0]`
-
-Apply the `@ListRepresenter` decorator with the `UserView` on the get list
-endpoint.
-
-In order to keep things simple modify the handler to return a fake paginated
-list of users:
-
--   `return [users, users.length];`
--   Explicitly set the return type to `[UserView[], number]`
-
-Putting it all together:
+For the get list endpoint, you can simply return the array of users. NestJS will automatically serialize each user according to the UserView contract:
 
 ```ts
-export const getList = (search: string): [User[], number] => {
+export const getList = (search: string): User[] => {
 	const users = UserStore.find(search);
-	return [users, users.length];
+	return users;
 };
 ```
 
-<details>
-<summary>The code</summary>
+Your controller method can specify the return type:
 
-```
+```ts
 @Get()
-@Authorized()
-@ListRepresenter(UserView)
-@OpenAPI({summary: 'Search users'})
-async getList(@Query() query: SearchQuery) {
+async getList(@Query() query: SearchQuery): Promise<UserView[]> {
 	return getList(query.search);
 }
-
 ```
-
-</details>
 
 ## Fix tests
 
@@ -693,8 +618,7 @@ The handlers now have different arguments and responses, so we need to adjust th
 tests accordingly.  
 Most endpoints themselves are exactly the same, so the integration tests should
 remain mainly the same.  
-However, there are some small changes like the view that was not applied on all
-endpoints or the list response that is introduced now.
+However, there are some small changes like the exception types that need to be updated.
 
 ### Handler tests without the request/response
 
@@ -710,15 +634,12 @@ Just pass in the arguments you need and get the return value to validate.
 import { expect } from "chai";
 import { beforeEach, describe, it } from "mocha";
 
-import { create } from "../../controllers/users/handlers/create.handler.js";
-import { deleteUser } from "../../controllers/users/handlers/delete.handler.js";
-import { get } from "../../controllers/users/handlers/get.handler.js";
-import { getList } from "../../controllers/users/handlers/getList.handler.js";
-import { update } from "../../controllers/users/handlers/update.handler.js";
-import {
-	User,
-	UserStore,
-} from "../../controllers/users/handlers/user.store.js";
+import { create } from "../../controllers/users/handlers/create.handler";
+import { deleteUser } from "../../controllers/users/handlers/delete.handler";
+import { get } from "../../controllers/users/handlers/get.handler";
+import { getList } from "../../controllers/users/handlers/getList.handler";
+import { update } from "../../controllers/users/handlers/update.handler";
+import { User, UserStore } from "../../controllers/users/handlers/user.store";
 
 const userFixtures: User[] = [
 	{
@@ -742,7 +663,7 @@ describe("Handler tests", () => {
 		});
 
 		it("should get users", () => {
-			const [res, total] = getList(null);
+			const res = getList(null);
 
 			expect(res.some((x) => x.name === "test2")).true;
 		});
@@ -808,103 +729,119 @@ describe("Handler tests", () => {
 The integration test shouldn't have any build error at this point. So to know if
 anything needs to change here we can simply run them.
 
-For me there were a few changes needed:
+There are a few changes needed:
 
--   Provide a body when validating the access (unauthorized) on the create
-    endpoint. (this happens because the Body is validated before the UseBefore
-    middleware. Not really a problem, but it's not ideal.)
--   Process the list response a bit different as now we have the `items` + `count`
+-   Update imports to use NestJS testing utilities
+-   Remove references to papi-specific response structures
+-   Update the authentication mechanism (we'll cover this in the next section)
 
-> Bonus: Papi has named status codes in the `StatusCode` enum. So you can use
-> them instead of specifying numbers to validate the status code.
+> Bonus: You can use HTTP status constants like `200`, `201`, `404` instead of magic numbers.
 
 <details>
 <summary>The code</summary>
 
 ```ts
-import { StatusCode } from "@panenco/papi";
+import { Test, TestingModule } from "@nestjs/testing";
+import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { expect } from "chai";
-import { beforeEach, describe, it } from "mocha";
-import supertest from "supertest";
+import { beforeAll, beforeEach, afterAll, describe, it } from "mocha";
+import * as request from "supertest";
 
-import { App } from "../../app.js";
-import { UserBody } from "../../contracts/user.body.js";
-import {
-	User,
-	UserStore,
-} from "../../controllers/users/handlers/user.store.js";
+import { AppModule } from "../../app.module";
+import { UserBody } from "../../contracts/user.body";
+import { User, UserStore } from "../../controllers/users/handlers/user.store";
 
 describe("Integration tests", () => {
 	describe("User Tests", () => {
-		let request: supertest.SuperTest<supertest.Test>;
-		beforeEach(() => {
-			UserStore.users = [];
-			const app = new App();
+		let app: INestApplication;
 
-			request = supertest(app.host);
+		beforeAll(async () => {
+			const moduleFixture: TestingModule = await Test.createTestingModule(
+				{
+					imports: [AppModule],
+				}
+			).compile();
+
+			app = moduleFixture.createNestApplication();
+
+			// Apply the same configuration as in main.ts
+			app.useGlobalPipes(
+				new ValidationPipe({
+					whitelist: true,
+					forbidNonWhitelisted: true,
+					transform: true,
+				})
+			);
+
+			app.enableCors({
+				origin: "*",
+				credentials: true,
+				exposedHeaders: ["x-auth"],
+			});
+
+			app.setGlobalPrefix("api");
+
+			await app.init();
+		});
+
+		beforeEach(() => {
+			UserStore.users = []; // Clean up users before each test
+		});
+
+		afterAll(async () => {
+			await app.close();
 		});
 
 		it("should CRUD users", async () => {
-			// Unauthorized without "api-key"
-			await request
-				.post(`/api/users`)
-				.send({
-					email: "test@test.test",
-					name: "test",
-					password: "testtestest",
-				} as UserBody)
-				.expect(StatusCode.unauthorized);
-
 			// Successfully create new user
-			const { body: createResponse } = await request
+			const { body: createResponse } = await request(app.getHttpServer())
 				.post(`/api/users`)
 				.send({
 					name: "test",
 					email: "test-user+1@panenco.com",
 					password: "real secret stuff",
 				} as User)
-				.set("x-auth", "api-key")
-				.expect(StatusCode.created);
+				.expect(201);
 
 			expect(
 				UserStore.users.some((x) => x.email === createResponse.email)
 			).true;
 
 			// Get the newly created user
-			const { body: getResponse } = await request
+			const { body: getResponse } = await request(app.getHttpServer())
 				.get(`/api/users/${createResponse.id}`)
-				.expect(StatusCode.ok);
+				.expect(200);
 			expect(getResponse.name).equal("test");
 
 			// Get all users
-			const { body: getListRes } = await request
+			const { body: getListRes } = await request(app.getHttpServer())
 				.get(`/api/users`)
-				.expect(StatusCode.ok);
-			const { items, count } = getListRes;
-			expect(items.length).equal(1);
-			expect(count).equal(1);
+				.expect(200);
+			expect(getListRes.length).equal(1);
+			expect(getListRes[0].name).equal("test");
 
 			// Successfully update user
-			const { body: updateResponse } = await request
+			const { body: updateResponse } = await request(app.getHttpServer())
 				.patch(`/api/users/${createResponse.id}`)
 				.send({
 					email: "test-user+1@panenco.com",
 				} as User)
-				.expect(StatusCode.ok);
+				.expect(200);
 
 			expect(updateResponse.name).equal("test");
 			expect(updateResponse.email).equal("test-user+1@panenco.com");
-			expect(updateResponse.password).undefined; // middleware transformed the object to not include the password
+			expect(updateResponse.password).undefined; // password excluded from response
 
 			// Delete the newly created user
-			await request.delete(`/api/users/${createResponse.id}`).expect(204);
+			await request(app.getHttpServer())
+				.delete(`/api/users/${createResponse.id}`)
+				.expect(204);
 
 			// Get all users again after deleted the only user
-			const { body: getNoneResponse } = await request
+			const { body: getNoneResponse } = await request(app.getHttpServer())
 				.get(`/api/users`)
-				.expect(StatusCode.ok);
-			const { count: getNoneCount } = getNoneResponse;
-			expect(getNoneCount).equal(0);
+				.expect(200);
+			expect(getNoneResponse.length).equal(0);
 		});
 	});
 });
@@ -912,14 +849,12 @@ describe("Integration tests", () => {
 
 </details>
 
-🥳 🚀 That's all for the papi conversion of the API. Next up... **Authentication**
+🥳 🚀 That's all for the NestJS conversion of the API. Next up... **Authentication**
 
 # Authentication & Authorization
 
-Currently most of our endpoints are publicly available or with a very bad
-authorization technique (e.g. `api-key`).  
-Luckily `papi` and `routing-controllers` provide a few utilities to easily
-implement this.
+Currently most of our endpoints are publicly available.
+NestJS provides a robust authentication system using Guards to protect your routes.
 
 We'll not go into a lot of detail on the basic principles here, but the Udemy
 course has a quite extensive explanation on this
@@ -940,15 +875,13 @@ A brief intro:
     -   When the token is valid but the user has no access to the resource we
         should return a `403 Forbidden` error.
 
-The `@Authorized` decorator should be used to mark the endpoint as requiring a
+The `@UseGuards()` decorator should be used to mark the endpoint as requiring a
 token.  
-You can pass
-in [requirements](https://github.com/Panenco/papi/blob/main/docs/modules.md#irequirement)
-to add custom validations like `isAdmin`, `belongsToOrganization`, etc. But we
-won't be covering requirements.
+You can create custom guards to add validations like `isAdmin`, `belongsToOrganization`, etc. But we
+won't be covering custom requirements.
 
 Have a look at
-the [papi authorization docs](https://github.com/Panenco/papi/blob/main/README.md#authorization)
+the [NestJS Guards documentation](https://docs.nestjs.com/guards)
 for more info.
 
 ## Login
@@ -958,9 +891,16 @@ implementing the most basic and unsecure login ever.
 
 The login endpoint should exist in a new controller, the `AuthController`.
 
+First, add the JWT dependency:
+
+```bash
+pnpm add jsonwebtoken
+pnpm add -D @types/jsonwebtoken
+```
+
 1. Create the controller (in a new `auth` folder)
-2. Add the new exported class `AuthController` with the `JsonController`
-   decorator and register it in the `App` class.
+2. Add the new exported class `AuthController` with the `@Controller`
+   decorator and register it in the `AppModule`.
 3. Create a new `LoginBody` contract that contains password and email
 4. Create a new `AccessTokenView` contract that contains token and expiresIn
 5. Add a handler in `src/controllers/auth/handlers/login.handler.ts` that will
@@ -972,18 +912,14 @@ The login endpoint should exist in a new controller, the `AuthController`.
         1. Simply compare both passwords in plain text. (this is a bad idea,
            it's just an example)
         2. Either if the user is not found or the password is wrong, throw
-           an `Unauthorized` error
-    5. Use
-       the [`createAccessToken`](https://github.com/Panenco/papi/blob/main/docs/modules.md#createaccesstoken)
-       helper from papi to create a JWT token
-        1. This is an `async` function so you need to `await` it
-        2. secret: used to verify the fact that our application created the
-           token by the `@Authorize` decorator
-        3. expiresIn: amount of seconds the token should be valid (put it to 10
-           minutes)
-        4. data: you can put basically anything in there. In our case we'll just
+           an `UnauthorizedException`
+    5. Use the `jsonwebtoken` library to create a JWT token
+        1. secret: used to verify the fact that our application created the
+           token (put this in a config file)
+        2. expiresIn: amount of time the token should be valid (put it to 1 hour)
+        3. payload: you can put basically anything in there. In our case we'll just
            put the user id
-        5. return the result
+        4. return the result
 6. Create the endpoint in the controller with the `LoginBody`, `AccessTokenView`
    and call the handler
 
@@ -995,16 +931,12 @@ on [jwt.io](jwt.io)
 <summary>login.body.ts</summary>
 
 ```ts
-import { Exclude, Expose } from "class-transformer";
 import { IsEmail, IsString } from "class-validator";
 
-@Exclude()
 export class LoginBody {
-	@Expose()
 	@IsEmail()
 	public email: string;
 
-	@Expose()
 	@IsString()
 	public password: string;
 }
@@ -1016,16 +948,12 @@ export class LoginBody {
 <summary>accessToken.view.ts</summary>
 
 ```ts
-import { Exclude, Expose } from "class-transformer";
 import { IsNumber, IsString } from "class-validator";
 
-@Exclude()
 export class AccessTokenView {
-	@Expose()
 	@IsString()
 	public token: string;
 
-	@Expose()
 	@IsNumber()
 	public expiresIn: number;
 }
@@ -1037,19 +965,17 @@ export class AccessTokenView {
 <summary>auth.controller.ts</summary>
 
 ```ts
-import { Representer } from "@panenco/papi";
-import { Body, JsonController, Post } from "routing-controllers";
+import { Controller, Post, Body } from "@nestjs/common";
 
-import { AccessTokenView } from "../../contracts/accessToken.view.js";
-import { LoginBody } from "../../contracts/login.body.js";
-import { login } from "./handlers/login.handler.js";
+import { AccessTokenView } from "../../contracts/accessToken.view";
+import { LoginBody } from "../../contracts/login.body";
+import { createToken } from "./handlers/login.handler";
 
-@JsonController("/auth")
+@Controller("auth")
 export class AuthController {
-	@Post("/tokens")
-	@Representer(AccessTokenView)
-	async create(@Body() body: LoginBody) {
-		return login(body);
+	@Post("login")
+	async login(@Body() body: LoginBody): Promise<AccessTokenView> {
+		return createToken(body);
 	}
 }
 ```
@@ -1060,136 +986,285 @@ export class AuthController {
 <summary>login.handler.ts</summary>
 
 ```ts
-import { createAccessToken, Unauthorized } from "@panenco/papi";
+import { UnauthorizedException } from "@nestjs/common";
+import * as jwt from "jsonwebtoken";
 
-import { LoginBody } from "../../../contracts/login.body.js";
-import { UserStore } from "../../users/handlers/user.store.js";
+import { LoginBody } from "../../../contracts/login.body";
+import { UserStore } from "../../users/handlers/user.store";
+import config from "../../../config";
 
-export const login = async (body: LoginBody) => {
+export const createToken = async (body: LoginBody) => {
 	const user = UserStore.getByEmail(body.email);
 	if (!user || user.password !== body.password) {
-		throw new Unauthorized("unauthorized", "Invalid credentials");
+		throw new UnauthorizedException("Invalid credentials");
 	}
-	const result = await createAccessToken("jwtSecretFromConfigHere", 60 * 10, {
-		userId: user.id,
-	}); // Important this secret is also used for the authenticator initialization in app.ts
-	return result;
+
+	const token = jwt.sign({ userId: user.id }, config.jwtSecret, {
+		expiresIn: "1h",
+	});
+
+	return {
+		token,
+		expiresIn: 3600, // 1 hour in seconds
+	};
 };
 ```
 
 </details>
 
-## Authenticator
+## JWT Guard
 
-The authenticator is the thing that will verify the JWT token and execute the
-requirements.
+The guard is the thing that will verify the JWT token and protect your routes.
 
-In order for the papi authenticator to be used, you need to initialize it when
-setting up `routing-controllers` in `App`.
+Create a JWT guard `src/guards/jwt-auth.guard.ts`:
 
-The final code should look like the sample below:
+```ts
+import {
+	Injectable,
+	CanActivate,
+	ExecutionContext,
+	UnauthorizedException,
+} from "@nestjs/common";
+import * as jwt from "jsonwebtoken";
+import config from "../config";
 
-```
-private initializeControllers(controllers: Function[]) {
-	useExpressServer(this.host, {
-		cors: {
-			origin: '*',
-			exposedHeaders: ['x-auth'],
-		},
-		controllers,
-		defaultErrorHandler: false,
-		routePrefix: '/api',
-		authorizationChecker: getAuthenticator('jwtSecretFromConfigHere'), // Tell routing-controllers to use the papi authentication checker
-	});
+@Injectable()
+export class JwtAuthGuard implements CanActivate {
+	canActivate(context: ExecutionContext): boolean {
+		const request = context.switchToHttp().getRequest();
+		const token = request.headers["x-auth"];
+
+		if (!token) {
+			throw new UnauthorizedException("Token not provided");
+		}
+
+		try {
+			const payload = jwt.verify(token, config.jwtSecret) as any;
+			request.user = payload;
+			return true;
+		} catch (error) {
+			throw new UnauthorizedException("Invalid token");
+		}
+	}
 }
 ```
 
-Now when we use the `@Authorized` decorator, the `papi` authenticator will be
-used, with your secret to validate the tokens created by the login handler.
+Now when we use the `@UseGuards(JwtAuthGuard)` decorator, this guard will be
+used to validate the tokens created by the login handler.
 
-## @Authorized()
+## @UseGuards()
 
 All preparations have been done, and it's finally time to secure our endpoints!
 
-Simply add the `@Authorized` decorator to your users endpoints and the endpoints
+First, update your `AppModule` to include the `AuthController`:
+
+```ts
+import { Module } from "@nestjs/common";
+import { AuthController } from "./controllers/auth/auth.controller";
+import { UserController } from "./controllers/users/user.controller";
+
+@Module({
+	controllers: [AuthController, UserController],
+})
+export class AppModule {}
+```
+
+Simply add the `@UseGuards(JwtAuthGuard)` decorator to your users endpoints and the endpoints
 will no longer be freely available. Secure get, getList, patch and delete. Leave
 the `POST` endpoint publicly available so you can still create new users.
 
+```ts
+import {
+	Controller,
+	Get,
+	Post,
+	Body,
+	Patch,
+	Param,
+	Delete,
+	Query,
+	UseGuards,
+	HttpCode,
+	HttpStatus,
+} from "@nestjs/common";
+import { JwtAuthGuard } from "../../guards/jwt-auth.guard";
+
+@Controller("users")
+export class UserController {
+	@Post()
+	@HttpCode(HttpStatus.CREATED)
+	async create(@Body() body: UserBody) {
+		return create(body);
+	}
+
+	@Get()
+	@UseGuards(JwtAuthGuard)
+	async getList(@Query() query: SearchQuery) {
+		return getList(query.search);
+	}
+
+	@Get(":id")
+	@UseGuards(JwtAuthGuard)
+	async get(@Param("id") id: string) {
+		return get(id);
+	}
+
+	@Patch(":id")
+	@UseGuards(JwtAuthGuard)
+	async update(@Param("id") id: string, @Body() body: UserBody) {
+		return update(id, body);
+	}
+
+	@Delete(":id")
+	@UseGuards(JwtAuthGuard)
+	@HttpCode(HttpStatus.NO_CONTENT)
+	async delete(@Param("id") id: string) {
+		await deleteUser(id);
+	}
+}
+```
+
 When running your integration test now you'll notice it's failing with
-a `Unauthorized` errors. Change it up a bit to first create a new user, then
+`Unauthorized` errors. Change it up a bit to first create a new user, then
 login and use the response token in the `x-auth` header to access the other
 endpoints.
 
-Meanwhile we also have no use for the `adminMiddleware` anymore so you can
-completely remove it.
+Here's an updated integration test that demonstrates the authentication flow:
+
+```ts
+it("should CRUD users with authentication", async () => {
+	// Successfully create new user (public endpoint)
+	const { body: createResponse } = await request(app.getHttpServer())
+		.post(`/api/users`)
+		.send({
+			name: "test",
+			email: "test-user+1@panenco.com",
+			password: "real secret stuff",
+		})
+		.expect(201);
+
+	expect(UserStore.users.some((x) => x.email === createResponse.email)).true;
+
+	// Login to get JWT token
+	const { body: loginResponse } = await request(app.getHttpServer())
+		.post(`/api/auth/login`)
+		.send({
+			email: "test-user+1@panenco.com",
+			password: "real secret stuff",
+		})
+		.expect(200);
+
+	const token = loginResponse.token;
+	expect(token).to.be.a("string");
+
+	// Try to access protected endpoint without token (should fail)
+	await request(app.getHttpServer()).get(`/api/users`).expect(401);
+
+	// Get all users with valid token
+	const { body: getListRes } = await request(app.getHttpServer())
+		.get(`/api/users`)
+		.set("x-auth", token)
+		.expect(200);
+	expect(getListRes.length).equal(1);
+	expect(getListRes[0].name).equal("test");
+
+	// Get the newly created user with token
+	const { body: getResponse } = await request(app.getHttpServer())
+		.get(`/api/users/${createResponse.id}`)
+		.set("x-auth", token)
+		.expect(200);
+	expect(getResponse.name).equal("test");
+
+	// Successfully update user with token
+	const { body: updateResponse } = await request(app.getHttpServer())
+		.patch(`/api/users/${createResponse.id}`)
+		.send({
+			email: "test-user+updated@panenco.com",
+		})
+		.set("x-auth", token)
+		.expect(200);
+
+	expect(updateResponse.name).equal("test");
+	expect(updateResponse.email).equal("test-user+updated@panenco.com");
+	expect(updateResponse.password).undefined; // password excluded from response
+
+	// Delete the user with token
+	await request(app.getHttpServer())
+		.delete(`/api/users/${createResponse.id}`)
+		.set("x-auth", token)
+		.expect(204);
+
+	// Verify user is deleted
+	const { body: getNoneResponse } = await request(app.getHttpServer())
+		.get(`/api/users`)
+		.set("x-auth", token)
+		.expect(200);
+	expect(getNoneResponse.length).equal(0);
+});
+```
 
 <details>
 <summary>user.controller.ts</summary>
 
 ```ts
 import {
-	Body,
-	ListRepresenter,
-	Query,
-	Representer,
-	StatusCode,
-} from "@panenco/papi";
-import {
-	Authorized,
-	Delete,
+	Controller,
 	Get,
-	JsonController,
-	Param,
-	Patch,
 	Post,
-} from "routing-controllers";
+	Body,
+	Patch,
+	Param,
+	Delete,
+	Query,
+	UseGuards,
+	HttpCode,
+	HttpStatus,
+} from "@nestjs/common";
 
-import { SearchQuery } from "../../contracts/search.query.js";
-import { UserBody } from "../../contracts/user.body.js";
-import { UserView } from "../../contracts/user.view.js";
-import { create } from "./handlers/create.handler.js";
-import { deleteUser } from "./handlers/delete.handler.js";
-import { get } from "./handlers/get.handler.js";
-import { getList } from "./handlers/getList.handler.js";
-import { update } from "./handlers/update.handler.js";
+import { SearchQuery } from "../../contracts/search.query";
+import { UserBody } from "../../contracts/user.body";
+import { UserView } from "../../contracts/user.view";
+import { create } from "./handlers/create.handler";
+import { deleteUser } from "./handlers/delete.handler";
+import { get } from "./handlers/get.handler";
+import { getList } from "./handlers/getList.handler";
+import { update } from "./handlers/update.handler";
+import { JwtAuthGuard } from "../../guards/jwt-auth.guard";
 
-@JsonController("/users")
+@Controller("users")
 export class UserController {
 	@Post()
-	@Representer(UserView, StatusCode.created)
-	async create(@Body() body: UserBody) {
+	@HttpCode(HttpStatus.CREATED)
+	async create(@Body() body: UserBody): Promise<UserView> {
 		return create(body);
 	}
 
 	@Get()
-	@Authorized()
-	@ListRepresenter(UserView)
-	async getList(@Query() query: SearchQuery) {
+	@UseGuards(JwtAuthGuard)
+	async getList(@Query() query: SearchQuery): Promise<UserView[]> {
 		return getList(query.search);
 	}
 
-	@Get("/:id")
-	@Authorized()
-	@Representer(UserView)
-	async get(@Param("id") id: string) {
+	@Get(":id")
+	@UseGuards(JwtAuthGuard)
+	async get(@Param("id") id: string): Promise<UserView> {
 		return get(id);
 	}
 
-	@Patch("/:id")
-	@Authorized()
-	@Representer(UserView)
+	@Patch(":id")
+	@UseGuards(JwtAuthGuard)
 	async update(
 		@Param("id") id: string,
-		@Body({}, { skipMissingProperties: true }) body: UserBody
-	) {
+		@Body() body: UserBody
+	): Promise<UserView> {
 		return update(id, body);
 	}
 
-	@Delete("/:id")
-	@Authorized()
-	@Representer(null)
-	async delete(@Param("id") id: string) {
-		deleteUser(id);
+	@Delete(":id")
+	@UseGuards(JwtAuthGuard)
+	@HttpCode(HttpStatus.NO_CONTENT)
+	async delete(@Param("id") id: string): Promise<void> {
+		await deleteUser(id);
 	}
 }
 ```
@@ -1197,100 +1272,149 @@ export class UserController {
 </details>
 
 <details>
-<summary>user.integration.test.ts</summary>
+<summary>user.integration.test.ts with Prisma</summary>
 
 ```ts
-import { StatusCode } from "@panenco/papi";
+import { Test, TestingModule } from "@nestjs/testing";
+import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { expect } from "chai";
-import { beforeEach, describe, it } from "mocha";
-import supertest from "supertest";
+import { beforeAll, beforeEach, afterAll, describe, it } from "mocha";
+import * as request from "supertest";
 
-import { App } from "../../app.js";
-import {
-	User,
-	UserStore,
-} from "../../controllers/users/handlers/user.store.js";
+import { AppModule } from "../../app.module";
+import { UserBody } from "../../contracts/user.body";
+import { prisma } from "../../lib/prisma";
 
 describe("Integration tests", () => {
 	describe("User Tests", () => {
-		let request: supertest.SuperTest<supertest.Test>;
-		beforeEach(async () => {
-			UserStore.users = [];
-			const app = new App();
+		let app: INestApplication;
 
-			request = supertest(app.host);
+		beforeAll(async () => {
+			const moduleFixture: TestingModule = await Test.createTestingModule(
+				{
+					imports: [AppModule],
+				}
+			).compile();
+
+			app = moduleFixture.createNestApplication();
+
+			// Apply the same configuration as in main.ts
+			app.useGlobalPipes(
+				new ValidationPipe({
+					whitelist: true,
+					forbidNonWhitelisted: true,
+					transform: true,
+				})
+			);
+
+			app.enableCors({
+				origin: "*",
+				credentials: true,
+				exposedHeaders: ["x-auth"],
+			});
+
+			app.setGlobalPrefix("api");
+
+			await app.init();
 		});
 
-		it("should CRUD users", async () => {
-			// Unauthorized without "token"
-			await request.get(`/api/users`).expect(StatusCode.unauthorized);
+		beforeEach(async () => {
+			// Clean up database before each test
+			await prisma.user.deleteMany();
+		});
+
+		afterAll(async () => {
+			await app.close();
+		});
+
+		it("should CRUD users with authentication and database", async () => {
+			// Test unauthorized access
+			await request(app.getHttpServer()).get(`/api/users`).expect(401);
 
 			// Successfully create new user
-			const { body: createResponse } = await request
+			const { body: createResponse } = await request(app.getHttpServer())
 				.post(`/api/users`)
 				.send({
 					name: "test",
 					email: "test-user+1@panenco.com",
 					password: "real secret stuff",
-				} as User)
-				.expect(StatusCode.created);
+				} as UserBody)
+				.expect(201);
 
-			// Login
-			const { body: loginResponse } = await request
-				.post(`/api/auth/tokens`)
+			// Verify user was created in database
+			const userInDb = await prisma.user.findUnique({
+				where: { email: createResponse.email },
+			});
+			expect(userInDb).to.not.be.null;
+			expect(userInDb.name).equal("test");
+
+			// Login to get JWT token
+			const { body: loginResponse } = await request(app.getHttpServer())
+				.post(`/api/auth/login`)
 				.send({
 					email: "test-user+1@panenco.com",
 					password: "real secret stuff",
-				} as User)
-				.expect(StatusCode.ok);
+				})
+				.expect(200);
+
 			const token = loginResponse.token;
+			expect(token).to.be.a("string");
 
-			expect(
-				UserStore.users.some((x) => x.email === createResponse.email)
-			).true;
-
-			// Get the newly created user
-			const { body: getResponse } = await request
+			// Get the newly created user with authentication
+			const { body: getResponse } = await request(app.getHttpServer())
 				.get(`/api/users/${createResponse.id}`)
 				.set("x-auth", token)
-				.expect(StatusCode.ok);
+				.expect(200);
 			expect(getResponse.name).equal("test");
+			expect(getResponse.password).to.be.undefined; // password should be excluded
 
 			// Get all users
-			const { body: getListRes } = await request
+			const { body: getListRes } = await request(app.getHttpServer())
 				.get(`/api/users`)
 				.set("x-auth", token)
-				.expect(StatusCode.ok);
-			const { items, count } = getListRes;
-			expect(items.length).equal(1);
-			expect(count).equal(1);
+				.expect(200);
+			expect(getListRes.length).equal(1);
+			expect(getListRes[0].name).equal("test");
 
 			// Successfully update user
-			const { body: updateResponse } = await request
+			const { body: updateResponse } = await request(app.getHttpServer())
 				.patch(`/api/users/${createResponse.id}`)
 				.send({
-					email: "test-user+1@panenco.com",
-				} as User)
+					email: "test-user+updated@panenco.com",
+				})
 				.set("x-auth", token)
-				.expect(StatusCode.ok);
+				.expect(200);
 
 			expect(updateResponse.name).equal("test");
-			expect(updateResponse.email).equal("test-user+1@panenco.com");
-			expect(updateResponse.password).undefined; // middleware transformed the object to not include the password
+			expect(updateResponse.email).equal("test-user+updated@panenco.com");
+			expect(updateResponse.password).undefined;
 
-			// Get the newly created user
-			await request
+			// Verify update in database
+			const updatedUserInDb = await prisma.user.findUnique({
+				where: { id: createResponse.id },
+			});
+			expect(updatedUserInDb.email).equal(
+				"test-user+updated@panenco.com"
+			);
+
+			// Delete the user
+			await request(app.getHttpServer())
 				.delete(`/api/users/${createResponse.id}`)
 				.set("x-auth", token)
 				.expect(204);
 
-			// Get all users again after deleted the only user
-			const { body: getNoneResponse } = await request
+			// Verify user was deleted from database
+			const deletedUser = await prisma.user.findUnique({
+				where: { id: createResponse.id },
+			});
+			expect(deletedUser).to.be.null;
+
+			// Get all users again after deletion
+			const { body: getNoneResponse } = await request(app.getHttpServer())
 				.get(`/api/users`)
 				.set("x-auth", token)
-				.expect(StatusCode.ok);
-			const { count: getNoneCount } = getNoneResponse;
-			expect(getNoneCount).equal(0);
+				.expect(200);
+			expect(getNoneResponse.length).equal(0);
 		});
 	});
 });
@@ -1321,93 +1445,107 @@ decorator based approach we're using.
 
 ### Add packages
 
+NestJS has built-in Swagger support that's much easier to set up:
+
 ```bash
-pnpm add class-validator-jsonschema@5.0.0 routing-controllers-openapi@4.0.0 swagger-ui-express@4.4.0
+pnpm add @nestjs/swagger swagger-ui-express
 ```
 
--   `class-validator-jsonschema` to convert all the data from the decorators (
-    metadata) to an OpenAPI json schema
+-   `@nestjs/swagger` provides the built-in Swagger integration
 -   `swagger-ui-express` to display the documentation
--   `routing-controllers-openapi` to hook up `routing-controllers` with swagger
 
-add module overrides in package.json to fix a dependency issue with routing controllers
+### Configure swagger-ui in main.ts
 
-```json
-{
-	"pnpm": {
-		"overrides": {
-			"openapi3-ts": "3.2.0"
-		}
-	}
-}
-```
-
-and run `pnpm install`.
-
-### Configure swagger-ui in app.ts
-
-Add a private method in app.ts to configure swagger and call it after the
-controllers are initialized.
-
-Some explanation is inline:
+NestJS provides built-in Swagger support that's much easier to configure. Update your `main.ts` file to include Swagger configuration:
 
 ```ts
-import { getMetadataStorage } from "class-validator";
+import { NestFactory } from "@nestjs/core";
+import { ValidationPipe } from "@nestjs/common";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { AppModule } from "./app.module";
 
-class App {
-	// ...
-	private initializeSwagger() {
-		const schemas = validationMetadatasToSchemas({
-			classValidatorMetadataStorage: getMetadataStorage(),
-			refPointerPrefix: "#/components/schemas/",
-		});
+async function bootstrap() {
+	const app = await NestFactory.create(AppModule);
 
-		const routingControllersOptions: RoutingControllersOptions = {
-			routePrefix: "/api",
-		};
+	// Enable validation
+	app.useGlobalPipes(
+		new ValidationPipe({
+			whitelist: true,
+			forbidNonWhitelisted: true,
+			transform: true,
+		})
+	);
 
-		const storage = getMetadataArgsStorage();
-		const spec = routingControllersToSpec(
-			storage,
-			routingControllersOptions,
+	// Enable CORS
+	app.enableCors({
+		origin: "*",
+		credentials: true,
+		exposedHeaders: ["x-auth"],
+	});
+
+	// Set global prefix
+	app.setGlobalPrefix("api");
+
+	// Swagger configuration
+	const config = new DocumentBuilder()
+		.setTitle("Node Course API")
+		.setDescription("The Node Course API description")
+		.setVersion("1.0")
+		.addApiKey(
 			{
-				components: {
-					schemas,
-					securitySchemes: {
-						JWT: {
-							in: "header",
-							name: "x-auth",
-							type: "apiKey",
-							bearerFormat: "JWT",
-							description:
-								'JWT Authorization header using the JWT scheme. Example: "x-auth: {token}"',
-						},
-					},
-				},
-				security: [{ JWT: [] }],
-			}
-		);
+				type: "apiKey",
+				name: "x-auth",
+				in: "header",
+			},
+			"x-auth"
+		)
+		.build();
 
-		this.host.use("/docs", swaggerUi.serve, swaggerUi.setup(spec));
-	}
+	const document = SwaggerModule.createDocument(app, config);
+	SwaggerModule.setup("docs", app, document);
+
+	await app.listen(3000);
+	console.log("🚀 http://localhost:3000/docs");
 }
+
+bootstrap();
 ```
 
 ### Endpoint descriptions
 
 This will already give you very handy docs. However if you have 100+ endpoints,
 not every endpoint might be very self explanatory.  
-To fix that we can add some descriptions. To do so you can add the `OpenAPI`
-decorator to your endpoint and provide some summary.
+To fix that we can add some descriptions using NestJS Swagger decorators.
 
-Like this:
+Add Swagger decorators to your controllers:
 
-```
-@Post()
-@Representer(UserView, StatusCode.created)
-@OpenAPI({summary: 'Create a new user'})
-async create(@Body() body: UserBody) {
-	return create(body);
+```ts
+import {
+	ApiTags,
+	ApiOperation,
+	ApiResponse,
+	ApiSecurity,
+} from "@nestjs/swagger";
+
+@ApiTags("users")
+@Controller("users")
+export class UserController {
+	@Post()
+	@HttpCode(HttpStatus.CREATED)
+	@ApiOperation({ summary: "Create a new user" })
+	@ApiResponse({ status: 201, description: "User created successfully" })
+	async create(@Body() body: UserBody) {
+		return create(body);
+	}
+
+	@Get()
+	@UseGuards(JwtAuthGuard)
+	@ApiSecurity("x-auth")
+	@ApiOperation({ summary: "Get all users" })
+	@ApiResponse({ status: 200, description: "Users retrieved successfully" })
+	async getList(@Query() query: SearchQuery) {
+		return getList(query.search);
+	}
 }
 ```
 
@@ -1424,108 +1562,7 @@ For instance, execute a flow in there:
 -   Configure it in the top right with the "Authorize" button
 -   Get your user
 
-In the end the `app.ts` should look like this:
-
-<details>
-<summary>app.ts</summary>
-
-```ts
-import "express-async-errors";
-import { errorMiddleware, getAuthenticator } from "@panenco/papi";
-import express, { Application } from "express";
-import {
-	getMetadataArgsStorage,
-	RoutingControllersOptions,
-	useExpressServer,
-} from "routing-controllers";
-import { validationMetadatasToSchemas } from "class-validator-jsonschema";
-import { routingControllersToSpec } from "routing-controllers-openapi";
-import swaggerUi from "swagger-ui-express";
-import { getMetadataStorage } from "class-validator";
-import { UserController } from "./controllers/users/user.controller.js";
-import { AuthController } from "./controllers/auth/auth.controller.js";
-
-export class App {
-	host: Application;
-
-	constructor() {
-		// Init server
-		this.host = express();
-		this.host.use(express.json());
-		this.host.use((req, res, next) => {
-			// general middleware
-			console.log(req.method, req.url);
-			next();
-		});
-		this.host.get("/", (req, res, next) => {
-			res.send("Hello World @ Panenco!");
-		});
-		const controllers = [AuthController, UserController];
-		this.initializeControllers(controllers);
-		this.initializeSwagger();
-		this.host.use(errorMiddleware);
-	}
-
-	listen() {
-		this.host.listen(3000, () => {
-			console.info(`:rocket: http://localhost:3000`);
-			console.info(`========================`);
-		});
-	}
-
-	private initializeControllers(controllers: Function[]) {
-		useExpressServer(this.host, {
-			// Link the express host to routing-controllers
-			cors: {
-				origin: "*", // Allow all origins, any application on any url can call our api. This is why we also added the `cors` package.
-				credentials: true,
-				exposedHeaders: ["x-auth"], // Allow the header `x-auth` to be exposed to the client. This is needed for the authentication to work later.
-			},
-			controllers, // Provide the controllers. Currently this won't work yet, first we need to convert the Route to a routing-controllers controller.
-			defaultErrorHandler: false, // Disable the default error handler. We will handle errors through papi later.
-			routePrefix: "/api", // Map all routes to the `/api` path.
-			authorizationChecker: getAuthenticator("jwtSecretFromConfigHere"), // Tell routing-controllers to use the papi authentication checker
-		});
-	}
-
-	private initializeSwagger() {
-		const schemas = validationMetadatasToSchemas({
-			classValidatorMetadataStorage: getMetadataStorage(),
-			refPointerPrefix: "#/components/schemas/",
-		});
-
-		const routingControllersOptions: RoutingControllersOptions = {
-			routePrefix: "/api",
-		};
-
-		const storage = getMetadataArgsStorage();
-		const spec = routingControllersToSpec(
-			storage,
-			routingControllersOptions,
-			{
-				components: {
-					schemas,
-					securitySchemes: {
-						JWT: {
-							in: "header",
-							name: "x-auth",
-							type: "apiKey",
-							bearerFormat: "JWT",
-							description:
-								'JWT Authorization header using the JWT scheme. Example: "x-auth: {token}"',
-						},
-					},
-				},
-				security: [{ JWT: [] }],
-			}
-		);
-
-		this.host.use("/docs", swaggerUi.serve, swaggerUi.setup(spec));
-	}
-}
-```
-
-</details>
+Your NestJS application is now properly configured with Swagger documentation!
 
 # Database
 
@@ -1751,50 +1788,50 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 ```
 
-### Database Connection in App
+### Database Connection in NestJS
 
-Connecting to the database and initializing Prisma occurs when bootstrapping
-your application, right before you start listening to incoming requests.
-
-In `server.ts` we replace the existing code with this asynchronous step and call
-the function:
+With NestJS, you can connect to Prisma during the application bootstrap process. Update your `main.ts` to initialize the database connection:
 
 ```ts
-import { App } from "./app.js";
+import { NestFactory } from "@nestjs/core";
+import { ValidationPipe } from "@nestjs/common";
+import { AppModule } from "./app.module";
+import { prisma } from "./lib/prisma";
 
-const app = new App();
+async function bootstrap() {
+	const app = await NestFactory.create(AppModule);
 
-const startServer = async () => {
-	await app.createConnection();
-	app.listen();
-};
+	// Enable validation
+	app.useGlobalPipes(
+		new ValidationPipe({
+			whitelist: true,
+			forbidNonWhitelisted: true,
+			transform: true,
+		})
+	);
 
-startServer().catch(console.error);
-```
+	// Enable CORS
+	app.enableCors({
+		origin: "*",
+		credentials: true,
+		exposedHeaders: ["x-auth"],
+	});
 
-The `createConnection` method lives in `app.ts` and initializes Prisma and
-provides a database connection:
+	// Set global prefix
+	app.setGlobalPrefix("api");
 
--   `app.ts`
+	// Connect to database
+	await prisma.$connect();
+	console.log("Database connected successfully");
 
-```ts
-import { prisma } from "./lib/prisma.js";
-
-export class App {
-	// ...
-
-	public async createConnection() {
-		try {
-			// Test database connection
-			await prisma.$connect();
-			console.log("Database connected successfully");
-		} catch (error) {
-			console.log("Error while connecting to the database", error);
-			process.exit(1);
-		}
-	}
+	await app.listen(3000);
+	console.log("🚀 http://localhost:3000");
 }
+
+bootstrap().catch(console.error);
 ```
+
+Alternatively, you can create a custom Prisma service and inject it as a provider in your NestJS modules for better dependency injection patterns.
 
 ### Database Schema Management
 
@@ -1976,8 +2013,8 @@ export const getList = async (search?: string) => {
 <summary>get.handler.ts</summary>
 
 ```ts
+import { NotFoundException } from "@nestjs/common";
 import { prisma } from "../../../lib/prisma";
-import { NotFound } from "@panenco/papi";
 
 export const get = async (id: string) => {
 	const user = await prisma.user.findUnique({
@@ -1985,7 +2022,7 @@ export const get = async (id: string) => {
 	});
 
 	if (!user) {
-		throw new NotFound("userNotFound", "User not found");
+		throw new NotFoundException("User not found");
 	}
 
 	return user;
@@ -1998,8 +2035,8 @@ export const get = async (id: string) => {
 <summary>update.handler.ts</summary>
 
 ```ts
+import { NotFoundException } from "@nestjs/common";
 import { prisma } from "../../../lib/prisma";
-import { NotFound } from "@panenco/papi";
 import bcrypt from "bcryptjs";
 import { UserBody } from "../../../contracts/user.body";
 
@@ -2009,7 +2046,7 @@ export const update = async (id: string, body: Partial<UserBody>) => {
 	});
 
 	if (!existingUser) {
-		throw new NotFound("userNotFound", "User not found");
+		throw new NotFoundException("User not found");
 	}
 
 	const updateData: any = {};
@@ -2032,8 +2069,8 @@ export const update = async (id: string, body: Partial<UserBody>) => {
 <summary>delete.handler.ts</summary>
 
 ```ts
+import { NotFoundException } from "@nestjs/common";
 import { prisma } from "../../../lib/prisma";
-import { NotFound } from "@panenco/papi";
 
 export const deleteUser = async (id: string) => {
 	const existingUser = await prisma.user.findUnique({
@@ -2041,7 +2078,7 @@ export const deleteUser = async (id: string) => {
 	});
 
 	if (!existingUser) {
-		throw new NotFound("userNotFound", "User not found");
+		throw new NotFoundException("User not found");
 	}
 
 	await prisma.user.delete({
@@ -2054,29 +2091,35 @@ export const deleteUser = async (id: string) => {
 <summary>login.handler.ts</summary>
 
 ```ts
+import { UnauthorizedException } from "@nestjs/common";
+import * as jwt from "jsonwebtoken";
 import { prisma } from "../../../lib/prisma";
-import { createAccessToken, Unauthorized } from "@panenco/papi";
 import bcrypt from "bcryptjs";
 import config from "../../../config";
 import { LoginBody } from "../../../contracts/login.body";
 
-export const login = async (body: LoginBody) => {
+export const createToken = async (body: LoginBody) => {
 	const user = await prisma.user.findUnique({
 		where: { email: body.email },
 	});
 
 	if (!user) {
-		throw new Unauthorized("invalidCredentials", "Invalid credentials");
+		throw new UnauthorizedException("Invalid credentials");
 	}
 
 	const isPasswordValid = await bcrypt.compare(body.password, user.password);
 	if (!isPasswordValid) {
-		throw new Unauthorized("invalidCredentials", "Invalid credentials");
+		throw new UnauthorizedException("Invalid credentials");
 	}
 
-	return createAccessToken(config.jwtSecret, 60 * 10, {
-		userId: user.id,
+	const token = jwt.sign({ userId: user.id }, config.jwtSecret, {
+		expiresIn: "1h",
 	});
+
+	return {
+		token,
+		expiresIn: 3600, // 1 hour in seconds
+	};
 };
 ```
 
@@ -2084,7 +2127,7 @@ export const login = async (body: LoginBody) => {
 
 ### Error Handling with Prisma
 
-As you might have noticed, looking for an entity and throwing a `NotFound` error
+As you might have noticed, looking for an entity and throwing a `NotFoundException` error
 when not found, is a commonly returning pattern. With Prisma, this pattern is
 straightforward - you simply check if the result is null and throw the
 appropriate error.
@@ -2098,7 +2141,7 @@ const user = await prisma.user.findUnique({
 });
 
 if (!user) {
-	throw new NotFound("userNotFound", "User not found");
+	throw new NotFoundException("User not found");
 }
 ```
 
@@ -2113,30 +2156,66 @@ but our tests have not been updated.
 
 For integration tests:
 
--   For each test suite we create a connection to the database through the App class
--   Instead of setting the users to an empty array in the beforeEach, we now clear the database using Prisma
+-   Create a NestJS test application using the Test module
+-   Connect to the database during test setup
+-   Clear the database using Prisma before each test
 
 <details>
 <summary>user.integration.test.ts</summary>
 
 ```ts
+import { Test, TestingModule } from "@nestjs/testing";
+import { INestApplication, ValidationPipe } from "@nestjs/common";
+import * as request from "supertest";
+import { AppModule } from "../../app.module";
 import { prisma } from "../../lib/prisma";
 
 describe("Integration tests", () => {
 	describe("User Tests", () => {
-		let request: any;
+		let app: INestApplication;
 
-		before(async () => {
-			const app = new App();
-			await app.createConnection();
-			request = supertest(app.host);
+		beforeAll(async () => {
+			const moduleFixture: TestingModule = await Test.createTestingModule(
+				{
+					imports: [AppModule],
+				}
+			).compile();
+
+			app = moduleFixture.createNestApplication();
+
+			// Configure app like in main.ts
+			app.useGlobalPipes(
+				new ValidationPipe({
+					whitelist: true,
+					forbidNonWhitelisted: true,
+					transform: true,
+				})
+			);
+
+			app.enableCors({
+				origin: "*",
+				credentials: true,
+				exposedHeaders: ["x-auth"],
+			});
+
+			app.setGlobalPrefix("api");
+
+			await app.init();
+
+			// Connect to database
+			await prisma.$connect();
 		});
 
 		beforeEach(async () => {
 			// Clean up database before each test
 			await prisma.user.deleteMany();
 		});
-		// ...
+
+		afterAll(async () => {
+			await app.close();
+		});
+
+		// ... your tests here
 	});
 });
 ```
