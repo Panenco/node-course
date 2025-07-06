@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  class-transformer@0.5.1:
-    hash: 8af2042aeee3eb6c5b71f8cb19079635550d7345488503d6a92792937b056935
-    path: patches/class-transformer@0.5.1.patch
-
 importers:
 
   .:
@@ -24,7 +19,7 @@ importers:
         version: 4.5.0
       class-transformer:
         specifier: ^0.5.1
-        version: 0.5.1(patch_hash=8af2042aeee3eb6c5b71f8cb19079635550d7345488503d6a92792937b056935)
+        version: 0.5.1
       class-validator:
         specifier: ^0.14.0
         version: 0.14.2
@@ -1188,7 +1183,7 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  class-transformer@0.5.1(patch_hash=8af2042aeee3eb6c5b71f8cb19079635550d7345488503d6a92792937b056935): {}
+  class-transformer@0.5.1: {}
 
   class-validator@0.14.2:
     dependencies:

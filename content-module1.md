@@ -3,9 +3,7 @@
 Throughout this course we will gradually build a Node.js Express API. As we
 progress elements, techniques and libraries will be added to the project.
 
-The end goal is to build a CRUD (create, read, update, delete) controller based
-on [papi](https://npmjs.com/package/@panenco/papi). The way API's are built at
-Panenco.
+The end goal is to build a CRUD (create, read, update, delete) API using modern Node.js practices with proper validation, authentication, and database integration.
 
 # Before you get started
 

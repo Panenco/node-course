@@ -411,8 +411,8 @@ export class UserController {
 <summary>create.handler.ts</summary>
 
 ```ts
-import { UserBody } from "../../../contracts/user.body.js";
-import { UserStore } from "./user.store.js";
+import { UserBody } from "../../../contracts/user.body";
+import { UserStore } from "./user.store";
 
 export const create = async (body: UserBody) => {
 	const user = UserStore.add(body);
@@ -427,7 +427,7 @@ export const create = async (body: UserBody) => {
 <summary>getList.handler.ts</summary>
 
 ```ts
-import { UserStore } from "./user.store.js";
+import { UserStore } from "./user.store";
 
 export const getList = (search: string) => {
 	const users = UserStore.find(search);
@@ -732,7 +732,7 @@ anything needs to change here we can simply run them.
 There are a few changes needed:
 
 -   Update imports to use NestJS testing utilities
--   Remove references to papi-specific response structures
+-   Remove references to Express-specific response structures
 -   Update the authentication mechanism (we'll cover this in the next section)
 
 > Bonus: You can use HTTP status constants like `200`, `201`, `404` instead of magic numbers.
