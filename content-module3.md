@@ -1272,7 +1272,7 @@ export class UserController {
 </details>
 
 <details>
-<summary>user.integration.test.ts with Prisma</summary>
+<summary>user.integration.test.ts with NestJS</summary>
 
 ```ts
 import { Test, TestingModule } from "@nestjs/testing";
@@ -1283,7 +1283,7 @@ import * as request from "supertest";
 
 import { AppModule } from "../../app.module";
 import { UserBody } from "../../contracts/user.body";
-import { prisma } from "../../lib/prisma";
+import { UserStore } from "../../controllers/users/handlers/user.store";
 
 describe("Integration tests", () => {
 	describe("User Tests", () => {
@@ -1318,20 +1318,20 @@ describe("Integration tests", () => {
 			await app.init();
 		});
 
-		beforeEach(async () => {
-			// Clean up database before each test
-			await prisma.user.deleteMany();
+		beforeEach(() => {
+			// Clean up in-memory store before each test
+			UserStore.users = [];
 		});
 
 		afterAll(async () => {
 			await app.close();
 		});
 
-		it("should CRUD users with authentication and database", async () => {
+		it("should CRUD users with authentication", async () => {
 			// Test unauthorized access
 			await request(app.getHttpServer()).get(`/api/users`).expect(401);
 
-			// Successfully create new user
+			// Successfully create new user (public endpoint)
 			const { body: createResponse } = await request(app.getHttpServer())
 				.post(`/api/users`)
 				.send({
@@ -1341,12 +1341,10 @@ describe("Integration tests", () => {
 				} as UserBody)
 				.expect(201);
 
-			// Verify user was created in database
-			const userInDb = await prisma.user.findUnique({
-				where: { email: createResponse.email },
-			});
-			expect(userInDb).to.not.be.null;
-			expect(userInDb.name).equal("test");
+			// Verify user was created in memory store
+			expect(
+				UserStore.users.some((x) => x.email === createResponse.email)
+			).true;
 
 			// Login to get JWT token
 			const { body: loginResponse } = await request(app.getHttpServer())
@@ -1360,15 +1358,7 @@ describe("Integration tests", () => {
 			const token = loginResponse.token;
 			expect(token).to.be.a("string");
 
-			// Get the newly created user with authentication
-			const { body: getResponse } = await request(app.getHttpServer())
-				.get(`/api/users/${createResponse.id}`)
-				.set("x-auth", token)
-				.expect(200);
-			expect(getResponse.name).equal("test");
-			expect(getResponse.password).to.be.undefined; // password should be excluded
-
-			// Get all users
+			// Get all users with valid token
 			const { body: getListRes } = await request(app.getHttpServer())
 				.get(`/api/users`)
 				.set("x-auth", token)
@@ -1376,7 +1366,14 @@ describe("Integration tests", () => {
 			expect(getListRes.length).equal(1);
 			expect(getListRes[0].name).equal("test");
 
-			// Successfully update user
+			// Get the newly created user with token
+			const { body: getResponse } = await request(app.getHttpServer())
+				.get(`/api/users/${createResponse.id}`)
+				.set("x-auth", token)
+				.expect(200);
+			expect(getResponse.name).equal("test");
+
+			// Successfully update user with token
 			const { body: updateResponse } = await request(app.getHttpServer())
 				.patch(`/api/users/${createResponse.id}`)
 				.send({
@@ -1387,29 +1384,15 @@ describe("Integration tests", () => {
 
 			expect(updateResponse.name).equal("test");
 			expect(updateResponse.email).equal("test-user+updated@panenco.com");
-			expect(updateResponse.password).undefined;
+			expect(updateResponse.password).undefined; // password excluded from response
 
-			// Verify update in database
-			const updatedUserInDb = await prisma.user.findUnique({
-				where: { id: createResponse.id },
-			});
-			expect(updatedUserInDb.email).equal(
-				"test-user+updated@panenco.com"
-			);
-
-			// Delete the user
+			// Delete the user with token
 			await request(app.getHttpServer())
 				.delete(`/api/users/${createResponse.id}`)
 				.set("x-auth", token)
 				.expect(204);
 
-			// Verify user was deleted from database
-			const deletedUser = await prisma.user.findUnique({
-				where: { id: createResponse.id },
-			});
-			expect(deletedUser).to.be.null;
-
-			// Get all users again after deletion
+			// Verify user is deleted
 			const { body: getNoneResponse } = await request(app.getHttpServer())
 				.get(`/api/users`)
 				.set("x-auth", token)
