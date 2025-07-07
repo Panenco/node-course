@@ -74,6 +74,7 @@ The following extensions will make your life a lot easier:
 -   [Eslint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
 -   [Gitlens](https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens)
 -   [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+-   [Prisma](https://marketplace.visualstudio.com/items?itemName=Prisma.prisma)
 -   [Mocha Test Explorer](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-mocha-test-adapter)
 
 If the name of the extension is not clear, you can check it out in the marketplace where they are all well documented.
