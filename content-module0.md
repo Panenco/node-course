@@ -116,7 +116,7 @@ However, sometimes you will need to use the terminal outside of your editor. A g
 ## Shell
 
 Most of the modern computers use `zsh` as their default shell.
-To enhance your experience with the terminal you can install [oh-my-zsh](https://ohmyz.sh/) and [fig](https://fig.io/)
+To enhance your experience with the terminal you can install [oh-my-zsh](https://ohmyz.sh/) and [Amazon Q](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/command-line-installing.html)
 
 ## Git
 
