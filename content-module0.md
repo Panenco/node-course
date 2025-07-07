@@ -53,7 +53,8 @@ nvm install --lts
 Instead of the default NPM package manager we will be using [pnpm](https://pnpm.io/installation).
 
 ```bash
-brew install pnpm
+corepack enable
+corepack prepare pnpm@latest --activate
 ```
 
 ## VSCode
