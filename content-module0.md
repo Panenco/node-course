@@ -108,10 +108,6 @@ Copy some text and press the hotkey. You should see the text you copied in the c
 
 ![Clipboard History](assets/clipboard-history.png)
 
-## Terminal
-
-We will be using the terminal a lot. Most of the time you will be using the terminal inside VSCode.
-However, sometimes you will need to use the terminal outside of your editor. A great choice would be [Warp](https://app.warp.dev)
 
 ## Shell
 
