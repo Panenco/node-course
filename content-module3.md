@@ -915,7 +915,7 @@ pnpm add -D @types/jsonwebtoken
            an `UnauthorizedException`
     5. Use the `jsonwebtoken` library to create a JWT token
         1. secret: used to verify the fact that our application created the
-           token (put this in a config file)
+           token (add this in a `config.ts` file in the `src` folder (see below))
         2. expiresIn: amount of time the token should be valid (put it to 1 hour)
         3. payload: you can put basically anything in there. In our case we'll just
            put the user id
@@ -926,6 +926,19 @@ pnpm add -D @types/jsonwebtoken
 When testing this you can check the contents of the JWT token
 on [jwt.io](jwt.io)  
 ![](assets/jwt-io.png)
+
+<details>
+<summary>config.ts</summary>
+
+```ts
+const config = {
+  jwtSecret: "very_secure_jwt_secret",
+};
+
+export default config;
+```
+
+</details>
 
 <details>
 <summary>login.body.ts</summary>
@@ -1682,7 +1695,7 @@ Prisma is a modern TypeScript ORM with an intuitive data model, automated migrat
 Prisma consists of two main packages: the Prisma CLI for development tasks and the Prisma Client for runtime database access. We also need bcryptjs for password hashing:
 
 ```bash
-pnpm add prisma @prisma/client bcryptjs
+pnpm add prisma@6 @prisma/client@6 bcryptjs
 pnpm add -D @types/bcryptjs
 ```
 
