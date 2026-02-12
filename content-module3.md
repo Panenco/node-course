@@ -610,6 +610,15 @@ async getList(@Query() query: SearchQuery): Promise<UserView[]> {
 }
 ```
 
+## Update server start commands in package.json
+Nest.js uses the following commands to start the app, so add/modify them in `package.json`:
+```
+"build": "nest build",
+"start": "nest start",
+"start:dev": "nest start --watch",
+"start:debug": "nest start --debug --watch",
+```
+
 ## Fix tests
 
 While converting the code, we introduced some breaking changes. That means the
