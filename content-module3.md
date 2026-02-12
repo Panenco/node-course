@@ -754,7 +754,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { expect } from "chai";
 import { beforeAll, beforeEach, afterAll, describe, it } from "mocha";
-import * as request from "supertest";
+import request from "supertest";
 
 import { AppModule } from "../../app.module";
 import { UserBody } from "../../contracts/user.body";
@@ -1301,7 +1301,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { expect } from "chai";
 import { beforeAll, beforeEach, afterAll, describe, it } from "mocha";
-import * as request from "supertest";
+import request from "supertest";
 
 import { AppModule } from "../../app.module";
 import { UserBody } from "../../contracts/user.body";
@@ -2171,7 +2171,7 @@ For integration tests:
 ```ts
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
-import * as request from "supertest";
+import request from "supertest";
 import { AppModule } from "../../app.module";
 import { prisma } from "../../lib/prisma";
 
