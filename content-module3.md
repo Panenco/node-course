@@ -754,7 +754,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { expect } from "chai";
 import { beforeAll, beforeEach, afterAll, describe, it } from "mocha";
-import * as request from "supertest";
+import request from "supertest";
 
 import { AppModule } from "../../app.module";
 import { UserBody } from "../../contracts/user.body";
@@ -1301,7 +1301,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { expect } from "chai";
 import { beforeAll, beforeEach, afterAll, describe, it } from "mocha";
-import * as request from "supertest";
+import request from "supertest";
 
 import { AppModule } from "../../app.module";
 import { UserBody } from "../../contracts/user.body";
@@ -1759,24 +1759,6 @@ POSTGRES_CONTAINER=example-postgres
 DATABASE_URL="postgresql://root:root@localhost:5432/example?schema=public"
 ```
 
-Keep the existing `config.json` file as it's still used for other application settings:
-
--   `config.json`
-
-```json
-{
-	"port": 3000,
-	"jwtSecret": "jwtSecretFromConfigHere",
-	"postgres": {
-		"db": "example",
-		"host": "localhost",
-		"password": "root",
-		"port": 5432,
-		"user": "root"
-	}
-}
-```
-
 ### Prisma Client Setup
 
 Create a Prisma client instance that will be used throughout your application. Create `src/lib/prisma.ts`:
@@ -2171,7 +2153,7 @@ For integration tests:
 ```ts
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
-import * as request from "supertest";
+import request from "supertest";
 import { AppModule } from "../../app.module";
 import { prisma } from "../../lib/prisma";
 
