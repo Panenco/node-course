@@ -28,17 +28,18 @@ Usually, it will be `zsh`;
 To edit your shell configuration file run:
 
 ```bash
-vim ~/.zshrc
+nano ~/.zshrc
 ```
 
-Press `i` to enter the `insert` mode and paste the following lines to the end of the file:
-
+Paste the following lines:
 ```bash
-export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+export NVM_DIR="$HOME/.nvm"
+[ -d "$NVM_DIR" ] || mkdir -p "$NVM_DIR"
+[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
+[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
 ```
 
-Then press `esc` and type `:wq` to save and exit.
+Save and exit.
 
 _If Node.js is already installed it should be removed before installing nvm._
 
