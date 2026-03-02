@@ -13,7 +13,9 @@ Instead you should install it through [nvm (node version manager)](https://formu
 
 ### NVM
 
-Install nvm with [nvm](https://formulae.brew.sh/formula/nvm) [using homebrew](https://brew.sh/) (or [on windows](https://github.com/coreybutler/nvm-windows/releases)).
+Install [homebrew](https://brew.sh/)
+
+Install [nvm](https://formulae.brew.sh/formula/nvm) (or [on windows](https://github.com/coreybutler/nvm-windows/releases)).
 
 For nvm you may need to edit your shell configuration file (`.bashrc`, `.zshrc`, etc.) to load nvm.
 
@@ -39,7 +41,7 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
 ```
 
-Save and exit.
+Save and exit using `ctrl+x` and `y`.
 
 _If Node.js is already installed it should be removed before installing nvm._
 
