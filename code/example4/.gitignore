@@ -1,0 +1,18 @@
+node_modules/
+.DS_Store
+
+# builds
+dist/
+build/
+.next/
+.turbo/
+
+# api local db data
+apps/api/data/
+
+# env
+.env
+!.env.example
+
+# ts incremental build cache
+*.tsbuildinfo

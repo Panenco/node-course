@@ -1,0 +1,23 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "generate:openapi": {
+      "cache": false,
+      "outputs": ["../../packages/api-sdk/openapi.json"]
+    },
+    "generate:sdk": {
+      "dependsOn": ["@node-course/api#generate:openapi"],
+      "outputs": ["src/generated/**"]
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "build/**", ".next/**", "!.next/cache/**"]
+    },
+    "typecheck": {},
+    "lint": {}
+  }
+}
