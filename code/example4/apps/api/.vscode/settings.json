@@ -1,0 +1,11 @@
+{
+	"mochaExplorer.files": "src/tests/**/*.test.ts",
+	"mochaExplorer.watch": "./src/tests/**/*.test.ts",
+	"mochaExplorer.nodeArgv": ["-r", "ts-node/register"],
+	"mochaExplorer.env": {
+		"TS_NODE_PROJECT": "./tsconfig.json"
+	},
+	"testExplorer.mergeSuites": true,
+	"mochaExplorer.timeout": 200000,
+	"mochaExplorer.exit": true
+}

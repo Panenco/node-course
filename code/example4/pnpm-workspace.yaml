@@ -1,0 +1,12 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# pnpm 10 does not run dependencies' install scripts by default. Prisma needs its
+# postinstall (to fetch its query engine), so allow it and its friends here.
+onlyBuiltDependencies:
+  - "@prisma/client"
+  - "@prisma/engines"
+  - "prisma"
+  - "@scarf/scarf"
+  - "sharp"

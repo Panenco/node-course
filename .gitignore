@@ -4,5 +4,7 @@
 
 **/build/
 
+# playwright-mcp tool output
+**/.playwright-mcp/
 
 code/example3/dist/

@@ -2,9 +2,9 @@
 
 Throughout this course we will gradually build a Node.js Express API that manages a single entity: `Users`. As we progress, elements, techniques and libraries will be added to the project.
 
-The end goal is to build a CRUD (create, read, update, delete) API using NestJS framework with proper authentication, validation, and database integration.
+The end goal is to build a CRUD (create, read, update, delete) API using NestJS framework with proper authentication, validation, and database integration — and then a **frontend** on top of it, brought together into one monorepo.
 
-The course consists of 3 main parts: Module 1, 2 and 3. Each part builds on top of the previous one.
+The course consists of 4 main parts: Module 1, 2, 3 and 4. Each part builds on top of the previous one.
 
 -   [Module 0](./content-module0.md)
 
@@ -22,6 +22,10 @@ The course consists of 3 main parts: Module 1, 2 and 3. Each part builds on top 
 
     > Transform the API to use NestJS framework with JWT authentication, Swagger documentation, and [Prisma](https://www.prisma.io/) database integration.
 
-When this is all done you should have gained the skills to extend it on your own. There will be an example product you can build with the result of module 3 as a starting point.
+-   [Module 4](./content-module4.md)
+
+    > Build the example product: a [Next.js](https://nextjs.org/) frontend, brought together with the API in one monorepo, talking to it through a typed SDK generated from the API's OpenAPI spec.
+
+When this is all done you should have gained the skills to extend it on your own. Module 4 delivers the example product you can keep building on, with the result of module 3 as its backend.
 
 🚀 Happy coding!
