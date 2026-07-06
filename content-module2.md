@@ -202,33 +202,26 @@ Example of converted handler:
 
 ```ts
 // controllers/users/handlers/create.handler.ts
-import { plainToInstance } from "class-transformer";
-import { validate } from "class-validator";
 import { NextFunction, Request, Response } from "express";
 
-import { UserBody } from "../../../contracts/user.body";
-import { UserView } from "../../../contracts/user.view";
 import { UserStore } from "./user.store";
 
-export const create = async (
+export const create = (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ) => {
-	const transformed = plainToInstance(UserBody, req.body);
-	const validationErrors = await validate(transformed, {
-		skipMissingProperties: false,
-		whitelist: true,
-		forbidNonWhitelisted: true,
-	});
-	if (validationErrors.length) {
-		return next(validationErrors);
+	if (!req.body.name) {
+		return res.status(400).json({ error: "name is required" });
 	}
-	const user = UserStore.add(transformed);
-
-	res.json(plainToInstance(UserView, user));
+	const user = UserStore.add(req.body);
+	res.json(user);
 };
 ```
+
+At this stage we're only converting to TypeScript and adding types. We'll add
+proper input validation and output representation to this handler in the next
+sections.
 
 In `app.ts` you have a property that's less straightforward to type, the `host`.
 This is exposed by express as `Application`.
@@ -368,27 +361,40 @@ class UserBody {
 export { UserBody };
 ```
 
-2. The validation and transformation is already integrated in the `create.handler.ts`
-   example above. The key parts are:
+2. Now integrate the transformation and validation into your `create.handler.ts`.
+   Replace the manual `name` check from the previous section with the transform +
+   validate logic below:
 
 ```ts
-// Import the required functions
+// create.handler.ts
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
+import { NextFunction, Request, Response } from "express";
 
-// Transform the plain object to an instance of our UserBody class
-const transformed = plainToInstance(UserBody, req.body);
-// Validate the transformed object and retrieve possible errors
-const validationErrors = await validate(transformed, {
-	skipMissingProperties: false,
-	whitelist: true,
-	forbidNonWhitelisted: true,
-});
-// If errors were found, pass them to the express NextFunction
-if (validationErrors.length) {
-	return next(validationErrors);
-}
-const user = UserStore.add(transformed);
+import { UserBody } from "../../../contracts/user.body";
+import { UserStore } from "./user.store";
+
+export const create = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	// Transform the plain object to an instance of our UserBody class
+	const transformed = plainToInstance(UserBody, req.body);
+	// Validate the transformed object and retrieve possible errors
+	const validationErrors = await validate(transformed, {
+		skipMissingProperties: false,
+		whitelist: true,
+		forbidNonWhitelisted: true,
+	});
+	// If errors were found, pass them to the express NextFunction
+	if (validationErrors.length) {
+		return next(validationErrors);
+	}
+	const user = UserStore.add(transformed);
+
+	res.json(user);
+};
 ```
 
 3. Try it out by using the POST `/api/users` endpoint with both a valid and an
@@ -426,11 +432,44 @@ class UserView {
 export { UserView };
 ```
 
-2. The representation is already integrated in the `create.handler.ts` example above:
+2. Now apply this representation in your `create.handler.ts` by transforming the
+   user object before sending the response. Update the last line of the handler:
 
 ```ts
 // Transform the user object before sending the response
 res.json(plainToInstance(UserView, user));
+```
+
+Your `create.handler.ts` should now look like this:
+
+```ts
+// create.handler.ts
+import { plainToInstance } from "class-transformer";
+import { validate } from "class-validator";
+import { NextFunction, Request, Response } from "express";
+
+import { UserBody } from "../../../contracts/user.body";
+import { UserView } from "../../../contracts/user.view";
+import { UserStore } from "./user.store";
+
+export const create = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	const transformed = plainToInstance(UserBody, req.body);
+	const validationErrors = await validate(transformed, {
+		skipMissingProperties: false,
+		whitelist: true,
+		forbidNonWhitelisted: true,
+	});
+	if (validationErrors.length) {
+		return next(validationErrors);
+	}
+	const user = UserStore.add(transformed);
+
+	res.json(plainToInstance(UserView, user));
+};
 ```
 
 ## Update handler with validation
