@@ -552,13 +552,13 @@ Make sure your `UserView` contract properly excludes sensitive data:
 ```ts
 // src/contracts/user.view.ts
 import { Exclude, Expose } from "class-transformer";
-import { IsEmail, IsString, IsUUID } from "class-validator";
+import { IsEmail, IsNumber, IsString } from "class-validator";
 
 @Exclude()
 export class UserView {
 	@Expose()
-	@IsUUID()
-	id: string;
+	@IsNumber()
+	id: number;
 
 	@Expose()
 	@IsString()
@@ -1850,6 +1850,35 @@ Key features of this schema:
 -   The `@unique` directive ensures email uniqueness
 -   `createdAt` and `updatedAt` are automatically managed by Prisma
 -   `@@map("users")` maps the model to a "users" table in the database
+
+#### Update the UserView contract
+
+Now that ids are UUID strings instead of incremental numbers, the `UserView`
+contract needs to reflect that. Swap the numeric id (`@IsNumber() id: number`)
+for a UUID string (`@IsUUID() id: string`):
+
+```ts
+// src/contracts/user.view.ts
+import { Exclude, Expose } from "class-transformer";
+import { IsEmail, IsString, IsUUID } from "class-validator";
+
+@Exclude()
+export class UserView {
+	@Expose()
+	@IsUUID()
+	id: string;
+
+	@Expose()
+	@IsString()
+	name: string;
+
+	@Expose()
+	@IsEmail()
+	email: string;
+
+	// password is automatically excluded because it's not @Expose()d
+}
+```
 
 #### Generate Prisma Client
 
