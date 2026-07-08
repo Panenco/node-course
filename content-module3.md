@@ -59,6 +59,29 @@ We also need to create the NestJS configuration file:
 echo '{"collection": "@nestjs/schematics", "sourceRoot": "src"}' > nest-cli.json
 ```
 
+## Update tsconfig.json
+
+Add `"types": ["node"]` to the `compilerOptions` in your `tsconfig.json`:
+
+```jsonc
+{
+	"compilerOptions": {
+		// ...existing options
+		"types": ["node"]
+	}
+}
+```
+
+By default TypeScript automatically includes **every** `@types/*` package it
+finds in `node_modules/@types` in the global scope. In a NestJS project with
+many (transitive) dependencies that can pull in conflicting or unexpected
+ambient type declarations, which surface as confusing errors when we run
+`tsc --noEmit`. Setting `"types": ["node"]` makes the global scope explicit:
+only `@types/node` (giving you `process`, `Buffer`, etc.) is included globally,
+and everything else is used through explicit imports. That's why our tests
+import their helpers explicitly (`import { describe, it } from "mocha"` and
+`import { expect } from "chai"`).
+
 ## Bootstrap with NestJS
 
 The initialization of the application works different with NestJS than plain Express. NestJS uses a module-based architecture where we bootstrap the application using `NestFactory`.
@@ -1949,7 +1972,24 @@ model User {
 
 ### Environment Configuration
 
-Update your `docker.env` file to include the DATABASE_URL:
+`prisma init` also generated a `.env` file in the root of your project. Prisma
+automatically loads this file and reads `DATABASE_URL` from it. By default it is
+filled in with a placeholder Prisma Postgres URL, which points at a database that
+doesn't exist locally. If you leave it as-is you'll get connection errors (like
+`the URL must start with the protocol ...` or a "service not found" error) when
+you run migrations or start the app.
+
+Replace the generated `DATABASE_URL` in `.env` with the connection string for the
+Postgres container we're running locally — the same value we configured in
+`docker.env`:
+
+```env
+# .env
+DATABASE_URL="postgresql://root:root@localhost:5432/example?schema=public"
+```
+
+Also add the same `DATABASE_URL` to your `docker.env` so all database config
+lives together:
 
 ```env
 POSTGRES_USER=root
@@ -2117,15 +2157,17 @@ Prisma has excellent built-in support for database migrations with automatic gen
 We'll use the `db:*` scripts added above. To create and execute a migration:
 
 1. Make sure your database is up and running: `docker compose up -d`
-2. Set the DATABASE_URL environment variable: `export DATABASE_URL="postgresql://root:root@localhost:5432/example?schema=public"`
-3. For development, you can use: `pnpm db:push` (pushes schema without creating migration files)
-4. For production migrations: `pnpm db:migrate` (creates migration files and applies them)
-5. Generate the Prisma client: `pnpm db:generate`
+2. For development, you can use: `pnpm db:push` (pushes schema without creating migration files)
+3. For production migrations: `pnpm db:migrate` (creates migration files and applies them)
+4. Generate the Prisma client: `pnpm db:generate`
+
+Prisma automatically reads `DATABASE_URL` from the `.env` file we configured
+above, so you don't need to pass it on the command line.
 
 For development, you typically use `prisma db push` which is faster:
 
 ```bash
-DATABASE_URL="postgresql://root:root@localhost:5432/example?schema=public" pnpm db:push
+pnpm db:push
 ```
 
 Now that the schema is pushed, a refresh of your database (`⌘+R` or `ctrl+R`) in
