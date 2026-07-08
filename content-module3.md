@@ -1908,10 +1908,12 @@ pnpm add -D @types/bcryptjs
 
 ### Initialize Prisma
 
-First, we need to initialize Prisma in our project:
+First, we need to initialize Prisma in our project. We just installed Prisma 6
+above, so run that pinned local binary with `pnpm exec` — **not** `pnpm dlx`,
+which would download and run the latest Prisma (7) instead:
 
 ```bash
-npx prisma init
+pnpm exec prisma init
 ```
 
 This creates:
@@ -2081,22 +2083,10 @@ export class UserView {
 
 #### Generate Prisma Client
 
-After defining your schema, generate the Prisma Client:
-
-```bash
-npx prisma generate
-```
-
-This creates type-safe client code based on your schema that you can use in your application.
-
-#### Migrations
-
-Having defined the schema, this now needs to be translated to SQL statements to
-create the accompanying database schema.
-
-Prisma has excellent built-in support for database migrations with automatic generation and version control.
-
-Add the following scripts to your `package.json`:
+From here on we run the Prisma CLI through `package.json` scripts. This keeps us
+on the pinned local Prisma 6: `pnpm dlx prisma ...` would download and run the
+latest Prisma (7) and generate a client that mismatches the `@prisma/client@6`
+we installed. Add these scripts to your `package.json`:
 
 ```json
 {
@@ -2109,7 +2099,22 @@ Add the following scripts to your `package.json`:
 }
 ```
 
-To create and execute a migration:
+After defining your schema, generate the Prisma Client:
+
+```bash
+pnpm db:generate
+```
+
+This creates type-safe client code based on your schema that you can use in your application.
+
+#### Migrations
+
+Having defined the schema, this now needs to be translated to SQL statements to
+create the accompanying database schema.
+
+Prisma has excellent built-in support for database migrations with automatic generation and version control.
+
+We'll use the `db:*` scripts added above. To create and execute a migration:
 
 1. Make sure your database is up and running: `docker compose up -d`
 2. Set the DATABASE_URL environment variable: `export DATABASE_URL="postgresql://root:root@localhost:5432/example?schema=public"`
