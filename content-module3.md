@@ -91,6 +91,7 @@ async function bootstrap() {
 			whitelist: true,
 			forbidNonWhitelisted: true,
 			transform: true,
+			transformOptions: { exposeUnsetFields: false },
 		})
 	);
 
@@ -268,6 +269,16 @@ decorators with `@IsOptional()` on optional fields.
 ```
 async update(@Body() body: UserBody) {}
 ```
+
+> **Heads-up on partial updates.** With `transform: true`, the `ValidationPipe`
+> runs `plainToInstance(UserBody, req.body)` for you. By default class-transformer
+> sets every `@Expose()`d property that is *missing* from the request to
+> `undefined`. In `update` we merge the body into the existing user
+> (`{ ...user, ...body }`), so those `undefined`s would wipe out fields the client
+> never sent. That is why the `ValidationPipe` in `main.ts` is configured with
+> `transformOptions: { exposeUnsetFields: false }`. Unset fields are simply left
+> off the transformed object, so a `PATCH` only touches the fields it actually
+> includes.
 
 That covers all body validations that previously were done manually. You can
 remove `patchValidationMiddleware` and the manual validation/transformation from
@@ -537,17 +548,178 @@ NestJS comes with many built-in exceptions like:
 
 ## Response Serialization
 
-NestJS automatically serializes responses and uses class-transformer to transform your response objects. When you return an object from your controller method, NestJS will automatically serialize it to JSON.
+In Module 2 we shaped every response by hand with
+`res.json(plainToInstance(UserView, user))`. Now that our handlers just return
+their result, we need to shape that output again, otherwise **everything the
+handler returns ends up in the response**, including the user's `password`.
 
-To control what properties are exposed in the response, you can use class-transformer decorators in your view contracts:
+It is tempting to think the return type takes care of this:
 
--   `@Exclude()` - Exclude the property from serialization
--   `@Expose()` - Expose the property in serialization
--   `@Transform()` - Transform the property value during serialization
+```ts
+async get(@Param("id") id: string): Promise<UserView> { ... }
+```
 
-### Update UserView Contract
+It does not. TypeScript types are erased at compile time, so at runtime NestJS
+has no idea you meant `UserView`. NestJS' built-in `ClassSerializerInterceptor`
+*can* strip fields, but only off objects that are **instances of a decorated
+class**. Our handlers return plain objects (from the `UserStore` now, and from
+Prisma later), so nothing gets stripped and the password leaks.
 
-Make sure your `UserView` contract properly excludes sensitive data:
+To fix this cleanly, without sprinkling `plainToInstance(...)` through every
+handler, we use a small, reusable representation layer: a `@Serialize(View)`
+decorator that declares which view an endpoint returns, plus an interceptor that
+performs the transformation. **You don't have to design these yourself; add the
+two files below to your project as-is.**
+
+### The `@Serialize` decorator
+
+Create `src/decorators/serialize.decorator.ts`:
+
+```ts
+import { Type } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+
+/**
+ * Marks an endpoint's response to be serialized into the given view contract.
+ *
+ * Usage: `@Serialize(UserView)` on a controller method. The TransformInterceptor
+ * reads this and transforms the handler's return value into the view, stripping
+ * any field that isn't declared on it.
+ */
+export const Serialize = Reflector.createDecorator<Type>();
+```
+
+### The transform interceptor
+
+Create `src/interceptors/transform.interceptor.ts`:
+
+```ts
+import {
+	ClassSerializerContextOptions,
+	ClassSerializerInterceptor,
+	ExecutionContext,
+	Injectable,
+} from "@nestjs/common";
+
+import { Serialize } from "../decorators/serialize.decorator";
+
+/**
+ * Serializes every response into the view declared with `@Serialize(View)`.
+ *
+ * It extends the built-in ClassSerializerInterceptor. We only override
+ * `getContextOptions` to resolve the requested view from the route metadata and
+ * put it on `options.type`. The base `intercept()` then runs its normal
+ * serialize pipeline, which does `plainToInstance(View, response)` for both
+ * single objects and arrays. `excludeExtraneousValues` makes it a strict
+ * whitelist: anything not @Expose()d on the view is dropped from the response.
+ *
+ * Handlers can therefore return raw domain objects and stay ignorant of the
+ * representation layer.
+ */
+@Injectable()
+export class TransformInterceptor extends ClassSerializerInterceptor {
+	protected getContextOptions(
+		context: ExecutionContext
+	): ClassSerializerContextOptions | undefined {
+		const view = this.reflector.getAllAndOverride(Serialize, [
+			context.getHandler(),
+			context.getClass(),
+		]);
+
+		// Preserve any options set via the built-in @SerializeOptions().
+		const base = super.getContextOptions(context);
+		if (!view) {
+			return base;
+		}
+
+		return { ...base, type: view, excludeExtraneousValues: true };
+	}
+}
+```
+
+### Register the interceptor globally
+
+Register it in your `AppModule` so it applies to every endpoint. We register it
+here (rather than in `main.ts`) so the integration tests, which build the app
+from `AppModule`, pick it up automatically as well.
+
+```ts
+import { Module } from "@nestjs/common";
+import { APP_INTERCEPTOR, Reflector } from "@nestjs/core";
+import { UserController } from "./controllers/users/user.controller";
+import { TransformInterceptor } from "./interceptors/transform.interceptor";
+
+@Module({
+	controllers: [UserController],
+	providers: [
+		// useFactory (rather than useClass) so the Reflector is passed to the
+		// constructor inherited from ClassSerializerInterceptor.
+		{
+			provide: APP_INTERCEPTOR,
+			useFactory: (reflector: Reflector) =>
+				new TransformInterceptor(reflector),
+			inject: [Reflector],
+		},
+	],
+})
+export class AppModule {}
+```
+
+### Declare the view on each endpoint
+
+Now add `@Serialize(UserView)` to every endpoint that returns a user. The
+handler keeps returning the raw object; the interceptor projects it onto
+`UserView` and drops everything else (like `password`). It works the same on a
+single object and on an array, because the interceptor serializes each element.
+
+```ts
+import { Serialize } from "../../decorators/serialize.decorator";
+import { UserView } from "../../contracts/user.view";
+
+@Controller("users")
+export class UserController {
+	@Post()
+	@HttpCode(HttpStatus.CREATED)
+	@Serialize(UserView)
+	async create(@Body() body: UserBody): Promise<UserView> {
+		return create(body);
+	}
+
+	@Get()
+	@Serialize(UserView)
+	async getList(@Query() query: SearchQuery): Promise<UserView[]> {
+		return getList(query.search);
+	}
+
+	@Get(":id")
+	@Serialize(UserView)
+	async get(@Param("id") id: string): Promise<UserView> {
+		return get(id);
+	}
+
+	@Patch(":id")
+	@Serialize(UserView)
+	async update(
+		@Param("id") id: string,
+		@Body() body: UserBody
+	): Promise<UserView> {
+		return update(id, body);
+	}
+
+	@Delete(":id")
+	@HttpCode(HttpStatus.NO_CONTENT)
+	async delete(@Param("id") id: string) {
+		await deleteUser(id);
+	}
+}
+```
+
+### The UserView contract
+
+The view is a plain contract of exactly what may leave your API. Because the
+interceptor uses `excludeExtraneousValues: true`, this is a strict **whitelist**:
+only `@Expose()`d properties survive, so `password` can never leak — even if you
+add new fields to the underlying model later.
 
 ```ts
 // src/contracts/user.view.ts
@@ -567,8 +739,6 @@ export class UserView {
 	@Expose()
 	@IsEmail()
 	email: string;
-
-	// password is automatically excluded because it's not @Expose()d
 }
 ```
 
@@ -592,7 +762,7 @@ async delete(@Param("id") id: string) {
 
 ### List Responses
 
-For the get list endpoint, you can simply return the array of users. NestJS will automatically serialize each user according to the UserView contract:
+The get list endpoint returns an array. The handler stays simple:
 
 ```ts
 export const getList = (search: string): User[] => {
@@ -601,10 +771,12 @@ export const getList = (search: string): User[] => {
 };
 ```
 
-Your controller method can specify the return type:
+The controller declares the element view with `@Serialize(UserView)`, and the
+interceptor serializes each item in the array:
 
 ```ts
 @Get()
+@Serialize(UserView)
 async getList(@Query() query: SearchQuery): Promise<UserView[]> {
 	return getList(query.search);
 }
@@ -779,6 +951,7 @@ describe("Integration tests", () => {
 					whitelist: true,
 					forbidNonWhitelisted: true,
 					transform: true,
+					transformOptions: { exposeUnsetFields: false },
 				})
 			);
 
@@ -1082,11 +1255,21 @@ First, update your `AppModule` to include the `AuthController`:
 
 ```ts
 import { Module } from "@nestjs/common";
+import { APP_INTERCEPTOR, Reflector } from "@nestjs/core";
 import { AuthController } from "./controllers/auth/auth.controller";
 import { UserController } from "./controllers/users/user.controller";
+import { TransformInterceptor } from "./interceptors/transform.interceptor";
 
 @Module({
 	controllers: [AuthController, UserController],
+	providers: [
+		{
+			provide: APP_INTERCEPTOR,
+			useFactory: (reflector: Reflector) =>
+				new TransformInterceptor(reflector),
+			inject: [Reflector],
+		},
+	],
 })
 export class AppModule {}
 ```
@@ -1110,29 +1293,37 @@ import {
 	HttpStatus,
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../../guards/jwt-auth.guard";
+import { Serialize } from "../../decorators/serialize.decorator";
+import { UserView } from "../../contracts/user.view";
 
+// Keep the @Serialize(UserView) decorators from the Response Serialization
+// section; here we only add the @UseGuards(JwtAuthGuard) guard on top.
 @Controller("users")
 export class UserController {
 	@Post()
 	@HttpCode(HttpStatus.CREATED)
+	@Serialize(UserView)
 	async create(@Body() body: UserBody) {
 		return create(body);
 	}
 
 	@Get()
 	@UseGuards(JwtAuthGuard)
+	@Serialize(UserView)
 	async getList(@Query() query: SearchQuery) {
 		return getList(query.search);
 	}
 
 	@Get(":id")
 	@UseGuards(JwtAuthGuard)
+	@Serialize(UserView)
 	async get(@Param("id") id: string) {
 		return get(id);
 	}
 
 	@Patch(":id")
 	@UseGuards(JwtAuthGuard)
+	@Serialize(UserView)
 	async update(@Param("id") id: string, @Body() body: UserBody) {
 		return update(id, body);
 	}
@@ -1252,29 +1443,34 @@ import { get } from "./handlers/get.handler";
 import { getList } from "./handlers/getList.handler";
 import { update } from "./handlers/update.handler";
 import { JwtAuthGuard } from "../../guards/jwt-auth.guard";
+import { Serialize } from "../../decorators/serialize.decorator";
 
 @Controller("users")
 export class UserController {
 	@Post()
 	@HttpCode(HttpStatus.CREATED)
+	@Serialize(UserView)
 	async create(@Body() body: UserBody): Promise<UserView> {
 		return create(body);
 	}
 
 	@Get()
 	@UseGuards(JwtAuthGuard)
+	@Serialize(UserView)
 	async getList(@Query() query: SearchQuery): Promise<UserView[]> {
 		return getList(query.search);
 	}
 
 	@Get(":id")
 	@UseGuards(JwtAuthGuard)
+	@Serialize(UserView)
 	async get(@Param("id") id: string): Promise<UserView> {
 		return get(id);
 	}
 
 	@Patch(":id")
 	@UseGuards(JwtAuthGuard)
+	@Serialize(UserView)
 	async update(
 		@Param("id") id: string,
 		@Body() body: UserBody
@@ -1326,6 +1522,7 @@ describe("Integration tests", () => {
 					whitelist: true,
 					forbidNonWhitelisted: true,
 					transform: true,
+					transformOptions: { exposeUnsetFields: false },
 				})
 			);
 
@@ -1478,6 +1675,7 @@ async function bootstrap() {
 			whitelist: true,
 			forbidNonWhitelisted: true,
 			transform: true,
+			transformOptions: { exposeUnsetFields: false },
 		})
 	);
 
@@ -1794,6 +1992,7 @@ async function bootstrap() {
 			whitelist: true,
 			forbidNonWhitelisted: true,
 			transform: true,
+			transformOptions: { exposeUnsetFields: false },
 		})
 	);
 
@@ -2205,6 +2404,7 @@ describe("Integration tests", () => {
 					whitelist: true,
 					forbidNonWhitelisted: true,
 					transform: true,
+					transformOptions: { exposeUnsetFields: false },
 				})
 			);
 
