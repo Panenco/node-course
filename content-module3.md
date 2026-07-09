@@ -799,7 +799,12 @@ Nest.js uses the following commands to start the app, so add/modify them in `pac
 "start": "nest start",
 "start:dev": "nest start --watch",
 "start:debug": "nest start --debug --watch",
+"dev": "nest start --watch",
 ```
+
+We keep the `dev` script that modules 1 and 2 established, so the same
+`pnpm dev` (or `npm run dev`) keeps working here and later when module 4's
+monorepo runs it across every package.
 
 ## Fix tests
 

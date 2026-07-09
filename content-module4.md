@@ -90,6 +90,11 @@ installs every package together.
 }
 ```
 
+Make sure `apps/api/package.json` still has its `dev` script
+(`"dev": "nest start --watch"` — it came over with the module 3 copy). Turbo's
+`dev` task runs the `dev` script in each package, so the Part 1 checkpoint's
+`pnpm dev` depends on it being there.
+
 ## Create the workspace
 
 At the repo root, tell pnpm which folders are workspace packages:
@@ -223,7 +228,13 @@ pnpm install
 >
 > `pnpm dev` stays running in the foreground — leave it, and open a **second
 > terminal** for any other commands (or stop it with Ctrl-C).
-> The API should boot exactly like it did in module 3. (`apps/api/.env` is
+> Turbo lists the packages in scope, runs `dev` in each, and streams the API's
+> Nest startup logs prefixed with `@node-course/api:dev:`; the process then stays
+> up, waiting. That waiting-in-the-foreground state **is** success — the API
+> should boot exactly like it did in module 3. If instead the command returns
+> immediately with `No tasks were executed as part of this run.`, no package has a
+> `dev` script — check that `apps/api/package.json` still has one (see "Move the
+> API into `apps/api`" above). (`apps/api/.env` is
 > git-ignored — commit an `apps/api/.env.example` with that same line so the next
 > person knows what to create.) You now have a monorepo. On to the interesting part.
 
