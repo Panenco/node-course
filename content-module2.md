@@ -235,7 +235,7 @@ This is exposed by express as `Application`.
 	"build:clean": "rm -rf build && pnpm run build",
 	"start": "node build/server.js",
 	"dev": "ts-node src/server.ts",
-	"test": "mocha -r ts-node/register ./src/tests/**/*.test.ts"
+	"test": "tsc --noEmit && mocha -r ts-node/register ./src/tests/**/*.test.ts"
 },
 ```
 
@@ -595,9 +595,16 @@ pnpm add -D mocha @types/mocha
 
 ```jsonc
 // package.json
-"test": "mocha -r ts-node/register ./src/tests/**/*.test.ts"
+"test": "tsc --noEmit && mocha -r ts-node/register ./src/tests/**/*.test.ts"
 
 ```
+
+The `tsc --noEmit` runs the TypeScript compiler as a type check first (without
+emitting any files); Mocha only runs if there are no type errors. We do this
+because `ts-node/register` falls back to native ESM resolution when it hits a
+compile error, which surfaces as a confusing `ERR_MODULE_NOT_FOUND` instead of
+the actual TypeScript error. Running `tsc --noEmit` first makes the real error
+visible.
 
 When running the command now you'll get a message stating no tests were found
 because we haven't added any tests yet.
