@@ -169,12 +169,7 @@ Converting the code:
     	//     this.router.post("/", adminMiddleware, create);
     	//     this.router.get("/", getList);
     	//     this.router.get("/:id", get);
-    	//     this.router.patch(
-    	//       "/:id",
-    	//       patchValidationMiddleware,
-    	//       update,
-    	//       representationMiddleware
-    	//     );
+    	//     this.router.patch("/:id", update);
     	//     this.router.delete("/:id", deleteUser);
     	//   }
     	async create() {}
@@ -204,8 +199,8 @@ Converting the code:
    be fixing that later.
 
     Most of the commented code is now converted so lets clean it up. Remove all
-    lines except the `post` and `patch`; we'll come back to the middleware used
-    there later.
+    lines except the `post`; we'll come back to the `adminMiddleware` used there
+    later.
 
 The current code:
 
@@ -213,12 +208,6 @@ The current code:
 @Controller("users")
 export class UserController {
 	//     this.router.post("/", adminMiddleware, create);
-	//     this.router.patch(
-	//       "/:id",
-	//       patchValidationMiddleware,
-	//       update,
-	//       representationMiddleware
-	//     );
 	@Post()
 	async create() {
 		return create();
@@ -248,8 +237,8 @@ export class UserController {
 
 #### NestJS body decorator to inject body
 
-Previously we implemented body validation manually in the handler, after that we
-converted it into middleware.  
+Previously we implemented body validation and transformation manually inside the
+handlers with `plainToInstance` and `validate`.  
 Now we will be using NestJS's `@Body()` decorator to inject the body into the
 controller method and have the body automatically transformed and validated.
 
@@ -281,8 +270,8 @@ async update(@Body() body: UserBody) {}
 > includes.
 
 That covers all body validations that previously were done manually. You can
-remove `patchValidationMiddleware` and the manual validation/transformation from
-the `create` handler now.
+remove the manual validation/transformation (the `plainToInstance` and `validate`
+calls) from the `create` and `update` handlers now.
 
 #### NestJS query decorator to inject search param
 
@@ -335,8 +324,7 @@ NestJS uses Guards instead of middleware for authentication and authorization.
 We'll create a proper JWT guard later in the authentication section, but for now
 you can remove the `adminMiddleware` as we'll replace it with a proper guard.
 
-So you can go ahead and remove the remaining commented
-code, `patchValidationMiddleware` and `representationMiddleware`.
+So you can go ahead and remove the remaining commented code now.
 
 ### Converting handlers
 
@@ -349,8 +337,7 @@ Since we are injecting only the items we need now, this becomes a lot easier.
 1. Replace the arguments in each handler with the ones we
    need: `body`, `id`, `query`
     - Also pass the these arguments to the handler from the controller
-2. Return the result instead of calling `res.json(...)` or assigning it
-   to `locals`
+2. Return the result instead of calling `res.json(...)`
 3. Remove the validation/transformation as this has now been abstracted away
    with the decorators
 4. Remove the `next` function calls
@@ -1160,7 +1147,7 @@ export class AccessTokenView {
 <summary>auth.controller.ts</summary>
 
 ```ts
-import { Controller, Post, Body } from "@nestjs/common";
+import { Controller, Post, Body, HttpCode, HttpStatus } from "@nestjs/common";
 
 import { AccessTokenView } from "../../contracts/accessToken.view";
 import { LoginBody } from "../../contracts/login.body";
@@ -1168,7 +1155,10 @@ import { createToken } from "./handlers/login.handler";
 
 @Controller("auth")
 export class AuthController {
+	// A POST defaults to 201 Created in NestJS, but a login isn't creating a
+	// resource — override it to 200 OK (the integration tests expect 200).
 	@Post("login")
+	@HttpCode(HttpStatus.OK)
 	async login(@Body() body: LoginBody): Promise<AccessTokenView> {
 		return createToken(body);
 	}
@@ -1720,7 +1710,9 @@ This will already give you very handy docs. However if you have 100+ endpoints,
 not every endpoint might be very self explanatory.  
 To fix that we can add some descriptions using NestJS Swagger decorators.
 
-Add Swagger decorators to your controllers:
+Add Swagger decorators to your controllers. The `@Serialize(UserView)` and
+`@UseGuards(JwtAuthGuard)` decorators are already there from the earlier sections
+— here we're only layering the `@Api*` documentation decorators on top:
 
 ```ts
 import {
@@ -1729,14 +1721,21 @@ import {
 	ApiResponse,
 	ApiSecurity,
 } from "@nestjs/swagger";
+import { Serialize } from "../../decorators/serialize.decorator";
+import { UserView } from "../../contracts/user.view";
 
 @ApiTags("users")
 @Controller("users")
 export class UserController {
 	@Post()
 	@HttpCode(HttpStatus.CREATED)
+	@Serialize(UserView)
 	@ApiOperation({ summary: "Create a new user" })
-	@ApiResponse({ status: 201, description: "User created successfully" })
+	@ApiResponse({
+		status: 201,
+		description: "User created successfully",
+		type: UserView,
+	})
 	async create(@Body() body: UserBody) {
 		return create(body);
 	}
@@ -1744,13 +1743,49 @@ export class UserController {
 	@Get()
 	@UseGuards(JwtAuthGuard)
 	@ApiSecurity("x-auth")
+	@Serialize(UserView)
 	@ApiOperation({ summary: "Get all users" })
-	@ApiResponse({ status: 200, description: "Users retrieved successfully" })
+	@ApiResponse({
+		status: 200,
+		description: "Users retrieved successfully",
+		type: [UserView],
+	})
 	async getList(@Query() query: SearchQuery) {
 		return getList(query.search);
 	}
 }
 ```
+
+> **Always pass `type` on your success response.** Without it, Swagger records
+> the status code and description but **no response schema**, so `UserView` is
+> never referenced anywhere in the spec and won't be emitted under
+> `components.schemas`. In Module 4 we generate a typed SDK straight from this
+> spec. If the schema isn't there, the `UserView` type simply won't exist in the
+> generated client. Note the array notation `type: [UserView]` for endpoints that
+> return a list.
+
+### `@ApiResponse` vs `@Serialize` — two different jobs
+
+These look related but operate at completely different layers, and **one cannot
+replace the other**:
+
+-   **`@Serialize(UserView)` is a _runtime_ mechanism.** The interceptor actually
+    transforms the object your handler returns and strips anything that isn't
+    `@Expose()`d on the view. That's what keeps the `password` out of the real
+    HTTP response body sent to the client.
+-   **`@ApiResponse({ type: UserView })` is _documentation only_.** It only
+    describes the response in the OpenAPI spec (and therefore in the generated
+    SDK). It does **not** touch the runtime response at all. It's a _claim_ about
+    the shape, not an _enforcement_ of it.
+
+So they are not redundant, and you need both. If you removed `@Serialize` and
+kept only `@ApiResponse`, the spec/SDK would advertise a clean `UserView` while
+the API kept leaking the `password` over the wire — the documentation would be
+lying. `@Serialize` is our single, reusable representation layer: keep it on every
+endpoint that returns a view, and let your handlers return the raw record (as they
+still do once they talk to Prisma in the database section). Don't reach for a
+per-handler `plainToInstance(...)`. The interceptor already does exactly that, in
+one place, for every response.
 
 ## Test out swagger
 

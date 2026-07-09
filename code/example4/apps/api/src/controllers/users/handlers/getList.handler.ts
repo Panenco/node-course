@@ -1,9 +1,6 @@
-import { plainToInstance } from "class-transformer";
-
 import { prisma } from "../../../lib/prisma";
-import { UserView } from "../../../contracts/user.view";
 
-export const getList = async (search?: string): Promise<UserView[]> => {
+export const getList = async (search?: string) => {
 	const where = search
 		? {
 				OR: [
@@ -23,10 +20,8 @@ export const getList = async (search?: string): Promise<UserView[]> => {
 		  }
 		: {};
 
-	const users = await prisma.user.findMany({
+	return prisma.user.findMany({
 		where,
 		orderBy: { createdAt: "desc" },
 	});
-
-	return plainToInstance(UserView, users, { excludeExtraneousValues: true });
 };

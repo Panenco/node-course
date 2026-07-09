@@ -302,28 +302,41 @@ Do this for all endpoints: `login`, `createUser`, `listUsers`, `getUser`,
 ## Honor the view contract
 
 Module 3 taught the four steps of an endpoint, the last being **representation**:
-_transform the handler output to a predefined view contract_. It's worth
-checking your handlers actually do this — if a handler returns the raw Prisma
-record, it leaks fields like the password hash, and the response won't match the
-`UserView` you just documented.
+_transform the handler output to a predefined view contract_. This matters even
+more now: the OpenAPI schema you just documented with `@ApiProperty` promises the
+client a clean `UserView`, so the **actual runtime response must match it**. If a
+handler leaks the raw Prisma record (including the password hash), the generated
+SDK is lying to the frontend.
 
-Map every user response through `UserView` with `class-transformer`. Because
-`UserView` is `@Exclude()` with `@Expose()` on `id`/`name`/`email`, this strips
-everything else:
+You already have the machinery for this from Module 3: the `@Serialize(UserView)`
+decorator plus the global `TransformInterceptor`. Because `UserView` is
+`@Exclude()` with `@Expose()` on `id`/`name`/`email`, the interceptor projects
+every response onto the view and drops everything else (like `password`), for
+both single objects and arrays. So the handlers stay ignorant of the
+representation layer and just return the raw record:
 
 ```ts
 // src/controllers/users/handlers/getList.handler.ts
-import { plainToInstance } from "class-transformer";
-import { UserView } from "../../../contracts/user.view";
-
-export const getList = async (search?: string): Promise<UserView[]> => {
+export const getList = async (search?: string) => {
   // ...build the `where` filter...
-  const users = await prisma.user.findMany({ where, orderBy: { createdAt: "desc" } });
-  return plainToInstance(UserView, users, { excludeExtraneousValues: true });
+  return prisma.user.findMany({ where, orderBy: { createdAt: "desc" } });
 };
 ```
 
-Apply the same `plainToInstance(UserView, …)` in `create`, `get` and `update`.
+Just make sure every user-returning endpoint carries `@Serialize(UserView)` in
+the controller (you added these in Module 3):
+
+```ts
+@Get()
+@Serialize(UserView)
+async getList(@Query() query: SearchQuery): Promise<UserView[]> {
+  return getList(query.search);
+}
+```
+
+The same `@Serialize(UserView)` covers `create`, `get` and `update`. No
+per-handler `plainToInstance(...)` is needed — the interceptor does the
+transformation in one place.
 
 ## Emit the spec to a file
 
