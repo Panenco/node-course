@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from "@nestjs/common";
+import { Controller, Post, Body, HttpCode, HttpStatus } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 
 import { AccessTokenView } from "../../contracts/accessToken.view";
@@ -9,6 +9,7 @@ import { createToken } from "./handlers/login.handler";
 @Controller("auth")
 export class AuthController {
 	@Post("login")
+	@HttpCode(HttpStatus.OK)
 	@ApiOperation({ operationId: "login", summary: "Request a new accesstoken" })
 	@ApiResponse({
 		status: 200,

@@ -27,12 +27,14 @@ import { get } from "./handlers/get.handler";
 import { getList } from "./handlers/getList.handler";
 import { update } from "./handlers/update.handler";
 import { JwtAuthGuard } from "../../guards/jwt-auth.guard";
+import { Serialize } from "../../decorators/serialize.decorator";
 
 @ApiTags("users")
 @Controller("users")
 export class UserController {
 	@Post()
 	@HttpCode(HttpStatus.CREATED)
+	@Serialize(UserView)
 	@ApiOperation({ operationId: "createUser", summary: "Create a new user" })
 	@ApiResponse({
 		status: 201,
@@ -47,6 +49,7 @@ export class UserController {
 	@Get()
 	@UseGuards(JwtAuthGuard)
 	@ApiSecurity("x-auth")
+	@Serialize(UserView)
 	@ApiOperation({ operationId: "listUsers", summary: "Search users" })
 	@ApiResponse({
 		status: 200,
@@ -60,6 +63,7 @@ export class UserController {
 	@Get(":id")
 	@UseGuards(JwtAuthGuard)
 	@ApiSecurity("x-auth")
+	@Serialize(UserView)
 	@ApiOperation({ operationId: "getUser", summary: "Get a user by id" })
 	@ApiResponse({
 		status: 200,
@@ -74,6 +78,7 @@ export class UserController {
 	@Patch(":id")
 	@UseGuards(JwtAuthGuard)
 	@ApiSecurity("x-auth")
+	@Serialize(UserView)
 	@ApiOperation({ operationId: "updateUser", summary: "Update a user" })
 	@ApiResponse({
 		status: 200,
