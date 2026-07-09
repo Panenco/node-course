@@ -2094,7 +2094,8 @@ we installed. Add these scripts to your `package.json`:
 		"db:generate": "prisma generate",
 		"db:push": "prisma db push",
 		"db:migrate": "prisma migrate dev",
-		"db:studio": "prisma studio"
+		"db:studio": "prisma studio",
+		"db:seed": "ts-node prisma/seed.ts"
 	}
 }
 ```
@@ -2140,6 +2141,75 @@ Prisma provides safety features:
 -   Migrations are executed in transactions
 -   Migration history is tracked in the `_prisma_migrations` table
 -   You can reset your database: `prisma migrate reset`
+
+#### Seed the database
+
+The schema is in place, but the `users` table is still empty. Rather than
+creating a user through the API every time you reset the database, we'll add a
+**seed script** that populates it with a couple of known users. This is handy
+for local development, and later on in module 4 the frontend expects a seeded
+`john@example.com` account to log in with.
+
+We already registered the `db:seed` script above
+(`"db:seed": "ts-node prisma/seed.ts"`). Now create the script it points to,
+`prisma/seed.ts`:
+
+```ts
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+
+const prisma = new PrismaClient();
+
+async function main() {
+	// Clear existing data
+	await prisma.user.deleteMany();
+
+	// Create initial users
+	const users = await Promise.all([
+		prisma.user.create({
+			data: {
+				name: "John Doe",
+				email: "john@example.com",
+				password: await bcrypt.hash("password123", 10),
+			},
+		}),
+		prisma.user.create({
+			data: {
+				name: "Jane Smith",
+				email: "jane@example.com",
+				password: await bcrypt.hash("password456", 10),
+			},
+		}),
+	]);
+
+	console.log("Seeded users:", users);
+}
+
+main()
+	.then(async () => {
+		await prisma.$disconnect();
+	})
+	.catch(async (e) => {
+		console.error(e);
+		await prisma.$disconnect();
+		process.exit(1);
+	});
+```
+
+A few things worth noting:
+
+-   The passwords are hashed with `bcrypt`, exactly like the `create` handler
+    does, so the seeded users can actually log in through the auth flow.
+-   `deleteMany()` at the top makes the script idempotent: run it as often as
+    you like and you always end up with the same known set of users.
+
+With the database running and the schema pushed, seed it:
+
+```bash
+pnpm db:seed
+```
+
+Refresh TablePlus and you should now see the two users in the `users` table.
 
 ## Updating the handlers
 
